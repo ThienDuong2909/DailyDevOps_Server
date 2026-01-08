@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    tools {
+        nodejs 'node-20' 
+    }
+
     environment {
         // App defaults
         PORT = '3001'
