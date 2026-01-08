@@ -1,0 +1,216 @@
+// Prisma Schema for DevOps Blog
+// Documentation: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  ADMIN
+  MODERATOR
+  EDITOR
+  VIEWER
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  SPAM
+  TRASH
+}
+
+// ============================================
+// MODELS
+// ============================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  password      String
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  avatar        String?
+  bio           String?
+  role          Role      @default(VIEWER)
+  isActive      Boolean   @default(true) @map("is_active")
+  refreshToken  String?   @map("refresh_token")
+  lastLoginAt   DateTime? @map("last_login_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  posts         Post[]
+  comments      Comment[]
+  seoSettings   SeoSetting[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  color       String?  @default("#137fec")
+  icon        String?
+  parentId    String?  @map("parent_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Self-relation for subcategories
+  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children    Category[] @relation("CategoryToCategory")
+  
+  // Relations
+  posts       Post[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  posts     Post[]   @relation("PostTags")
+
+  @@map("tags")
+}
+
+model Post {
+  id              String     @id @default(cuid())
+  title           String
+  slug            String     @unique
+  excerpt         String?
+  content         String     @db.Text
+  featuredImage   String?    @map("featured_image")
+  status          PostStatus @default(DRAFT)
+  viewCount       Int        @default(0) @map("view_count")
+  readingTime     Int?       @map("reading_time") // in minutes
+  publishedAt     DateTime?  @map("published_at")
+  scheduledAt     DateTime?  @map("scheduled_at")
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  author          User       @relation(fields: [authorId], references: [id])
+  authorId        String     @map("author_id")
+  category        Category?  @relation(fields: [categoryId], references: [id])
+  categoryId      String?    @map("category_id")
+  tags            Tag[]      @relation("PostTags")
+  comments        Comment[]
+  seoSetting      SeoSetting?
+
+  @@index([status, publishedAt])
+  @@index([authorId])
+  @@index([categoryId])
+  @@map("posts")
+}
+
+model Comment {
+  id        String        @id @default(cuid())
+  content   String        @db.Text
+  authorName String?      @map("author_name") // For guest comments
+  authorEmail String?     @map("author_email") // For guest comments
+  authorIp  String?       @map("author_ip")
+  status    CommentStatus @default(PENDING)
+  parentId  String?       @map("parent_id")
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  // Relations
+  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String        @map("post_id")
+  user      User?         @relation(fields: [userId], references: [id])
+  userId    String?       @map("user_id")
+  
+  // Self-relation for replies
+  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[]     @relation("CommentReplies")
+
+  @@index([postId, status])
+  @@map("comments")
+}
+
+model SeoSetting {
+  id              String   @id @default(cuid())
+  metaTitle       String?  @map("meta_title")
+  metaDescription String?  @map("meta_description") @db.Text
+  focusKeywords   Json?    @map("focus_keywords") @default("[]")
+  canonicalUrl    String?  @map("canonical_url")
+  ogImage         String?  @map("og_image")
+  noIndex         Boolean  @default(false) @map("no_index")
+  noFollow        Boolean  @default(false) @map("no_follow")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations - can be for post or global page
+  post            Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId          String?  @unique @map("post_id")
+  user            User?    @relation(fields: [userId], references: [id])
+  userId          String?  @map("user_id")
+  
+  // For global pages (home, about, etc.)
+  pageType        String?  @map("page_type") // 'home', 'about', 'contact', etc.
+
+  @@map("seo_settings")
+}
+
+model Subscriber {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  name        String?
+  isActive    Boolean   @default(true) @map("is_active")
+  subscribedAt DateTime @default(now()) @map("subscribed_at")
+  unsubscribedAt DateTime? @map("unsubscribed_at")
+
+  @@map("subscribers")
+}
+
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String   @db.Text
+  type      String   @default("string") // string, number, boolean, json
+  group     String   @default("general") // general, seo, email, backup
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  action      String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+  entity      String   // Post, User, Comment, etc.
+  entityId    String?  @map("entity_id")
+  userId      String?  @map("user_id")
+  userEmail   String?  @map("user_email")
+  ipAddress   String?  @map("ip_address")
+  userAgent   String?  @map("user_agent")
+  details     String?  @db.Text // JSON string for additional info
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([entity, entityId])
+  @@map("activity_logs")
+}
