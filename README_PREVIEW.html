@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps Blog API - README</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-markdown-css/5.2.0/github-markdown.light.min.css">
+    <style>
+        .markdown-body {
+            box-sizing: border-box;
+            min-width: 200px;
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 45px;
+        }
+        @media (max-width: 767px) {
+            .markdown-body {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <article class="markdown-body">
+        <h1>DevOps Blog API - Node.js/Express</h1>
+        
+        <p>Backend API cho DevOps Blog Platform được xây dựng bằng Node.js, Express và Prisma ORM.</p>
+        
+        <h2>🚀 Tech Stack</h2>
+        <ul>
+            <li><strong>Node.js</strong> - Runtime environment</li>
+            <li><strong>Express.js</strong> - Web framework</li>
+            <li><strong>Prisma</strong> - ORM cho database</li>
+            <li><strong>MySQL</strong> - Database</li>
+            <li><strong>JWT</strong> - Authentication</li>
+            <li><strong>Argon2</strong> - Password hashing</li>
+            <li><strong>Joi</strong> - Validation</li>
+            <li><strong>Swagger</strong> - API documentation</li>
+        </ul>
+        
+        <h2>📋 Prerequisites</h2>
+        <ul>
+            <li>Node.js &gt;= 16.x</li>
+            <li>MySQL &gt;= 8.0</li>
+            <li>npm hoặc yarn</li>
+        </ul>
+        
+        <h2>🛠️ Installation</h2>
+        <ol>
+            <li>
+                <p>Clone repository:</p>
+                <div class="highlight highlight-source-shell"><pre>git clone &lt;repository-url&gt;
+cd server-nodejs</pre></div>
+            </li>
+            <li>
+                <p>Install dependencies:</p>
+                <div class="highlight highlight-source-shell"><pre>npm install</pre></div>
+            </li>
+            <li>
+                <p>Tạo file <code>.env</code>:</p>
+                <div class="highlight highlight-source-shell"><pre>cp .env.example .env</pre></div>
+            </li>
+            <li>
+                <p>Cập nhật các biến môi trường trong <code>.env</code>:</p>
+                <div class="highlight highlight-source-dotenv"><pre>DATABASE_URL="mysql://user:password@localhost:3306/devopsblog"
+JWT_ACCESS_SECRET=your-secret-key
+JWT_REFRESH_SECRET=your-refresh-secret</pre></div>
+            </li>
+            <li>
+                <p>Generate Prisma Client:</p>
+                <div class="highlight highlight-source-shell"><pre>npm run prisma:generate</pre></div>
+            </li>
+            <li>
+                <p>Run database migrations:</p>
+                <div class="highlight highlight-source-shell"><pre>npm run prisma:migrate</pre></div>
+            </li>
+            <li>
+                <p>Seed database (optional):</p>
+                <div class="highlight highlight-source-shell"><pre>npm run prisma:seed</pre></div>
+            </li>
+        </ol>
+        
+        <h2>🏃‍♂️ Running the Application</h2>
+        <h3>Development</h3>
+        <div class="highlight highlight-source-shell"><pre>npm run dev</pre></div>
+        
+        <h3>Production</h3>
+        <div class="highlight highlight-source-shell"><pre>npm start</pre></div>
+        
+        <p>Server sẽ chạy tại: <code>http://localhost:3001</code></p>
+        
+        <h2>📁 Project Structure</h2>
+        <div class="highlight highlight-text"><pre>server-nodejs/
+├── prisma/
+│   ├── schema.prisma      # Prisma schema
+│   └── seed.js            # Database seeding
+├── src/
+│   ├── config/            # Configuration
+│   ├── middlewares/       # Express middlewares
+│   ├── modules/           # Feature modules
+│   │   ├── auth/          # Authentication
+│   │   ├── posts/         # Blog posts
+│   │   ├── categories/    # Categories
+│   │   ├── tags/          # Tags
+│   │   ├── comments/      # Comments
+│   │   └── users/         # Users
+│   ├── utils/             # Utilities
+│   ├── app.js             # Express app
+│   └── server.js          # Entry point
+├── .env.example           # Environment variables example
+├── package.json
+└── README.md</pre></div>
+        
+        <h2>🔑 API Endpoints</h2>
+        <h3>Authentication</h3>
+        <ul>
+            <li><code>POST /api/auth/register</code> - Đăng ký user mới</li>
+            <li><code>POST /api/auth/login</code> - Đăng nhập</li>
+            <li><code>POST /api/auth/logout</code> - Đăng xuất</li>
+            <li><code>POST /api/auth/refresh</code> - Refresh access token</li>
+            <li><code>GET /api/auth/profile</code> - Lấy thông tin user hiện tại</li>
+        </ul>
+        
+        <h3>Posts</h3>
+        <ul>
+            <li><code>GET /api/posts/published</code> - Lấy danh sách bài viết đã publish (public)</li>
+            <li><code>GET /api/posts/slug/:slug</code> - Lấy bài viết theo slug (public)</li>
+            <li><code>GET /api/posts/:id/related</code> - Lấy bài viết liên quan (public)</li>
+            <li><code>GET /api/posts</code> - Lấy tất cả bài viết (admin)</li>
+            <li><code>GET /api/posts/stats</code> - Lấy thống kê bài viết (admin)</li>
+            <li><code>GET /api/posts/:id</code> - Lấy bài viết theo ID (admin)</li>
+            <li><code>POST /api/posts</code> - Tạo bài viết mới (admin)</li>
+            <li><code>PUT /api/posts/:id</code> - Cập nhật bài viết (admin)</li>
+            <li><code>DELETE /api/posts/:id</code> - Xóa bài viết (admin)</li>
+        </ul>
+        
+        <h2>🔒 Authentication</h2>
+        <p>API sử dụng JWT Bearer tokens cho authentication:</p>
+        <ul>
+            <li><strong>Access Token</strong>: Short-lived (15 phút), gửi trong Authorization header</li>
+            <li><strong>Refresh Token</strong>: Long-lived (7 ngày), lưu trong HTTP-only cookie</li>
+        </ul>
+        
+        <h3>Sử dụng:</h3>
+        <div class="highlight highlight-source-js"><pre><span class="pl-c">// Gửi request với access token</span>
+fetch(<span class="pl-s"><span class="pl-pds">'</span>/api/posts<span class="pl-pds">'</span></span>, {
+  headers: {
+    <span class="pl-s"><span class="pl-pds">'</span>Authorization<span class="pl-pds">'</span></span>: <span class="pl-s"><span class="pl-pds">'</span>Bearer &lt;access-token&gt;<span class="pl-pds">'</span></span>
+  }
+})</pre></div>
+        
+        <h2>🔐 Roles &amp; Permissions</h2>
+        <ul>
+            <li><strong>ADMIN</strong>: Full access</li>
+            <li><strong>MODERATOR</strong>: Quản lý content</li>
+            <li><strong>EDITOR</strong>: Tạo và edit posts</li>
+            <li><strong>VIEWER</strong>: Chỉ xem</li>
+        </ul>
+        
+        <h2>🗃️ Database</h2>
+        <p>Sử dụng Prisma ORM với MySQL. Prisma Client được auto-generated từ schema.</p>
+        
+        <h3>Các lệnh Prisma:</h3>
+        <div class="highlight highlight-source-shell"><pre>npm run prisma:generate    # Generate Prisma Client
+npm run prisma:migrate     # Run migrations (dev)
+npm run prisma:migrate:prod # Run migrations (production)
+npm run prisma:studio      # Open Prisma Studio
+npm run prisma:seed        # Seed database
+npm run prisma:reset       # Reset database</pre></div>
+        
+        <h2>🔧 Environment Variables</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Variable</th>
+                    <th>Description</th>
+                    <th>Default</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>NODE_ENV</code></td>
+                    <td>Environment mode</td>
+                    <td>development</td>
+                </tr>
+                <tr>
+                    <td><code>PORT</code></td>
+                    <td>Server port</td>
+                    <td>3001</td>
+                </tr>
+                <tr>
+                    <td><code>DATABASE_URL</code></td>
+                    <td>MySQL connection string</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><code>JWT_ACCESS_SECRET</code></td>
+                    <td>JWT access token secret</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><code>JWT_REFRESH_SECRET</code></td>
+                    <td>JWT refresh token secret</td>
+                    <td>-</td>
+                </tr>
+                <tr>
+                    <td><code>JWT_ACCESS_EXPIRES_IN</code></td>
+                    <td>Access token expiry</td>
+                    <td>15m</td>
+                </tr>
+                <tr>
+                    <td><code>JWT_REFRESH_EXPIRES_IN</code></td>
+                    <td>Refresh token expiry</td>
+                    <td>7d</td>
+                </tr>
+                <tr>
+                    <td><code>CORS_ORIGIN</code></td>
+                    <td>CORS allowed origin</td>
+                    <td>http://localhost:3000</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>📝 License</h2>
+        <p>MIT</p>
+    </article>
+</body>
+</html>
