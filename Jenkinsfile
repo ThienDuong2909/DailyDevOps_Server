@@ -42,7 +42,7 @@ pipeline {
                         echo "DATABASE_URL=${DATABASE_URL}" >> .env
                         echo "JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}" >> .env
                         echo "JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}" >> .env
-                        echo "CORS_ORIGIN=https://your-client-domain.com" >> .env
+                        echo "CORS_ORIGIN=https://blog.thienduong.info" >> .env
                     '''
                 }
             }
