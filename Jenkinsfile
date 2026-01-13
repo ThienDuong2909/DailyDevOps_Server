@@ -85,9 +85,22 @@ pipeline {
 
         stage('Docker Build & Push') {
             steps {
-                echo 'Skipping Docker Build & Push (TODO: Create Dockerfile & Integrate Registry)'
-                // sh 'docker build -t myapp:latest .'
-                // sh 'docker push myapp:latest'
+                script {
+                    echo '--- STARTING DOCKER BUILD ---'
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CRED, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        
+                        // 1. Đăng nhập Docker Hub
+                        sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                        
+                        // 2. Build Image
+                        // Lưu ý: Dấu chấm (.) cuối cùng là bắt buộc
+                        sh "docker build -t $DOCKER_HUB_USER/$IMAGE_NAME:latest -t $DOCKER_HUB_USER/$IMAGE_NAME:$BUILD_NUMBER -f Dockerfile ."
+                        
+                        // 3. Push Image lên Hub
+                        sh "docker push $DOCKER_HUB_USER/$IMAGE_NAME:latest"
+                        sh "docker push $DOCKER_HUB_USER/$IMAGE_NAME:$BUILD_NUMBER"
+                    }
+                }
             }
         }
 
