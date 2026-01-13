@@ -11,6 +11,11 @@ pipeline {
         NODE_ENV = 'production'
         // NodeJS tool if configured in Global Tool Configuration, otherwise assume in PATH
         // NODEJS_HOME = tool name: 'NodeJS', type: 'hudson.plugins.nodejs.tools.NodeJSInstallation' 
+        
+        // Thông tin Docker Hub
+        DOCKER_HUB_USER = 'thienduong2909' 
+        IMAGE_NAME = 'devops-blog-server' // Đặt tên image cho server
+        DOCKER_CRED = 'docker-hub-credentials'
     }
 
     stages {
