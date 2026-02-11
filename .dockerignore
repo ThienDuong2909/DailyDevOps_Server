@@ -9,3 +9,7 @@ Dockerfile
 .dockerignore
 .gitignore
 README.md
+
+# CI/CD cache & temp files
+.npm-cache
+.scannerwork

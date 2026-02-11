@@ -5,70 +5,74 @@ pipeline {
         nodejs 'node-20' 
     }
 
+    options {
+        // Auto-abort if pipeline runs longer than 30 minutes
+        timeout(time: 30, unit: 'MINUTES')
+        // Keep only last 5 builds to save disk space
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        // Prevent concurrent builds on the same branch
+        disableConcurrentBuilds()
+        // Add timestamps to console output for easier debugging
+        timestamps()
+    }
+
     environment {
-        // App defaults
-        PORT = '3001'
-        NODE_ENV = 'production'
-        // NodeJS tool if configured in Global Tool Configuration, otherwise assume in PATH
-        // NODEJS_HOME = tool name: 'NodeJS', type: 'hudson.plugins.nodejs.tools.NodeJSInstallation' 
-        
-        // Thông tin Docker Hub
+        // Docker Registry Configuration
         DOCKER_HUB_USER = 'thienduong2909' 
-        IMAGE_NAME = 'devops-blog-server' // Đặt tên image cho server
-        DOCKER_CRED = 'docker-hub-credentials'
+        IMAGE_NAME = 'devops-blog-server'
+        IMAGE_TAG = "${DOCKER_HUB_USER}/${IMAGE_NAME}"
+        DOCKER_CRED_ID = 'docker-hub-credentials'
+
+        // GitOps / Infrastructure Repository Configuration
+        K8S_MANIFEST_REPO = 'github.com/ThienDuong2909/Blog_K8S.git'
+        GIT_CRED_ID = 'github-access-token' 
+        GIT_EMAIL = 'jenkins-bot@thienduong.info'
+        GIT_NAME = 'Jenkins Bot'
+
+        // npm cache directory - persists across builds for faster installs
+        NPM_CACHE_DIR = "${WORKSPACE}/.npm-cache"
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout Source Code') {
             steps {
+                echo 'Checking out application source code...'
                 checkout scm
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm ci'
+                echo 'Installing dependencies from lockfile...'
+                // npm ci: designed for CI environments
+                // - Automatically removes existing node_modules (no manual rm needed)
+                // - Installs exact versions from package-lock.json (deterministic)
+                // - 2-3x faster than npm install
+                // - Fails if package-lock.json is out of sync with package.json
+                sh 'npm ci --cache ${NPM_CACHE_DIR}'
             }
         }
 
-        stage('Security & Config') {
+        stage('Generate Prisma Client') {
             steps {
-                // IMPORTANT: Use Jenkins Credentials Binding for production secrets
-                withCredentials([
-                    string(credentialsId: 'DB_URL_PROD', variable: 'DATABASE_URL'),
-                    string(credentialsId: 'JWT_ACCESS_SECRET', variable: 'JWT_ACCESS_SECRET'),
-                    string(credentialsId: 'JWT_REFRESH_SECRET', variable: 'JWT_REFRESH_SECRET')
-                ]) {
-                    sh '''
-                        echo "Generating .env file..."
-                        echo "PORT=${PORT}" > .env
-                        echo "NODE_ENV=${NODE_ENV}" >> .env
-                        echo "API_PREFIX=api" >> .env
-                        echo "DATABASE_URL=${DATABASE_URL}" >> .env
-                        echo "JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}" >> .env
-                        echo "JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}" >> .env
-                        echo "CORS_ORIGIN=https://blog.thienduong.info" >> .env
-                    '''
-                }
+                echo 'Generating Prisma Client from schema...'
+                sh 'npx prisma generate'
             }
         }
 
-        // --- PLACEHOLDERS FOR FUTURE INTEGRATIONS ---
-        
         stage('SonarQube Analysis') {
             steps {
+                echo 'Starting static code analysis...'
                 script {
                     def scannerHome = tool 'sonar-scanner'
-                    // Ensure path uses forward slashes for compatibility with sh on Windows
-                    def scannerHomePath = scannerHome.replace('\\', '/')
                     
                     withSonarQubeEnv('sonar-server') {
                         sh """
-                            "${scannerHomePath}/bin/sonar-scanner" \
-                            -Dsonar.projectKey=devops-blog-server-nodejs \
-                            -Dsonar.projectName='DevOps Blog Server NodeJS' \
+                            "${scannerHome}/bin/sonar-scanner" \
+                            -Dsonar.projectKey=devops-blog-server \
+                            -Dsonar.projectName='DevOps Blog Server' \
                             -Dsonar.sources=. \
-                            -Dsonar.exclusions=node_modules/**,coverage/** \
+                            -Dsonar.exclusions=node_modules/**,.npm-cache/**,coverage/**,prisma/migrations/** \
                             -Dsonar.sourceEncoding=UTF-8
                         """
                     }
@@ -76,59 +80,96 @@ pipeline {
             }
         }
 
-        stage('Sonatype Nexus') {
+        stage('Quality Gate') {
             steps {
-                echo 'Skipping Artifact Upload to Sonatype Nexus (TODO: Integrate Nexus)'
-                // sh 'mvn deploy' or similar
+                echo 'Waiting for SonarQube Quality Gate result...'
+                script {
+                    timeout(time: 5, unit: 'MINUTES') {
+                        def qg = waitForQualityGate()
+                        if (qg.status != 'OK') {
+                            error "Pipeline aborted due to Quality Gate failure: ${qg.status}"
+                        }
+                    }
+                    echo 'Quality Gate passed successfully.'
+                }
             }
         }
 
         stage('Docker Build & Push') {
             steps {
                 script {
-                    echo '--- STARTING DOCKER BUILD ---'
-                    withCredentials([usernamePassword(credentialsId: DOCKER_CRED, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                    echo "Building Docker image: ${IMAGE_TAG}:${BUILD_NUMBER}..."
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CRED_ID, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         
-                        // 1. Đăng nhập Docker Hub
                         sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                         
-                        // 2. Build Image
-                        // Lưu ý: Dấu chấm (.) cuối cùng là bắt buộc
-                        sh "docker build -t $DOCKER_HUB_USER/$IMAGE_NAME:latest -t $DOCKER_HUB_USER/$IMAGE_NAME:$BUILD_NUMBER -f Dockerfile ."
+                        // Build with both specific version tag and 'latest'
+                        sh "docker build -t ${IMAGE_TAG}:${BUILD_NUMBER} -t ${IMAGE_TAG}:latest -f Dockerfile ."
                         
-                        // 3. Push Image lên Hub
-                        sh "docker push $DOCKER_HUB_USER/$IMAGE_NAME:latest"
-                        sh "docker push $DOCKER_HUB_USER/$IMAGE_NAME:$BUILD_NUMBER"
+                        sh "docker push ${IMAGE_TAG}:${BUILD_NUMBER}"
+                        sh "docker push ${IMAGE_TAG}:latest"
                     }
                 }
             }
         }
 
-        stage('Update CD Repo') {
+        stage('Update K8s Manifest') {
             steps {
-                echo 'Skipping CD Repo Update (TODO: Commit to GitOps repo)'
-            }
-        }
-        
-        // --------------------------------------------
-
-        stage('Prisma Generate') {
-            steps {
-                sh 'npx prisma generate'
+                script {
+                    echo 'Updating Kubernetes manifest repository with new image version...'
+                    withCredentials([usernamePassword(credentialsId: GIT_CRED_ID, passwordVariable: 'GIT_TOKEN', usernameVariable: 'GIT_USER')]) {
+                        
+                        sh "git clone https://${GIT_USER}:${GIT_TOKEN}@${K8S_MANIFEST_REPO} k8s-repo"
+                        
+                        dir("k8s-repo") {
+                            sh "git config user.email '${GIT_EMAIL}'"
+                            sh "git config user.name '${GIT_NAME}'"
+                            sh "git checkout main"
+                            
+                            sh """
+                                sed -i 's|image: ${IMAGE_TAG}:.*|image: ${IMAGE_TAG}:${BUILD_NUMBER}|' deployment.yaml
+                            """
+                            
+                            echo "Verifying changes in deployment.yaml:"
+                            sh "grep 'image:' deployment.yaml"
+                            
+                            try {
+                                sh "git add deployment.yaml"
+                                sh "git diff-index --quiet HEAD || git commit -m 'chore(ci): update image version to ${BUILD_NUMBER}'"
+                                sh "git push origin main"
+                                echo "Manifest repository updated successfully."
+                            } catch (Exception e) {
+                                echo "Failed to push changes or no changes detected: ${e}"
+                                currentBuild.result = 'UNSTABLE'
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
     post {
         always {
-            // Clean up workspace to avoid sensitive files lingering
-            sh 'rm -f .env'
+            echo 'Performing post-build cleanup...'
+            sh "docker logout || true"
+            sh "rm -rf k8s-repo"
+            // Remove Docker images from agent to free disk space
+            sh "docker rmi ${IMAGE_TAG}:${BUILD_NUMBER} ${IMAGE_TAG}:latest || true"
         }
         success {
-            echo 'Pipeline executed successfully!'
+            echo "Pipeline executed successfully. Image: ${IMAGE_TAG}:${BUILD_NUMBER}"
         }
         failure {
-            echo 'Pipeline failed.'
+            echo "Pipeline failed at stage: ${env.STAGE_NAME}. Check logs for details."
+        }
+        cleanup {
+            // Clean workspace AFTER everything else - at the END instead of the START
+            // This allows npm cache to persist for the NEXT build
+            cleanWs(deleteDirs: true, patterns: [
+                // Keep npm cache between builds for faster installs
+                [pattern: '.npm-cache/**', type: 'EXCLUDE']
+            ])
         }
     }
 }
