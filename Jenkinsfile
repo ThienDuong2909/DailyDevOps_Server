@@ -117,14 +117,26 @@ pipeline {
             steps {
                 script {
                     echo 'Updating Kubernetes manifest repository with new image version...'
+                    
+                    // Use Jenkins checkout step to clone — credentials are managed internally
+                    // and NEVER exposed in console output (unlike raw git clone)
+                    dir('k8s-repo') {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: [[name: 'main']],
+                            extensions: [[$class: 'CloneOption', depth: 1, shallow: true]],
+                            userRemoteConfigs: [[
+                                url: "https://${K8S_MANIFEST_REPO}",
+                                credentialsId: GIT_CRED_ID
+                            ]]
+                        ])
+                    }
+
+                    // Use withCredentials only for push — with shell-level interpolation
                     withCredentials([usernamePassword(credentialsId: GIT_CRED_ID, passwordVariable: 'GIT_TOKEN', usernameVariable: 'GIT_USER')]) {
-                        
-                        sh "git clone https://${GIT_USER}:${GIT_TOKEN}@${K8S_MANIFEST_REPO} k8s-repo"
-                        
-                        dir("k8s-repo") {
+                        dir('k8s-repo') {
                             sh "git config user.email '${GIT_EMAIL}'"
                             sh "git config user.name '${GIT_NAME}'"
-                            sh "git checkout main"
                             
                             sh """
                                 sed -i 's|image: ${IMAGE_TAG}:.*|image: ${IMAGE_TAG}:${BUILD_NUMBER}|' deployment.yaml
@@ -133,14 +145,18 @@ pipeline {
                             echo "Verifying changes in deployment.yaml:"
                             sh "grep 'image:' deployment.yaml"
                             
-                            try {
-                                sh "git add deployment.yaml"
-                                sh "git diff-index --quiet HEAD || git commit -m 'chore(ci): update image version to ${BUILD_NUMBER}'"
+                            // Check if there are actual changes before committing
+                            sh "git add deployment.yaml"
+                            def hasChanges = sh(script: 'git diff-index --quiet HEAD', returnStatus: true) != 0
+                            
+                            if (hasChanges) {
+                                sh "git commit -m 'chore(ci): update server image to ${BUILD_NUMBER}'"
+                                // Set remote URL with credentials for push (shell interpolation — Jenkins will mask the token)
+                                sh 'git remote set-url origin https://${GIT_USER}:${GIT_TOKEN}@' + "${K8S_MANIFEST_REPO}"
                                 sh "git push origin main"
                                 echo "Manifest repository updated successfully."
-                            } catch (Exception e) {
-                                echo "Failed to push changes or no changes detected: ${e}"
-                                currentBuild.result = 'UNSTABLE'
+                            } else {
+                                echo "No changes detected in deployment.yaml — skipping commit."
                             }
                         }
                     }
