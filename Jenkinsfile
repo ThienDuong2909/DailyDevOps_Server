@@ -153,7 +153,8 @@ pipeline {
                                 sh "git commit -m 'chore(ci): update server image to ${BUILD_NUMBER}'"
                                 // Set remote URL with credentials for push (shell interpolation — Jenkins will mask the token)
                                 sh 'git remote set-url origin https://${GIT_USER}:${GIT_TOKEN}@' + "${K8S_MANIFEST_REPO}"
-                                sh "git push origin main"
+                                // Use HEAD:main because Jenkins GitSCM checkout leaves repo in detached HEAD state
+                                sh "git push origin HEAD:main"
                                 echo "Manifest repository updated successfully."
                             } else {
                                 echo "No changes detected in deployment.yaml — skipping commit."
