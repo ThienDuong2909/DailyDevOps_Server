@@ -19,6 +19,9 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+# Install OpenSSL for Prisma engine (Alpine 3.17+ uses OpenSSL 3.x)
+RUN apk add --no-cache openssl
+
 # Install only production dependencies
 # We copy package files and run npm ci --omit=dev to get a clean node_modules
 # This prevents carrying over tools like nodemon, eslint, etc.
