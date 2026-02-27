@@ -103,10 +103,16 @@ pipeline {
                         
                         sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                         
-                        // Build with both specific version tag and 'latest'
-                        sh "docker build -t ${IMAGE_TAG}:${BUILD_NUMBER} -t ${IMAGE_TAG}:latest -f Dockerfile ."
+                        // Build with specific version tag, then re-tag as latest
+                        sh "docker build -t ${IMAGE_TAG}:${BUILD_NUMBER} -f Dockerfile ."
+                        sh "docker tag ${IMAGE_TAG}:${BUILD_NUMBER} ${IMAGE_TAG}:latest"
                         
+                        // Push versioned tag
                         sh "docker push ${IMAGE_TAG}:${BUILD_NUMBER}"
+                        
+                        // Re-authenticate before pushing latest to prevent token expiry
+                        // (long push operations with retries can cause session timeout)
+                        sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                         sh "docker push ${IMAGE_TAG}:latest"
                     }
                 }
