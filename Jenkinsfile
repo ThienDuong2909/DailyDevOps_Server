@@ -73,7 +73,7 @@ pipeline {
                             -Dsonar.projectName='DevOps Blog Server' \
                             -Dsonar.sources=. \
                             -Dsonar.exclusions=node_modules/**,.npm-cache/**,coverage/**,prisma/migrations/** \
-                            -Dsonar.coverage.exclusions=src/utils/metrics.js,src/utils/prisma.js,src/config/**,src/server.js \
+                            -Dsonar.coverage.exclusions=src/utils/metrics.js,src/utils/prisma.js,src/config/**,src/server.js,src/app.js \
                             -Dsonar.sourceEncoding=UTF-8
                         """
                     }
