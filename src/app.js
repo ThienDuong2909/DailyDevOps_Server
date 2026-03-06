@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 
 const config = require('./config');
 const { errorHandler, notFoundHandler } = require('./middlewares/error.middleware');
+const { register, metricsMiddleware } = require('./utils/metrics');
 
 // Import routes
 const authRoutes = require('./modules/auth/auth.routes');
@@ -24,6 +25,24 @@ const app = express();
 
 // Security
 app.use(helmet());
+
+// ============================================
+// PROMETHEUS METRICS
+// ============================================
+
+// Đo duration/count mỗi request TRƯỚC khi xử lý
+app.use(metricsMiddleware);
+
+// Endpoint để Prometheus scrape — CHỈ nội bộ cluster, không expose qua Ingress
+app.get('/metrics', async (req, res) => {
+    try {
+        res.set('Content-Type', register.contentType);
+        res.end(await register.metrics());
+    } catch (err) {
+        res.status(500).end(err.message);
+    }
+});
+
 
 // CORS
 app.use(cors({
@@ -65,6 +84,11 @@ app.get('/health', (req, res) => {
         message: 'DevOps Blog API is running',
         timestamp: new Date().toISOString(),
         environment: config.nodeEnv,
+        uptime: Math.floor(process.uptime()),
+        memory: {
+            heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
+            heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB',
+        },
     });
 });
 
