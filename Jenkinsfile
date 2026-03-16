@@ -164,6 +164,10 @@ pipeline {
                                 sh "git commit -m 'chore(ci): update server image to ${BUILD_NUMBER}'"
                                 // Set remote URL with credentials for push (shell interpolation — Jenkins will mask the token)
                                 sh 'git remote set-url origin https://${GIT_USER}:${GIT_TOKEN}@' + "${K8S_MANIFEST_REPO}"
+                                // Fetch + rebase to handle remote having newer commits
+                                // (e.g. client pipeline pushed while this build was running)
+                                sh "git fetch origin main"
+                                sh "git rebase origin/main"
                                 // Use HEAD:main because Jenkins GitSCM checkout leaves repo in detached HEAD state
                                 sh "git push origin HEAD:main"
                                 echo "Manifest repository updated successfully."
