@@ -25,7 +25,7 @@ const config = {
     // Server
     nodeEnv,
     port: parseInt(process.env.PORT, 10) || 3001,
-    apiPrefix: process.env.API_PREFIX || 'api/v1',
+    apiPrefix: (process.env.API_PREFIX === 'api' ? 'api/v1' : process.env.API_PREFIX) || 'api/v1',
 
     // Database
     databaseUrl: process.env.DATABASE_URL,
