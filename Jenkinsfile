@@ -83,8 +83,8 @@ pipeline {
                             -Dsonar.projectKey=devops-blog-server \
                             -Dsonar.projectName='DevOps Blog Server' \
                             -Dsonar.sources=. \
-                            -Dsonar.exclusions=node_modules/**,.npm-cache/**,coverage/**,prisma/migrations/**,**/__tests__/** \
-                            -Dsonar.coverage.exclusions=src/utils/metrics.js,src/utils/prisma.js,src/config/**,src/server.js,src/app.js \
+                            -Dsonar.exclusions=node_modules/**,.npm-cache/**,coverage/**,prisma/migrations/**,prisma/seed*.js,**/__tests__/** \
+                            -Dsonar.coverage.exclusions=src/utils/metrics.js,src/utils/prisma.js,src/config/**,src/server.js,src/app.js,prisma/seed*.js \
                             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
                             -Dsonar.tests=src \
                             -Dsonar.test.inclusions=**/__tests__/**/*.test.js,**/*.test.js \
