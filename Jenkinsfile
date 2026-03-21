@@ -198,6 +198,10 @@ pipeline {
             sh "rm -rf k8s-repo"
             // Remove Docker images from agent to free disk space
             sh "docker rmi ${IMAGE_TAG}:${BUILD_NUMBER} ${IMAGE_TAG}:latest || true"
+            // Remove dangling images (<none> tags) created during build
+            sh 'docker image prune -f || true'
+            // Remove build cache older than 7 days to prevent disk accumulation
+            sh 'docker builder prune --filter "until=168h" -f || true'
         }
         success {
             echo "Pipeline executed successfully. Image: ${IMAGE_TAG}:${BUILD_NUMBER}"
