@@ -14,7 +14,9 @@
     "prisma:migrate:prod": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:seed": "node prisma/seed.js",
-    "prisma:reset": "prisma migrate reset"
+    "prisma:reset": "prisma migrate reset",
+    "test": "jest --forceExit --detectOpenHandles",
+    "test:coverage": "jest --forceExit --detectOpenHandles --coverage"
   },
   "dependencies": {
     "@prisma/client": "^5.8.0",
@@ -35,7 +37,31 @@
     "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
+    "jest": "^30.3.0",
     "nodemon": "^3.0.2",
-    "prisma": "^5.8.0"
+    "prisma": "^5.8.0",
+    "supertest": "^7.2.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "lcov",
+      "text",
+      "text-summary"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js",
+      "!src/app.js",
+      "!src/config/**",
+      "!src/utils/metrics.js",
+      "!src/utils/prisma.js",
+      "!node_modules/**"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.test.js",
+      "**/*.test.js"
+    ]
   }
 }
