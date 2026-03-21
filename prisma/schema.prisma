@@ -181,6 +181,7 @@ model Subscriber {
   email       String    @unique
   name        String?
   isActive    Boolean   @default(true) @map("is_active")
+  unsubscribeToken String? @unique @map("unsubscribe_token")
   subscribedAt DateTime @default(now()) @map("subscribed_at")
   unsubscribedAt DateTime? @map("unsubscribed_at")
 

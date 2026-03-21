@@ -16,6 +16,7 @@ const categoriesRoutes = require('./modules/categories/categories.routes');
 const tagsRoutes = require('./modules/tags/tags.routes');
 const commentsRoutes = require('./modules/comments/comments.routes');
 const usersRoutes = require('./modules/users/users.routes');
+const subscribersRoutes = require('./modules/subscribers/subscribers.routes');
 
 const app = express();
 
@@ -102,6 +103,7 @@ app.use(`/${config.apiPrefix}/categories`, categoriesRoutes);
 app.use(`/${config.apiPrefix}/tags`, tagsRoutes);
 app.use(`/${config.apiPrefix}/comments`, commentsRoutes);
 app.use(`/${config.apiPrefix}/users`, usersRoutes);
+app.use(`/${config.apiPrefix}/subscribers`, subscribersRoutes);
 
 // ============================================
 // ERROR HANDLING
