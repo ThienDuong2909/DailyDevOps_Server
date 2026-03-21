@@ -3,7 +3,7 @@ const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const morgan = require('morgan');
+const { requestLogger } = require('./middlewares/logger.middleware');
 const rateLimit = require('express-rate-limit');
 
 const config = require('./config');
@@ -62,12 +62,8 @@ app.use(cookieParser());
 // Static files (uploaded images, thumbnails)
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
 
-// Logging
-if (config.nodeEnv === 'development') {
-    app.use(morgan('dev'));
-} else {
-    app.use(morgan('combined'));
-}
+// Detailed Logging
+app.use(requestLogger(config.nodeEnv));
 
 // Rate limiting
 const limiter = rateLimit({
