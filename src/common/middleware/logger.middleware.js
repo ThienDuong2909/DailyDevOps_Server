@@ -1,5 +1,7 @@
 const morgan = require('morgan');
 
+const REDACTED_VALUE = '[REDACTED]';
+
 const c = {
     Reset: '\x1b[0m',
     Bold: '\x1b[1m',
@@ -41,9 +43,9 @@ const maskSensitiveFields = (data) => {
     if (!data || typeof data !== 'object') return data;
 
     const clone = { ...data };
-    if (clone.password) clone.password = '[MASKED_FOR_SECURITY]';
-    if (clone.passwordConfirm) clone.passwordConfirm = '[MASKED_FOR_SECURITY]';
-    if (clone.refreshToken) clone.refreshToken = '[MASKED_FOR_SECURITY]';
+    if (clone.password) clone.password = REDACTED_VALUE;
+    if (clone.passwordConfirm) clone.passwordConfirm = REDACTED_VALUE;
+    if (clone.refreshToken) clone.refreshToken = REDACTED_VALUE;
     return clone;
 };
 
