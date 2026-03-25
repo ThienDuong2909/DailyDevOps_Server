@@ -1,20 +1,18 @@
-const slugify = require('slugify');
-const { getPrismaClient } = require('../../utils/prisma');
-const { NotFoundError, ConflictError } = require('../../middlewares/error.middleware');
-
-const prisma = getPrismaClient();
+const tagsRepository = require('./tags.repository');
+const { tagDetailInclude, tagListInclude } = require('./tags.queries');
+const {
+    buildTagSlug,
+    ensureTagExists,
+    ensureTagSlugAvailable,
+} = require('./tags.helpers');
 
 class TagsService {
     /**
      * Find all tags
      */
     async findAll() {
-        return prisma.tag.findMany({
-            include: {
-                _count: {
-                    select: { posts: true },
-                },
-            },
+        return tagsRepository.findMany({
+            include: tagListInclude,
             orderBy: { name: 'asc' },
         });
     }
@@ -23,16 +21,11 @@ class TagsService {
      * Find tag by ID
      */
     async findById(id) {
-        const tag = await prisma.tag.findUnique({
+        const tag = await tagsRepository.findUnique({
             where: { id },
-            include: {
-                _count: { select: { posts: true } },
-            },
+            include: tagDetailInclude,
         });
-
-        if (!tag) {
-            throw new NotFoundError('Tag not found');
-        }
+        ensureTagExists(tag);
 
         return tag;
     }
@@ -41,15 +34,11 @@ class TagsService {
      * Create tag
      */
     async create(dto) {
-        const slug = dto.slug || slugify(dto.name, { lower: true, strict: true });
+        const slug = buildTagSlug(dto.name, dto.slug);
+        const existing = await tagsRepository.findUnique({ where: { slug } });
+        ensureTagSlugAvailable(existing);
 
-        // Check if slug exists
-        const existing = await prisma.tag.findUnique({ where: { slug } });
-        if (existing) {
-            throw new ConflictError('Tag with this slug already exists');
-        }
-
-        return prisma.tag.create({
+        return tagsRepository.create({
             data: { ...dto, slug },
         });
     }
@@ -61,11 +50,10 @@ class TagsService {
         await this.findById(id);
 
         if (dto.name) {
-            const slug = dto.slug || slugify(dto.name, { lower: true, strict: true });
-            dto.slug = slug;
+            dto.slug = buildTagSlug(dto.name, dto.slug);
         }
 
-        return prisma.tag.update({
+        return tagsRepository.update({
             where: { id },
             data: dto,
         });
@@ -77,7 +65,7 @@ class TagsService {
     async delete(id) {
         await this.findById(id);
 
-        await prisma.tag.delete({ where: { id } });
+        await tagsRepository.delete({ where: { id } });
 
         return { message: 'Tag deleted successfully' };
     }

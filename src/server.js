@@ -1,6 +1,6 @@
 const app = require('./app');
 const config = require('./config');
-const { disconnectPrisma } = require('./utils/prisma');
+const { disconnectPrisma } = require('./database/prisma');
 
 const port = config.port;
 

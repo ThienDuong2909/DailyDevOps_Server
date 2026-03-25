@@ -1,95 +1,42 @@
-const slugify = require('slugify');
-const { getPrismaClient } = require('../../utils/prisma');
 const { NotFoundError, ForbiddenError } = require('../../middlewares/error.middleware');
-
-const prisma = getPrismaClient();
+const postsRepository = require('./posts.repository');
+const {
+    adminWriteInclude,
+    detailPostInclude,
+    listPostInclude,
+    publicPostInclude,
+    relatedPostsInclude,
+    statsRecentPostsSelect,
+} = require('./posts.queries');
+const {
+    buildListQuery,
+    buildPaginatedResponse,
+    buildPublishedAt,
+    buildReadingTime,
+    buildTagConnect,
+    buildTagReplace,
+    generateSlug,
+} = require('./posts.helpers');
 
 class PostsService {
     /**
      * Find all posts with filtering and pagination
      */
     async findAll(query) {
-        const {
-            page = 1,
-            limit = 10,
-            search,
-            status,
-            categoryId,
-            authorId,
-            tagSlug,
-            sortBy = 'createdAt',
-            sortOrder = 'desc',
-        } = query;
-
-        const skip = (page - 1) * limit;
-
-        const where = {
-            ...(search && {
-                OR: [
-                    { title: { contains: search } },
-                    { excerpt: { contains: search } },
-                    { content: { contains: search } },
-                ],
-            }),
-            ...(status && { status }),
-            ...(categoryId && { categoryId }),
-            ...(authorId && { authorId }),
-            ...(tagSlug && {
-                tags: {
-                    some: { slug: tagSlug },
-                },
-            }),
-        };
-
-        const orderBy = { [sortBy]: sortOrder };
+        const { page, limit, skip, where, orderBy } = buildListQuery(query);
 
         const [posts, total] = await Promise.all([
-            prisma.post.findMany({
+            postsRepository.findMany({
                 where,
                 skip,
                 take: limit,
                 orderBy,
-                include: {
-                    author: {
-                        select: {
-                            id: true,
-                            firstName: true,
-                            lastName: true,
-                            avatar: true,
-                        },
-                    },
-                    category: {
-                        select: {
-                            id: true,
-                            name: true,
-                            slug: true,
-                            color: true,
-                        },
-                    },
-                    tags: {
-                        select: {
-                            id: true,
-                            name: true,
-                            slug: true,
-                        },
-                    },
-                    _count: {
-                        select: { comments: true },
-                    },
-                },
+                include: listPostInclude,
             }),
-            prisma.post.count({ where }),
+            postsRepository.count({ where }),
         ]);
 
-        return {
-            data: posts,
-            meta: {
-                total,
-                page,
-                limit,
-                totalPages: Math.ceil(total / limit),
-            },
-        };
+        return buildPaginatedResponse({ data: posts, total, page, limit });
     }
 
     /**
@@ -106,25 +53,9 @@ class PostsService {
      * Find post by ID
      */
     async findById(id) {
-        const post = await prisma.post.findUnique({
+        const post = await postsRepository.findUnique({
             where: { id },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        avatar: true,
-                        bio: true,
-                    },
-                },
-                category: true,
-                tags: true,
-                seoSetting: true,
-                _count: {
-                    select: { comments: true },
-                },
-            },
+            include: detailPostInclude,
         });
 
         if (!post) {
@@ -138,49 +69,9 @@ class PostsService {
      * Find post by slug (for public view)
      */
     async findBySlug(slug) {
-        const post = await prisma.post.findUnique({
+        const post = await postsRepository.findUnique({
             where: { slug },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        avatar: true,
-                        bio: true,
-                    },
-                },
-                category: true,
-                tags: true,
-                seoSetting: true,
-                comments: {
-                    where: { status: 'APPROVED', parentId: null },
-                    include: {
-                        user: {
-                            select: {
-                                id: true,
-                                firstName: true,
-                                lastName: true,
-                                avatar: true,
-                            },
-                        },
-                        replies: {
-                            where: { status: 'APPROVED' },
-                            include: {
-                                user: {
-                                    select: {
-                                        id: true,
-                                        firstName: true,
-                                        lastName: true,
-                                        avatar: true,
-                                    },
-                                },
-                            },
-                        },
-                    },
-                    orderBy: { createdAt: 'desc' },
-                },
-            },
+            include: publicPostInclude,
         });
 
         if (!post) {
@@ -188,7 +79,7 @@ class PostsService {
         }
 
         // Increment view count
-        await prisma.post.update({
+        await postsRepository.update({
             where: { id: post.id },
             data: { viewCount: { increment: 1 } },
         });
@@ -201,39 +92,20 @@ class PostsService {
      */
     async create(dto, authorId) {
         const { tagIds, ...postData } = dto;
-
-        // Generate slug if not provided
-        const slug = dto.slug || this.generateSlug(dto.title);
-
-        // Ensure slug is unique
+        const slug = dto.slug || generateSlug(dto.title);
         const uniqueSlug = await this.ensureUniqueSlug(slug);
+        const readingTime = buildReadingTime(dto.content);
 
-        // Calculate reading time (approx 200 words per minute)
-        const wordCount = dto.content.split(/\s+/).length;
-        const readingTime = Math.ceil(wordCount / 200);
-
-        return prisma.post.create({
+        return postsRepository.create({
             data: {
                 ...postData,
                 slug: uniqueSlug,
                 readingTime,
                 authorId,
-                publishedAt: dto.status === 'PUBLISHED' ? new Date() : null,
-                tags: tagIds?.length
-                    ? { connect: tagIds.map((id) => ({ id })) }
-                    : undefined,
+                publishedAt: buildPublishedAt(dto.status, null),
+                tags: buildTagConnect(tagIds),
             },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                    },
-                },
-                category: true,
-                tags: true,
-            },
+            include: adminWriteInclude,
         });
     }
 
@@ -250,50 +122,28 @@ class PostsService {
 
         const { tagIds, ...postData } = dto;
 
-        // If title changed, regenerate slug
         let slug = post.slug;
         if (dto.title && dto.title !== post.title) {
-            slug = await this.ensureUniqueSlug(this.generateSlug(dto.title), id);
+            slug = await this.ensureUniqueSlug(generateSlug(dto.title), id);
         }
 
-        // Recalculate reading time if content changed
         let readingTime = post.readingTime;
         if (dto.content) {
-            const wordCount = dto.content.split(/\s+/).length;
-            readingTime = Math.ceil(wordCount / 200);
+            readingTime = buildReadingTime(dto.content);
         }
 
-        // Set publishedAt if status changes to PUBLISHED
-        let publishedAt = post.publishedAt;
-        if (dto.status === 'PUBLISHED' && !post.publishedAt) {
-            publishedAt = new Date();
-        }
+        const publishedAt = buildPublishedAt(dto.status, post.publishedAt);
 
-        return prisma.post.update({
+        return postsRepository.update({
             where: { id },
             data: {
                 ...postData,
                 slug,
                 readingTime,
                 publishedAt,
-                tags: tagIds
-                    ? {
-                        set: [], // Clear existing tags
-                        connect: tagIds.map((tagId) => ({ id: tagId })),
-                    }
-                    : undefined,
+                tags: buildTagReplace(tagIds),
             },
-            include: {
-                author: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                    },
-                },
-                category: true,
-                tags: true,
-            },
+            include: adminWriteInclude,
         });
     }
 
@@ -308,7 +158,7 @@ class PostsService {
             throw new ForbiddenError('You can only delete your own posts');
         }
 
-        await prisma.post.delete({ where: { id } });
+        await postsRepository.delete({ where: { id } });
 
         return { message: 'Post deleted successfully' };
     }
@@ -318,29 +168,19 @@ class PostsService {
      */
     async getStats() {
         const [total, statusStats, recentPosts] = await Promise.all([
-            prisma.post.count(),
-            prisma.post.groupBy({
+            postsRepository.count(),
+            postsRepository.groupBy({
                 by: ['status'],
                 _count: true,
             }),
-            prisma.post.findMany({
+            postsRepository.findMany({
                 take: 5,
                 orderBy: { createdAt: 'desc' },
-                select: {
-                    id: true,
-                    title: true,
-                    slug: true,
-                    status: true,
-                    viewCount: true,
-                    createdAt: true,
-                    author: {
-                        select: { firstName: true, lastName: true },
-                    },
-                },
+                select: statsRecentPostsSelect,
             }),
         ]);
 
-        const totalViews = await prisma.post.aggregate({
+        const totalViews = await postsRepository.aggregate({
             _sum: { viewCount: true },
         });
 
@@ -359,14 +199,14 @@ class PostsService {
      * Get related posts based on category and tags
      */
     async getRelated(postId, limit = 3) {
-        const post = await prisma.post.findUnique({
+        const post = await postsRepository.findUnique({
             where: { id: postId },
             include: { tags: true },
         });
 
         if (!post) return [];
 
-        return prisma.post.findMany({
+        return postsRepository.findMany({
             where: {
                 id: { not: postId },
                 status: 'PUBLISHED',
@@ -383,14 +223,7 @@ class PostsService {
             },
             take: limit,
             orderBy: { viewCount: 'desc' },
-            include: {
-                author: {
-                    select: { firstName: true, lastName: true, avatar: true },
-                },
-                category: {
-                    select: { name: true, slug: true, color: true },
-                },
-            },
+            include: relatedPostsInclude,
         });
     }
 
@@ -398,20 +231,12 @@ class PostsService {
     // PRIVATE HELPERS
     // ============================================
 
-    generateSlug(title) {
-        return slugify(title, {
-            lower: true,
-            strict: true,
-            locale: 'en',
-        });
-    }
-
     async ensureUniqueSlug(slug, excludeId) {
         let uniqueSlug = slug;
         let counter = 1;
 
         while (true) {
-            const existing = await prisma.post.findUnique({
+            const existing = await postsRepository.findUnique({
                 where: { slug: uniqueSlug },
             });
 

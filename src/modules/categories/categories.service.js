@@ -1,23 +1,22 @@
-const slugify = require('slugify');
-const { getPrismaClient } = require('../../utils/prisma');
-const { NotFoundError, ConflictError } = require('../../middlewares/error.middleware');
-
-const prisma = getPrismaClient();
+const categoriesRepository = require('./categories.repository');
+const {
+    categoryDetailInclude,
+    categoryListInclude,
+    categorySlugInclude,
+} = require('./categories.queries');
+const {
+    buildCategorySlug,
+    ensureCategoryExists,
+    ensureCategorySlugAvailable,
+} = require('./categories.helpers');
 
 class CategoriesService {
     /**
      * Find all categories
      */
     async findAll() {
-        return prisma.category.findMany({
-            include: {
-                _count: {
-                    select: { posts: true },
-                },
-                parent: {
-                    select: { id: true, name: true, slug: true },
-                },
-            },
+        return categoriesRepository.findMany({
+            include: categoryListInclude,
             orderBy: { name: 'asc' },
         });
     }
@@ -26,18 +25,11 @@ class CategoriesService {
      * Find category by ID
      */
     async findById(id) {
-        const category = await prisma.category.findUnique({
+        const category = await categoriesRepository.findUnique({
             where: { id },
-            include: {
-                _count: { select: { posts: true } },
-                parent: true,
-                children: true,
-            },
+            include: categoryDetailInclude,
         });
-
-        if (!category) {
-            throw new NotFoundError('Category not found');
-        }
+        ensureCategoryExists(category);
 
         return category;
     }
@@ -46,16 +38,11 @@ class CategoriesService {
      * Find category by slug
      */
     async findBySlug(slug) {
-        const category = await prisma.category.findUnique({
+        const category = await categoriesRepository.findUnique({
             where: { slug },
-            include: {
-                _count: { select: { posts: true } },
-            },
+            include: categorySlugInclude,
         });
-
-        if (!category) {
-            throw new NotFoundError('Category not found');
-        }
+        ensureCategoryExists(category);
 
         return category;
     }
@@ -64,15 +51,11 @@ class CategoriesService {
      * Create category
      */
     async create(dto) {
-        const slug = dto.slug || slugify(dto.name, { lower: true, strict: true });
+        const slug = buildCategorySlug(dto.name, dto.slug);
+        const existing = await categoriesRepository.findUnique({ where: { slug } });
+        ensureCategorySlugAvailable(existing);
 
-        // Check if slug exists
-        const existing = await prisma.category.findUnique({ where: { slug } });
-        if (existing) {
-            throw new ConflictError('Category with this slug already exists');
-        }
-
-        return prisma.category.create({
+        return categoriesRepository.create({
             data: { ...dto, slug },
         });
     }
@@ -81,14 +64,13 @@ class CategoriesService {
      * Update category
      */
     async update(id, dto) {
-        await this.findById(id); // Check if exists
+        await this.findById(id);
 
         if (dto.name) {
-            const slug = dto.slug || slugify(dto.name, { lower: true, strict: true });
-            dto.slug = slug;
+            dto.slug = buildCategorySlug(dto.name, dto.slug);
         }
 
-        return prisma.category.update({
+        return categoriesRepository.update({
             where: { id },
             data: dto,
         });
@@ -98,9 +80,9 @@ class CategoriesService {
      * Delete category
      */
     async delete(id) {
-        await this.findById(id); // Check if exists
+        await this.findById(id);
 
-        await prisma.category.delete({ where: { id } });
+        await categoriesRepository.delete({ where: { id } });
 
         return { message: 'Category deleted successfully' };
     }

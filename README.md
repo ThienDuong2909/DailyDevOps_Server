@@ -1,173 +1,114 @@
-# DevOps Blog API - Node.js/Express
+# DevOps Blog API
 
-Backend API cho DevOps Blog Platform được xây dựng bằng Node.js, Express và Prisma ORM.
+Backend API for DevOps Blog, currently implemented with Node.js, Express, Prisma, and MySQL.
 
-## 🚀 Tech Stack
+## Current Stack
 
-- **Node.js** - Runtime environment
-- **Express.js** - Web framework
-- **Prisma** - ORM cho database
-- **MySQL** - Database
-- **JWT** - Authentication  
-- **Argon2** - Password hashing
-- **Joi** - Validation
-- **Swagger** - API documentation
+- Node.js
+- Express
+- Prisma
+- MySQL
+- JWT authentication
+- Joi validation
+- Prometheus metrics
 
-## 📋 Prerequisites
+## Runtime Contracts
 
-- Node.js >= 16.x
-- MySQL >= 8.0
-- npm hoặc yarn
+These contracts are currently considered stable and should not be broken by refactor work:
 
-## 🛠️ Installation
+- Entry point: `src/server.js`
+- App bootstrap: `src/app.js`
+- Health endpoint: `/health`
+- Metrics endpoint: `/metrics`
+- API prefix: `/api/v1`
+- Existing env variable names
 
-1. Clone repository:
-```bash
-git clone <repository-url>
-cd server-nodejs
-```
+## Installation
 
-2. Install dependencies:
 ```bash
 npm install
-```
-
-3. Tạo file `.env`:
-```bash
-cp .env.example .env
-```
-
-4. Cập nhật các biến môi trường trong `.env`:
-```env
-DATABASE_URL="mysql://user:password@localhost:3306/devopsblog"
-JWT_ACCESS_SECRET=your-secret-key
-JWT_REFRESH_SECRET=your-refresh-secret
-```
-
-5. Generate Prisma Client:
-```bash
+copy .env.example .env
 npm run prisma:generate
-```
-
-6. Run database migrations:
-```bash
 npm run prisma:migrate
 ```
 
-7. Seed database (optional):
-```bash
-npm run prisma:seed
-```
+## Run
 
-## 🏃‍♂️ Running the Application
+Development:
 
-### Development
 ```bash
 npm run dev
 ```
 
-### Production
+Production:
+
 ```bash
 npm start
 ```
 
-Server sẽ chạy tại: `http://localhost:3001`
+Default runtime URL: [http://localhost:3001](http://localhost:3001)
 
-## 📁 Project Structure
+## Current Structure
 
-```
+```text
 server-nodejs/
-├── prisma/
-│   ├── schema.prisma      # Prisma schema
-│   └── seed.js            # Database seeding
-├── src/
-│   ├── config/            # Configuration
-│   ├── middlewares/       # Express middlewares
-│   ├── modules/           # Feature modules
-│   │   ├── auth/          # Authentication
-│   │   ├── posts/         # Blog posts
-│   │   ├── categories/    # Categories
-│   │   ├── tags/          # Tags
-│   │   ├── comments/      # Comments
-│   │   └── users/         # Users
-│   ├── utils/             # Utilities
-│   ├── app.js             # Express app
-│   └── server.js          # Entry point
-├── .env.example           # Environment variables example
-├── package.json
-└── README.md
+|-- prisma/
+|-- src/
+|   |-- app.js
+|   |-- server.js
+|   |-- config/
+|   |-- common/
+|   |-- database/
+|   |-- middlewares/        # compatibility wrappers kept for existing imports
+|   |-- modules/
+|   |-- utils/              # compatibility wrappers kept for existing imports
+|-- docs/
+|-- package.json
 ```
 
-## 🔑 API Endpoints
+## Backend Refactor Direction
 
-### Authentication
-- `POST /api/auth/register` - Đăng ký user mới
-- `POST /api/auth/login` - Đăng nhập
-- `POST /api/auth/logout` - Đăng xuất
-- `POST /api/auth/refresh` - Refresh access token
-- `GET /api/auth/profile` - Lấy thông tin user hiện tại
+The current refactor is standardizing the codebase toward:
 
-### Posts
-- `GET /api/posts/published` - Lấy danh sách bài viết đã publish (public)
-- `GET /api/posts/slug/:slug` - Lấy bài viết theo slug (public)
-- `GET /api/posts/:id/related` - Lấy bài viết liên quan (public)
-- `GET /api/posts` - Lấy tất cả bài viết (admin)
-- `GET /api/posts/stats` - Lấy thống kê bài viết (admin)
-- `GET /api/posts/:id` - Lấy bài viết theo ID (admin)
-- `POST /api/posts` - Tạo bài viết mới (admin)
-- `PUT /api/posts/:id` - Cập nhật bài viết (admin)
-- `DELETE /api/posts/:id` - Xóa bài viết (admin)
+- `common/errors`
+- `common/middleware`
+- `common/observability`
+- `database`
+- feature modules with `routes -> service -> repository`
 
-## 🔒 Authentication
+This is a structural cleanup pass. It is not a framework migration pass.
 
-API sử dụng JWT Bearer tokens cho authentication:
-- **Access Token**: Short-lived (15 phút), gửi trong Authorization header
-- **Refresh Token**: Long-lived (7 ngày), lưu trong HTTP-only cookie
+## Scripts
 
-### Sử dụng:
-```javascript
-// Gửi request với access token
-fetch('/api/posts', {
-  headers: {
-    'Authorization': 'Bearer <access-token>'
-  }
-})
-```
-
-## 🔐 Roles & Permissions
-
-- **ADMIN**: Full access
-- **MODERATOR**: Quản lý content
-- **EDITOR**: Tạo và edit posts
-- **VIEWER**: Chỉ xem
-
-## 🗃️ Database
-
-Sử dụng Prisma ORM với MySQL. Prisma Client được auto-generated từ schema.
-
-### Các lệnh Prisma:
 ```bash
-npm run prisma:generate    # Generate Prisma Client
-npm run prisma:migrate     # Run migrations (dev)
-npm run prisma:migrate:prod # Run migrations (production)
-npm run prisma:studio      # Open Prisma Studio
-npm run prisma:seed        # Seed database
-npm run prisma:reset       # Reset database
+npm run dev
+npm start
+npm test
+npm run prisma:generate
+npm run prisma:migrate
+npm run prisma:migrate:prod
+npm run prisma:studio
+npm run prisma:seed
 ```
 
-## 🔧 Environment Variables
+## API Notes
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment mode | development |
-| `PORT` | Server port | 3001 |
-| `DATABASE_URL` | MySQL connection string | - |
-| `JWT_ACCESS_SECRET` | JWT access token secret | - |
-| `JWT_REFRESH_SECRET` | JWT refresh token secret | - |
-| `JWT_ACCESS_EXPIRES_IN` | Access token expiry | 15m |
-| `JWT_REFRESH_EXPIRES_IN` | Refresh token expiry | 7d |
-| `CORS_ORIGIN` | CORS allowed origin | http://localhost:3000 |
+Main public/admin routes currently live under `/api/v1`:
 
-## 📝 License
+- `/api/v1/auth`
+- `/api/v1/posts`
+- `/api/v1/categories`
+- `/api/v1/tags`
+- `/api/v1/comments`
+- `/api/v1/users`
+- `/api/v1/subscribers`
 
-MIT
+## Verification
+
+Current refactor baseline has been verified with:
+
+```bash
+npm test
+```
+
+For deployment/runtime guardrails, see [refactor-notes.md](E:/stitch/server-nodejs/docs/refactor-notes.md).

@@ -2,6 +2,22 @@ require('dotenv').config();
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 
+const parseNumber = (value, fallback) => {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isNaN(parsed) ? fallback : parsed;
+};
+
+const parseCorsOrigin = (origin) => {
+    if (!origin) return 'http://localhost:3000';
+    const origins = origin.split(',').map((o) => o.trim());
+    return origins.length === 1 ? origins[0] : origins;
+};
+
+const resolveApiPrefix = (value) => {
+    if (value === 'api') return 'api/v1';
+    return value || 'api/v1';
+};
+
 // ============================================
 // SECURITY: Fail fast if JWT secrets are not set in production
 // ============================================
@@ -14,18 +30,11 @@ if (nodeEnv === 'production') {
     }
 }
 
-// Parse CORS origins (support comma-separated list)
-const parseCorsOrigin = (origin) => {
-    if (!origin) return 'http://localhost:3000';
-    const origins = origin.split(',').map((o) => o.trim());
-    return origins.length === 1 ? origins[0] : origins;
-};
-
 const config = {
     // Server
     nodeEnv,
-    port: parseInt(process.env.PORT, 10) || 3001,
-    apiPrefix: (process.env.API_PREFIX === 'api' ? 'api/v1' : process.env.API_PREFIX) || 'api/v1',
+    port: parseNumber(process.env.PORT, 3001),
+    apiPrefix: resolveApiPrefix(process.env.API_PREFIX),
 
     // Database
     databaseUrl: process.env.DATABASE_URL,
@@ -43,8 +52,8 @@ const config = {
 
     // Rate Limiting
     rateLimit: {
-        windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS, 10) || 60000,
-        maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS, 10) || 100,
+        windowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 60000),
+        maxRequests: parseNumber(process.env.RATE_LIMIT_MAX_REQUESTS, 100),
     },
 
     // Swagger

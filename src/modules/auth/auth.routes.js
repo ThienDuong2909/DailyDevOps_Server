@@ -3,6 +3,8 @@ const authService = require('./auth.service');
 const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate } = require('../../middlewares/auth.middleware');
 const { registerSchema, loginSchema } = require('./auth.validation');
+const { refreshTokenCookieOptions } = require('../../common/http/cookies');
+const { sendCreated, sendError, sendOk } = require('../../common/http/responses');
 const asyncHandler = require('express-async-handler');
 
 const router = express.Router();
@@ -19,15 +21,9 @@ router.post(
         const tokens = await authService.register(req.body);
 
         // Set refresh token in HTTP-only cookie
-        res.cookie('refreshToken', tokens.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        });
+        res.cookie('refreshToken', tokens.refreshToken, refreshTokenCookieOptions);
 
-        res.status(201).json({
-            success: true,
+        return sendCreated(res, {
             data: {
                 accessToken: tokens.accessToken,
                 accessTokenExpires: tokens.accessTokenExpires,
@@ -48,15 +44,9 @@ router.post(
         const tokens = await authService.login(req.body);
 
         // Set refresh token in HTTP-only cookie
-        res.cookie('refreshToken', tokens.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        });
+        res.cookie('refreshToken', tokens.refreshToken, refreshTokenCookieOptions);
 
-        res.status(200).json({
-            success: true,
+        return sendOk(res, {
             data: {
                 accessToken: tokens.accessToken,
                 accessTokenExpires: tokens.accessTokenExpires,
@@ -79,8 +69,7 @@ router.post(
         // Clear refresh token cookie
         res.clearCookie('refreshToken');
 
-        res.status(200).json({
-            success: true,
+        return sendOk(res, {
             message: 'Logged out successfully',
         });
     })
@@ -97,8 +86,7 @@ router.post(
         const refreshToken = req.cookies.refreshToken;
 
         if (!refreshToken) {
-            return res.status(401).json({
-                success: false,
+            return sendError(res, 401, {
                 error: 'No refresh token provided',
             });
         }
@@ -111,15 +99,9 @@ router.post(
         const tokens = await authService.refreshTokens(decoded.sub, refreshToken);
 
         // Set new refresh token in cookie
-        res.cookie('refreshToken', tokens.refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
+        res.cookie('refreshToken', tokens.refreshToken, refreshTokenCookieOptions);
 
-        res.status(200).json({
-            success: true,
+        return sendOk(res, {
             data: {
                 accessToken: tokens.accessToken,
                 accessTokenExpires: tokens.accessTokenExpires,
@@ -139,8 +121,7 @@ router.get(
     asyncHandler(async (req, res) => {
         const user = await authService.getProfile(req.user.id);
 
-        res.status(200).json({
-            success: true,
+        return sendOk(res, {
             data: user,
         });
     })

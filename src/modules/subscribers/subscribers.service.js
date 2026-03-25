@@ -1,15 +1,19 @@
-const { PrismaClient } = require('@prisma/client');
-const crypto = require('crypto');
-
-const prisma = new PrismaClient();
+const subscribersRepository = require('./subscribers.repository');
+const {
+    buildSubscriberCreateData,
+    buildSubscriberReactivateData,
+    buildSubscribersListQuery,
+    buildSubscribersResponse,
+    ensureSubscriberToken,
+} = require('./subscribers.helpers');
+const { subscriberListSelect } = require('./subscribers.queries');
 
 const subscribersService = {
     /**
      * Subscribe to newsletter
      */
     async subscribe({ email, name }) {
-        // Check if already subscribed
-        const existing = await prisma.subscriber.findUnique({
+        const existing = await subscribersRepository.findUnique({
             where: { email },
         });
 
@@ -18,27 +22,15 @@ const subscribersService = {
                 return { message: 'Already subscribed', subscriber: existing };
             }
             // Reactivate
-            const updated = await prisma.subscriber.update({
+            const updated = await subscribersRepository.update({
                 where: { email },
-                data: {
-                    isActive: true,
-                    unsubscribedAt: null,
-                    name: name || existing.name,
-                },
+                data: buildSubscriberReactivateData({ name, existing }),
             });
             return { message: 'Subscription reactivated', subscriber: updated };
         }
 
-        // Generate unsubscribe token
-        const unsubscribeToken = crypto.randomBytes(32).toString('hex');
-
-        const subscriber = await prisma.subscriber.create({
-            data: {
-                email,
-                name: name || null,
-                unsubscribeToken,
-                isActive: true,
-            },
+        const subscriber = await subscribersRepository.create({
+            data: buildSubscriberCreateData({ email, name }),
         });
 
         return { message: 'Subscribed successfully', subscriber };
@@ -48,17 +40,12 @@ const subscribersService = {
      * Unsubscribe using token
      */
     async unsubscribe(token) {
-        const subscriber = await prisma.subscriber.findFirst({
+        const subscriber = await subscribersRepository.findFirst({
             where: { unsubscribeToken: token },
         });
+        ensureSubscriberToken(subscriber);
 
-        if (!subscriber) {
-            const error = new Error('Invalid unsubscribe token');
-            error.statusCode = 400;
-            throw error;
-        }
-
-        await prisma.subscriber.update({
+        await subscribersRepository.update({
             where: { id: subscriber.id },
             data: {
                 isActive: false,
@@ -73,39 +60,29 @@ const subscribersService = {
      * Get all subscribers (admin)
      */
     async findAll({ page = 1, limit = 20, isActive }) {
-        const skip = (page - 1) * limit;
-        const where = {};
-        if (isActive !== undefined) {
-            where.isActive = isActive === 'true';
-        }
+        const { page: resolvedPage, limit: resolvedLimit, skip, where } = buildSubscribersListQuery({
+            page,
+            limit,
+            isActive,
+        });
 
         const [subscribers, total] = await Promise.all([
-            prisma.subscriber.findMany({
+            subscribersRepository.findMany({
                 where,
                 skip,
-                take: Number(limit),
+                take: resolvedLimit,
                 orderBy: { subscribedAt: 'desc' },
-                select: {
-                    id: true,
-                    email: true,
-                    name: true,
-                    isActive: true,
-                    subscribedAt: true,
-                    unsubscribedAt: true,
-                },
+                select: subscriberListSelect,
             }),
-            prisma.subscriber.count({ where }),
+            subscribersRepository.count({ where }),
         ]);
 
-        return {
+        return buildSubscribersResponse({
             data: subscribers,
-            meta: {
-                total,
-                page: Number(page),
-                limit: Number(limit),
-                totalPages: Math.ceil(total / Number(limit)),
-            },
-        };
+            total,
+            page: resolvedPage,
+            limit: resolvedLimit,
+        });
     },
 
     /**
@@ -113,9 +90,9 @@ const subscribersService = {
      */
     async getStats() {
         const [total, active, inactive] = await Promise.all([
-            prisma.subscriber.count(),
-            prisma.subscriber.count({ where: { isActive: true } }),
-            prisma.subscriber.count({ where: { isActive: false } }),
+            subscribersRepository.count(),
+            subscribersRepository.count({ where: { isActive: true } }),
+            subscribersRepository.count({ where: { isActive: false } }),
         ]);
 
         return { total, active, inactive };
@@ -125,7 +102,7 @@ const subscribersService = {
      * Delete subscriber (admin)
      */
     async delete(id) {
-        return prisma.subscriber.delete({ where: { id } });
+        return subscribersRepository.delete({ where: { id } });
     },
 };
 

@@ -3,12 +3,12 @@ const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const { requestLogger } = require('./middlewares/logger.middleware');
+const { requestLogger } = require('./common/middleware/logger.middleware');
 const rateLimit = require('express-rate-limit');
 
 const config = require('./config');
-const { errorHandler, notFoundHandler } = require('./middlewares/error.middleware');
-const { register, metricsMiddleware } = require('./utils/metrics');
+const { errorHandler, notFoundHandler } = require('./common/middleware/error.middleware');
+const { register, metricsMiddleware } = require('./common/observability/metrics');
 
 // Import routes
 const authRoutes = require('./modules/auth/auth.routes');
@@ -18,6 +18,8 @@ const tagsRoutes = require('./modules/tags/tags.routes');
 const commentsRoutes = require('./modules/comments/comments.routes');
 const usersRoutes = require('./modules/users/users.routes');
 const subscribersRoutes = require('./modules/subscribers/subscribers.routes');
+const settingsRoutes = require('./modules/settings/settings.routes');
+const seoRoutes = require('./modules/seo/seo.routes');
 
 const app = express();
 
@@ -104,6 +106,8 @@ app.use(`/${config.apiPrefix}/tags`, tagsRoutes);
 app.use(`/${config.apiPrefix}/comments`, commentsRoutes);
 app.use(`/${config.apiPrefix}/users`, usersRoutes);
 app.use(`/${config.apiPrefix}/subscribers`, subscribersRoutes);
+app.use(`/${config.apiPrefix}/settings`, settingsRoutes);
+app.use(`/${config.apiPrefix}/seo`, seoRoutes);
 
 // ============================================
 // ERROR HANDLING

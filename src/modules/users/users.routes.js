@@ -1,6 +1,9 @@
 const express = require('express');
 const usersService = require('./users.service');
+const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate, authorize } = require('../../middlewares/auth.middleware');
+const { sendOk } = require('../../common/http/responses');
+const { queryUsersSchema, updateUserSchema, userIdParamSchema } = require('./users.validation');
 const asyncHandler = require('express-async-handler');
 
 const router = express.Router();
@@ -14,9 +17,20 @@ router.get(
     '/',
     authenticate,
     authorize('ADMIN', 'MODERATOR'),
+    validate(queryUsersSchema, 'query'),
     asyncHandler(async (req, res) => {
         const result = await usersService.findAll(req.query);
-        res.status(200).json({ success: true, ...result });
+        return sendOk(res, { ...result });
+    })
+);
+
+router.get(
+    '/stats',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR'),
+    asyncHandler(async (_req, res) => {
+        const stats = await usersService.getStats();
+        return sendOk(res, { data: stats });
     })
 );
 
@@ -28,9 +42,10 @@ router.get(
 router.get(
     '/:id',
     authenticate,
+    validate(userIdParamSchema, 'params'),
     asyncHandler(async (req, res) => {
         const user = await usersService.findById(req.params.id);
-        res.status(200).json({ success: true, data: user });
+        return sendOk(res, { data: user });
     })
 );
 
@@ -42,6 +57,8 @@ router.get(
 router.put(
     '/:id',
     authenticate,
+    validate(userIdParamSchema, 'params'),
+    validate(updateUserSchema),
     asyncHandler(async (req, res) => {
         const user = await usersService.update(
             req.params.id,
@@ -49,7 +66,7 @@ router.put(
             req.user.id,
             req.user.role
         );
-        res.status(200).json({ success: true, data: user });
+        return sendOk(res, { data: user });
     })
 );
 
@@ -62,13 +79,14 @@ router.delete(
     '/:id',
     authenticate,
     authorize('ADMIN'),
+    validate(userIdParamSchema, 'params'),
     asyncHandler(async (req, res) => {
         const result = await usersService.delete(
             req.params.id,
             req.user.id,
             req.user.role
         );
-        res.status(200).json({ success: true, ...result });
+        return sendOk(res, { ...result });
     })
 );
 

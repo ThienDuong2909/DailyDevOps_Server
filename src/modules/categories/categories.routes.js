@@ -1,6 +1,13 @@
 const express = require('express');
 const categoriesService = require('./categories.service');
+const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate, authorize } = require('../../middlewares/auth.middleware');
+const { sendCreated, sendOk } = require('../../common/http/responses');
+const {
+    categoryIdParamSchema,
+    createCategorySchema,
+    updateCategorySchema,
+} = require('./categories.validation');
 const asyncHandler = require('express-async-handler');
 
 const router = express.Router();
@@ -14,8 +21,7 @@ router.get(
     '/',
     asyncHandler(async (req, res) => {
         const categories = await categoriesService.findAll();
-        res.status(200).json({
-            success: true,
+        return sendOk(res, {
             data: categories,
         });
     })
@@ -28,10 +34,10 @@ router.get(
  */
 router.get(
     '/:id',
+    validate(categoryIdParamSchema, 'params'),
     asyncHandler(async (req, res) => {
         const category = await categoriesService.findById(req.params.id);
-        res.status(200).json({
-            success: true,
+        return sendOk(res, {
             data: category,
         });
     })
@@ -46,10 +52,10 @@ router.post(
     '/',
     authenticate,
     authorize('ADMIN'),
+    validate(createCategorySchema),
     asyncHandler(async (req, res) => {
         const category = await categoriesService.create(req.body);
-        res.status(201).json({
-            success: true,
+        return sendCreated(res, {
             data: category,
         });
     })
@@ -64,10 +70,11 @@ router.put(
     '/:id',
     authenticate,
     authorize('ADMIN'),
+    validate(categoryIdParamSchema, 'params'),
+    validate(updateCategorySchema),
     asyncHandler(async (req, res) => {
         const category = await categoriesService.update(req.params.id, req.body);
-        res.status(200).json({
-            success: true,
+        return sendOk(res, {
             data: category,
         });
     })
@@ -82,10 +89,10 @@ router.delete(
     '/:id',
     authenticate,
     authorize('ADMIN'),
+    validate(categoryIdParamSchema, 'params'),
     asyncHandler(async (req, res) => {
         const result = await categoriesService.delete(req.params.id);
-        res.status(200).json({
-            success: true,
+        return sendOk(res, {
             ...result,
         });
     })

@@ -4,6 +4,7 @@ const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate, authorize } = require('../../middlewares/auth.middleware');
 const subscribersService = require('./subscribers.service');
 const { subscribeSchema, unsubscribeSchema } = require('./subscribers.validation');
+const { sendCreated, sendOk } = require('../../common/http/responses');
 
 const router = express.Router();
 
@@ -16,8 +17,7 @@ router.post(
     validate(subscribeSchema),
     asyncHandler(async (req, res) => {
         const result = await subscribersService.subscribe(req.body);
-        res.status(201).json({
-            success: true,
+        return sendCreated(res, {
             message: result.message,
             data: result.subscriber,
         });
@@ -33,8 +33,7 @@ router.post(
     validate(unsubscribeSchema),
     asyncHandler(async (req, res) => {
         const result = await subscribersService.unsubscribe(req.body.token);
-        res.json({
-            success: true,
+        return sendOk(res, {
             message: result.message,
         });
     })
@@ -51,8 +50,7 @@ router.get(
     asyncHandler(async (req, res) => {
         const { page, limit, isActive } = req.query;
         const result = await subscribersService.findAll({ page, limit, isActive });
-        res.json({
-            success: true,
+        return sendOk(res, {
             ...result,
         });
     })
@@ -68,8 +66,7 @@ router.get(
     authorize('ADMIN'),
     asyncHandler(async (req, res) => {
         const stats = await subscribersService.getStats();
-        res.json({
-            success: true,
+        return sendOk(res, {
             data: stats,
         });
     })
@@ -85,8 +82,7 @@ router.delete(
     authorize('ADMIN'),
     asyncHandler(async (req, res) => {
         await subscribersService.delete(req.params.id);
-        res.json({
-            success: true,
+        return sendOk(res, {
             message: 'Subscriber deleted',
         });
     })

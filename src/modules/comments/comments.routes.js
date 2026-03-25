@@ -1,9 +1,39 @@
 const express = require('express');
 const commentsService = require('./comments.service');
+const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate, optionalAuth, authorize } = require('../../middlewares/auth.middleware');
+const { sendCreated, sendOk } = require('../../common/http/responses');
+const {
+    commentIdParamSchema,
+    createCommentSchema,
+    postCommentsParamSchema,
+    queryCommentsSchema,
+    updateCommentStatusSchema,
+} = require('./comments.validation');
 const asyncHandler = require('express-async-handler');
 
 const router = express.Router();
+
+router.get(
+    '/',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR'),
+    validate(queryCommentsSchema, 'query'),
+    asyncHandler(async (req, res) => {
+        const result = await commentsService.findAll(req.query);
+        return sendOk(res, { ...result });
+    })
+);
+
+router.get(
+    '/stats',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR'),
+    asyncHandler(async (_req, res) => {
+        const stats = await commentsService.getStats();
+        return sendOk(res, { data: stats });
+    })
+);
 
 /**
  * @route   GET /api/comments/post/:postId
@@ -12,9 +42,10 @@ const router = express.Router();
  */
 router.get(
     '/post/:postId',
+    validate(postCommentsParamSchema, 'params'),
     asyncHandler(async (req, res) => {
         const comments = await commentsService.findByPostId(req.params.postId);
-        res.status(200).json({ success: true, data: comments });
+        return sendOk(res, { data: comments });
     })
 );
 
@@ -26,10 +57,11 @@ router.get(
 router.post(
     '/',
     optionalAuth,
+    validate(createCommentSchema),
     asyncHandler(async (req, res) => {
         const userId = req.user?.id;
         const comment = await commentsService.create(req.body, userId, req);
-        res.status(201).json({ success: true, data: comment });
+        return sendCreated(res, { data: comment });
     })
 );
 
@@ -42,6 +74,8 @@ router.patch(
     '/:id/status',
     authenticate,
     authorize('ADMIN', 'MODERATOR'),
+    validate(commentIdParamSchema, 'params'),
+    validate(updateCommentStatusSchema),
     asyncHandler(async (req, res) => {
         const { status } = req.body;
         const comment = await commentsService.updateStatus(
@@ -50,7 +84,7 @@ router.patch(
             req.user.id,
             req.user.role
         );
-        res.status(200).json({ success: true, data: comment });
+        return sendOk(res, { data: comment });
     })
 );
 
@@ -62,13 +96,14 @@ router.patch(
 router.delete(
     '/:id',
     authenticate,
+    validate(commentIdParamSchema, 'params'),
     asyncHandler(async (req, res) => {
         const result = await commentsService.delete(
             req.params.id,
             req.user.id,
             req.user.role
         );
-        res.status(200).json({ success: true, ...result });
+        return sendOk(res, { ...result });
     })
 );
 

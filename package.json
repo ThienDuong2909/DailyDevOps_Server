@@ -57,6 +57,8 @@
       "!src/server.js",
       "!src/app.js",
       "!src/config/**",
+      "!src/common/observability/**",
+      "!src/database/**",
       "!src/utils/metrics.js",
       "!src/utils/prisma.js",
       "!node_modules/**"

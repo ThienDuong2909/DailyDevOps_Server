@@ -1,114 +1,866 @@
-# API Documentation - DevOps Blog Server
+# DevOps Blog API Docs
 
-Tài liệu này tổng hợp toàn bộ các API endpoints hiện có của hệ thống Backend (NodeJS/Express), giúp bạn dễ dàng import vào Postman để kiểm thử.
+This document is intended for handoff and integration work. It reflects the current backend behavior in `server-nodejs`.
 
-## 🌍 Base URLs
-- **Local Environment:** `http://localhost:3001`
-- **Production Environment:** `https://api.blog.thienduong.info`
+## Base URLs
 
-*(Lưu ý: Tiền tố chung cho tất cả các API route là `/api/v1`)*
+- Local: `http://localhost:3001`
+- Production example: `https://api.blog.thienduong.info`
 
----
+API prefix for application routes:
 
-## 🛡️ 1. Authentication (`/api/v1/auth`)
+- `/api/v1`
 
-| Method | Endpoint | Description | Access |
-|---|---|---|---|
-| `POST` | `/api/v1/auth/register` | Đăng ký tài khoản mới | Public |
-| `POST` | `/api/v1/auth/login` | Đăng nhập và nhận Tokens | Public |
-| `POST` | `/api/v1/auth/refresh` | Lấy Access Token mới (dùng HTTP-only cookie) | Public |
-| `POST` | `/api/v1/auth/logout` | Đăng xuất (xóa Cookie) | Private |
-| `GET`  | `/api/v1/auth/profile` | Lấy thông tin user (profile) hiện tại | Private |
+Non-prefixed operational endpoints:
 
----
+- `GET /health`
+- `GET /metrics`
 
-## ✍️ 2. Posts (`/api/v1/posts`)
+## Authentication Model
 
-| Method | Endpoint | Description | Access |
-|---|---|---|---|
-| `GET` | `/api/v1/posts/published` | Lấy danh sách bài viết đã phê duyệt | Public |
-| `GET` | `/api/v1/posts/slug/:slug` | Lấy bài viết chi tiết qua URL slug | Public |
-| `GET` | `/api/v1/posts/:id/related` | Lấy các bài viết gợi ý/liên quan | Public |
-| `GET` | `/api/v1/posts` | Lấy toàn bộ bài viết (Quản lý) | Admin, Editor |
-| `GET` | `/api/v1/posts/stats` | Thống kê số lượng bài viết | Admin, Moderator |
-| `GET` | `/api/v1/posts/:id` | Lấy chi tiết bài viết (qua ID) | Admin, Editor |
-| `POST` | `/api/v1/posts` | Tạo bài viết mới | Admin, Editor |
-| `PUT` | `/api/v1/posts/:id` | Cập nhật nội dung bài viết | Admin, Editor |
-| `DELETE` | `/api/v1/posts/:id` | Xóa bài viết | Admin, Editor |
+The backend uses a split-token flow:
 
----
+- Access token:
+  - returned in JSON response body
+  - sent by client in `Authorization: Bearer <token>`
+- Refresh token:
+  - returned as HTTP-only cookie named `refreshToken`
+  - used by `POST /api/v1/auth/refresh`
 
-## 📂 3. Categories (`/api/v1/categories`)
+## Common Response Shapes
 
-| Method | Endpoint | Description | Access |
-|---|---|---|---|
-| `GET` | `/api/v1/categories` | Lấy danh sách danh mục (Categories) | Public |
-| `GET` | `/api/v1/categories/:id` | Lấy chi tiết một danh mục | Public |
-| `POST` | `/api/v1/categories` | Tạo danh mục mới | Admin |
-| `PUT` | `/api/v1/categories/:id` | Chỉnh sửa danh mục | Admin |
-| `DELETE` | `/api/v1/categories/:id` | Xóa danh mục | Admin |
+Success with data:
 
----
+```json
+{
+  "success": true,
+  "data": {}
+}
+```
 
-## 🏷️ 4. Tags (`/api/v1/tags`)
+Success with pagination:
 
-| Method | Endpoint | Description | Access |
-|---|---|---|---|
-| `GET` | `/api/v1/tags` | Lấy danh sách thẻ (Tags) | Public |
-| `GET` | `/api/v1/tags/:id` | Lấy chi tiết một Tag | Public |
-| `POST` | `/api/v1/tags` | Tạo Tag mới | Admin |
-| `PUT` | `/api/v1/tags/:id` | Chỉnh sửa Tag | Admin |
-| `DELETE` | `/api/v1/tags/:id` | Xóa Tag | Admin |
+```json
+{
+  "success": true,
+  "data": [],
+  "meta": {
+    "total": 0,
+    "page": 1,
+    "limit": 10,
+    "totalPages": 0
+  }
+}
+```
 
----
+Success with message:
 
-## 💬 5. Comments (`/api/v1/comments`)
+```json
+{
+  "success": true,
+  "message": "Operation completed"
+}
+```
 
-| Method | Endpoint | Description | Access |
-|---|---|---|---|
-| `GET` | `/api/v1/comments/post/:postId` | Lấy danh sách bình luận của bài viết | Public |
-| `POST` | `/api/v1/comments` | Đăng bình luận mới vào bài viết | Public |
-| `PATCH` | `/api/v1/comments/:id/status`| Đổi trạng thái bình luận (Chờ/Duyệt/Ẩn) | Admin |
-| `DELETE` | `/api/v1/comments/:id` | Xóa bình luận | Admin |
+Error:
 
----
+```json
+{
+  "success": false,
+  "error": "Error message"
+}
+```
 
-## 👥 6. Users (`/api/v1/users`)
+## Roles
 
-| Method | Endpoint | Description | Access |
-|---|---|---|---|
-| `GET` | `/api/v1/users` | Lấy danh sách User trong hệ thống | Admin |
-| `GET` | `/api/v1/users/:id` | Lấy chi tiết một User | Admin |
-| `PUT` | `/api/v1/users/:id` | Phân quyền/Khóa User (Sửa Role, Trạng thái) | Admin |
-| `DELETE` | `/api/v1/users/:id` | Xóa/Cấm User | Admin |
+Current role values:
 
----
+- `ADMIN`
+- `MODERATOR`
+- `EDITOR`
+- `VIEWER`
 
-## 📧 7. Subscribers (`/api/v1/subscribers`)
+## Auth API
 
-| Method | Endpoint | Description | Access |
-|---|---|---|---|
-| `POST` | `/api/v1/subscribers` | Người dùng đăng ký theo dõi (Nhận Email) | Public |
-| `POST` | `/api/v1/subscribers/unsubscribe` | Hủy theo dõi Email (Cần truyền Token) | Public |
-| `GET` | `/api/v1/subscribers` | Lấy danh sách Emails đang theo dõi | Admin |
-| `GET` | `/api/v1/subscribers/stats` | Thống kê số lượng người đăng ký | Admin |
-| `DELETE` | `/api/v1/subscribers/:id` | Trục xuất 1 subscriber khỏi danh sách | Admin |
+### POST `/api/v1/auth/register`
 
----
+Public endpoint. Creates a user and returns access token data.
 
-## ⚠️ Thông tin quan trọng khi Test trên Postman / Client
+Request body:
 
-1. **Quyền truy cập (Authentication)** 
-   - Token làm mới (Refresh Token) được trả về trong Header `Set-Cookie` tự động dưới dạng **HTTP-Only**. Khi test Local hay Postman, hãy bật cookie.
-   - Access Token được Server phản hồi trong Body Json lúc gọi API `/login`. Để thực thi các API `Private/Admin`, gắn nó vào Request Header như sau:
-     `Authorization: Bearer <your_access_token>_here`
+```json
+{
+  "email": "user@example.com",
+  "password": "secret123",
+  "firstName": "John",
+  "lastName": "Doe"
+}
+```
 
-2. **Dữ liệu truyền lên (Payload)** 
-   - Tất cả dữ liệu gửi POST/PUT đều dùng định dạng chuẩn **JSON**.
-   - Header mẫu: `Content-Type: application/json`.
+Success:
 
-3. **Bảo mật giới hạn Rate Limit**
-   - API được giới hạn **100 requests / 1 phút**. Nếu bạn test spam (VD: Load test) bị báo lỗi thì hãy xem lại thiết lập `RATE_LIMIT_MAX_REQUESTS` ở `.env`.
+- status `201`
+- sets `refreshToken` cookie
 
-4. **Kiểm tra sức khỏe Backend (Health Check)**
-   - API kiểm tra Service có đang chạy không: `GET /health` (Sẽ trả về ram, trạng thái, thời gian chạy). Không nằm trong `/api/v1`.
+Response:
+
+```json
+{
+  "success": true,
+  "data": {
+    "accessToken": "jwt",
+    "accessTokenExpires": 1710000000000
+  }
+}
+```
+
+### POST `/api/v1/auth/login`
+
+Public endpoint. Validates credentials and returns tokens.
+
+Request body:
+
+```json
+{
+  "email": "user@example.com",
+  "password": "secret123"
+}
+```
+
+Success:
+
+- status `200`
+- sets `refreshToken` cookie
+
+### POST `/api/v1/auth/refresh`
+
+Public endpoint, but requires valid `refreshToken` cookie.
+
+Success:
+
+- status `200`
+- rotates refresh token cookie
+- returns new access token payload
+
+Error example:
+
+```json
+{
+  "success": false,
+  "error": "No refresh token provided"
+}
+```
+
+### POST `/api/v1/auth/logout`
+
+Private endpoint.
+
+Headers:
+
+- `Authorization: Bearer <access-token>`
+
+Success:
+
+- clears `refreshToken` cookie
+
+### GET `/api/v1/auth/profile`
+
+Private endpoint.
+
+Headers:
+
+- `Authorization: Bearer <access-token>`
+
+Response `data` contains:
+
+- `id`
+- `email`
+- `firstName`
+- `lastName`
+- `avatar`
+- `bio`
+- `role`
+- `isActive`
+- `lastLoginAt`
+- `createdAt`
+
+## Posts API
+
+### GET `/api/v1/posts/published`
+
+Public list endpoint for published articles.
+
+Query params:
+
+- `page`
+- `limit`
+- `search`
+- `categoryId`
+- `authorId`
+- `tagSlug`
+- `sortBy`:
+  - `createdAt`
+  - `updatedAt`
+  - `publishedAt`
+  - `viewCount`
+  - `title`
+- `sortOrder`: `asc | desc`
+
+Response:
+
+- paginated list
+- each item includes author, category, tags, comment count
+
+### GET `/api/v1/posts/slug/:slug`
+
+Public detail endpoint for blog detail page.
+
+Behavior:
+
+- returns article detail by slug
+- includes approved top-level comments and approved replies
+- increments `viewCount`
+
+### GET `/api/v1/posts/:id/related`
+
+Public endpoint.
+
+Query params:
+
+- `limit` optional, default `3`
+
+Behavior:
+
+- finds related published posts by category or shared tags
+
+### GET `/api/v1/posts`
+
+Private endpoint for admin/editor listing.
+
+Roles:
+
+- `ADMIN`
+- `MODERATOR`
+- `EDITOR`
+
+Query params same shape as `/published`, plus:
+
+- `status`: `DRAFT | PUBLISHED | SCHEDULED | ARCHIVED`
+
+### GET `/api/v1/posts/stats`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+- `MODERATOR`
+
+Returns:
+
+- total posts
+- total views
+- post count by status
+- recent posts
+
+### GET `/api/v1/posts/:id`
+
+Private endpoint for admin detail view.
+
+Roles:
+
+- `ADMIN`
+- `MODERATOR`
+- `EDITOR`
+
+### POST `/api/v1/posts`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+- `EDITOR`
+
+Request body:
+
+```json
+{
+  "title": "Kubernetes at Scale",
+  "slug": "kubernetes-at-scale",
+  "excerpt": "Optional summary",
+  "content": "Markdown or article body",
+  "featuredImage": "https://example.com/image.webp",
+  "status": "PUBLISHED",
+  "categoryId": "category-id",
+  "tagIds": ["tag-1", "tag-2"],
+  "scheduledAt": null
+}
+```
+
+Behavior:
+
+- auto-generates slug if missing
+- enforces unique slug
+- calculates reading time
+- sets `publishedAt` when status is `PUBLISHED`
+
+### PUT `/api/v1/posts/:id`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+- `EDITOR`
+
+Behavior:
+
+- only author or admin can update
+- recalculates reading time if content changed
+- regenerates slug if title changed
+- replaces tags if `tagIds` provided
+
+### DELETE `/api/v1/posts/:id`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+- `EDITOR`
+
+Behavior:
+
+- only author or admin can delete
+
+## Comments API
+
+### GET `/api/v1/comments`
+
+Private admin/moderation listing endpoint.
+
+Roles:
+
+- `ADMIN`
+- `MODERATOR`
+
+Query params:
+
+- `page`
+- `limit`
+- `status`: `all | PENDING | APPROVED | SPAM | TRASH`
+- `search`
+
+Behavior:
+
+- returns paginated comments ordered by newest first
+- search matches comment content, guest author fields, post title, or linked user fields
+- includes linked `post` and `user` information for admin UI
+
+### GET `/api/v1/comments/post/:postId`
+
+Public endpoint.
+
+Returns:
+
+- approved top-level comments for a post
+- approved replies nested under each top-level comment
+
+### POST `/api/v1/comments`
+
+Public endpoint with optional auth.
+
+Request body:
+
+```json
+{
+  "content": "Great article",
+  "postId": "post-id",
+  "parentId": null,
+  "authorName": "Guest User",
+  "authorEmail": "guest@example.com"
+}
+```
+
+Behavior:
+
+- creates comment as `PENDING`
+- stores guest identity when user is not logged in
+- stores request IP in `authorIp`
+
+### PATCH `/api/v1/comments/:id/status`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+- `MODERATOR`
+
+Request body:
+
+```json
+{
+  "status": "APPROVED"
+}
+```
+
+Allowed status values:
+
+- `PENDING`
+- `APPROVED`
+- `SPAM`
+- `TRASH`
+
+### DELETE `/api/v1/comments/:id`
+
+Private endpoint.
+
+Behavior:
+
+- comment author can delete own comment
+- `ADMIN` and `MODERATOR` can delete any comment
+
+### GET `/api/v1/comments/stats`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+- `MODERATOR`
+
+Returns:
+
+- `total`
+- `byStatus`
+
+## Users API
+
+### GET `/api/v1/users`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+- `MODERATOR`
+
+Query params:
+
+- `page`
+- `limit`
+- `role`
+- `search`
+
+Returns paginated users with post/comment counts.
+
+### GET `/api/v1/users/:id`
+
+Private endpoint.
+
+Returns detailed user profile plus counts.
+
+### GET `/api/v1/users/stats`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+- `MODERATOR`
+
+Returns:
+
+- `total`
+- `active`
+- `byRole`
+
+### PUT `/api/v1/users/:id`
+
+Private endpoint.
+
+Behavior:
+
+- self update allowed
+- admin can update any user
+- only admin can change `role`
+
+Accepted fields:
+
+- `email`
+- `password`
+- `firstName`
+- `lastName`
+- `avatar`
+- `bio`
+- `role`
+- `isActive`
+
+### DELETE `/api/v1/users/:id`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+Behavior:
+
+- admin only
+- cannot delete own account
+
+## Categories API
+
+### GET `/api/v1/categories`
+
+Public endpoint.
+
+Returns:
+
+- categories
+- post counts
+- parent reference
+
+### GET `/api/v1/categories/:id`
+
+Public endpoint.
+
+Returns:
+
+- category detail
+- parent
+- children
+- post count
+
+### POST `/api/v1/categories`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+Request body fields:
+
+- `name` required
+- `slug` optional
+- `description` optional
+- `color` optional
+- `icon` optional
+- `parentId` optional
+
+Behavior:
+
+- generates slug if missing
+- rejects duplicate slug
+
+### PUT `/api/v1/categories/:id`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+Behavior:
+
+- updates category
+- regenerates slug from `name` if needed
+
+### DELETE `/api/v1/categories/:id`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+## Tags API
+
+### GET `/api/v1/tags`
+
+Public endpoint.
+
+Returns tags with post counts.
+
+### GET `/api/v1/tags/:id`
+
+Public endpoint.
+
+Returns tag detail with post count.
+
+### POST `/api/v1/tags`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+Request body:
+
+```json
+{
+  "name": "kubernetes",
+  "slug": "kubernetes"
+}
+```
+
+Behavior:
+
+- generates slug if missing
+- rejects duplicate slug
+
+### PUT `/api/v1/tags/:id`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+### DELETE `/api/v1/tags/:id`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+## Subscribers API
+
+### POST `/api/v1/subscribers`
+
+Public endpoint.
+
+Request body:
+
+```json
+{
+  "email": "reader@example.com",
+  "name": "Reader"
+}
+```
+
+Behavior:
+
+- creates new subscriber if email is new
+- returns `Already subscribed` if already active
+- reactivates inactive subscriber if email exists but is inactive
+
+### POST `/api/v1/subscribers/unsubscribe`
+
+Public endpoint.
+
+Request body:
+
+```json
+{
+  "token": "unsubscribe-token"
+}
+```
+
+Behavior:
+
+- deactivates subscriber
+- sets `unsubscribedAt`
+
+### GET `/api/v1/subscribers`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+Query params:
+
+- `page`
+- `limit`
+- `isActive`
+
+### GET `/api/v1/subscribers/stats`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+Returns:
+
+- total
+- active
+- inactive
+
+### DELETE `/api/v1/subscribers/:id`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+## Settings API
+
+### GET `/api/v1/settings`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+Returns grouped system settings payload for:
+
+- `general`
+- `appearance`
+- `email`
+- `maintenance`
+
+### PUT `/api/v1/settings`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+Request body shape:
+
+```json
+{
+  "general": {
+    "siteName": "DevOps Blog",
+    "siteUrl": "https://blog.thienduong.info",
+    "siteDescription": "Expert articles on Kubernetes and DevOps best practices.",
+    "language": "en",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "postsPerPage": 10,
+    "allowComments": true,
+    "moderateComments": true
+  },
+  "appearance": {
+    "darkModeDefault": true,
+    "primaryColor": "#00bcd4"
+  },
+  "email": {
+    "smtpHost": "",
+    "smtpPort": "587",
+    "smtpUser": "",
+    "notifyNewComment": true,
+    "notifyNewUser": true
+  },
+  "maintenance": {
+    "maintenanceMode": false
+  }
+}
+```
+
+Behavior:
+
+- stores values in `system_settings`
+- returns normalized grouped settings after save
+
+## SEO API
+
+### GET `/api/v1/seo`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+Returns SEO dashboard payload containing:
+
+- `overview`
+- `globalSettings`
+- `homepage`
+- `pages`
+- `topKeywords`
+- `suggestions`
+
+Behavior:
+
+- reads homepage/global SEO config from `seo_settings` and `system_settings`
+- audits recent published posts and homepage SEO completeness
+- computes overview score and issue summary for admin dashboard
+
+### PUT `/api/v1/seo`
+
+Private endpoint.
+
+Roles:
+
+- `ADMIN`
+
+Request body shape:
+
+```json
+{
+  "globalSettings": {
+    "searchIndexing": true,
+    "homepageTitleSuffix": " | DevOps Blog",
+    "robotsTxt": "User-agent: *\nAllow: /\nDisallow: /admin/",
+    "analyticsId": "G-XXXXXXXXXX"
+  },
+  "homepage": {
+    "metaTitle": "DevOps Blog",
+    "metaDescription": "Expert articles on Kubernetes, CI/CD, Cloud Architecture and DevOps best practices.",
+    "canonicalUrl": "https://blog.thienduong.info/",
+    "focusKeywords": ["devops", "kubernetes", "ci/cd"],
+    "ogImage": "https://example.com/og-home.png",
+    "noIndex": false,
+    "noFollow": false
+  }
+}
+```
+
+Behavior:
+
+- updates homepage SEO configuration in `seo_settings`
+- updates global SEO settings in `system_settings`
+- returns refreshed SEO dashboard payload after save
+
+## Operational Endpoints
+
+### GET `/health`
+
+Public operational endpoint.
+
+Returns server status, timestamp, environment, uptime, and memory stats.
+
+### GET `/metrics`
+
+Prometheus scrape endpoint.
+
+Returns:
+
+- default node metrics
+- request count
+- request latency histogram
+- in-progress requests
+- blog-specific counters
+
+## Validation Notes
+
+Validated modules currently include:
+
+- `auth`
+- `posts`
+- `subscribers`
+- `comments`
+- `users`
+- `tags`
+- `categories`
+
+## Current Verification Status
+
+Latest backend refactor baseline has been validated with:
+
+```bash
+npm test
+```

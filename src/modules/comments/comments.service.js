@@ -1,44 +1,69 @@
-const { getPrismaClient } = require('../../utils/prisma');
-const { NotFoundError, ForbiddenError } = require('../../middlewares/error.middleware');
-
-const prisma = getPrismaClient();
+const { NotFoundError } = require('../../middlewares/error.middleware');
+const commentsRepository = require('./comments.repository');
+const {
+    buildAdminCommentsListQuery,
+    buildCreateCommentData,
+    buildPaginatedCommentsResponse,
+    buildPublicCommentsQuery,
+    ensureDeletePermission,
+    ensureModeratorPermission,
+} = require('./comments.helpers');
+const {
+    adminCommentInclude,
+    createCommentInclude,
+    publicCommentInclude,
+} = require('./comments.queries');
 
 class CommentsService {
+    async getStats() {
+        const [total, statusStats] = await Promise.all([
+            commentsRepository.count(),
+            commentsRepository.groupBy({
+                by: ['status'],
+                _count: true,
+            }),
+        ]);
+
+        return {
+            total,
+            byStatus: statusStats.reduce((acc, current) => {
+                acc[current.status] = current._count;
+                return acc;
+            }, {}),
+        };
+    }
+
+    async findAll(query = {}) {
+        const { page, limit, skip, where } = buildAdminCommentsListQuery(query);
+
+        const [comments, total] = await Promise.all([
+            commentsRepository.findMany({
+                where,
+                skip,
+                take: limit,
+                include: adminCommentInclude,
+                orderBy: { createdAt: 'desc' },
+            }),
+            commentsRepository.count({ where }),
+        ]);
+
+        return buildPaginatedCommentsResponse({
+            data: comments,
+            total,
+            page,
+            limit,
+        });
+    }
+
     /**
      * Find comments by post ID
      */
     async findByPostId(postId) {
-        return prisma.comment.findMany({
-            where: {
-                postId,
-                status: 'APPROVED',
-                parentId: null,
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        avatar: true,
-                    },
-                },
-                replies: {
-                    where: { status: 'APPROVED' },
-                    include: {
-                        user: {
-                            select: {
-                                id: true,
-                                firstName: true,
-                                lastName: true,
-                                avatar: true,
-                            },
-                        },
-                    },
-                    orderBy: { createdAt: 'asc' },
-                },
-            },
-            orderBy: { createdAt: 'desc' },
+        const query = buildPublicCommentsQuery(postId);
+
+        return commentsRepository.findMany({
+            ...query,
+            include: publicCommentInclude,
         });
     }
 
@@ -46,27 +71,9 @@ class CommentsService {
      * Create comment
      */
     async create(dto, userId, req) {
-        return prisma.comment.create({
-            data: {
-                content: dto.content,
-                postId: dto.postId,
-                userId: userId || null,
-                parentId: dto.parentId || null,
-                authorName: dto.authorName || null,
-                authorEmail: dto.authorEmail || null,
-                authorIp: req.ip,
-                status: 'PENDING', // Default to pending for moderation
-            },
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true,
-                        avatar: true,
-                    },
-                },
-            },
+        return commentsRepository.create({
+            data: buildCreateCommentData(dto, userId, req.ip),
+            include: createCommentInclude,
         });
     }
 
@@ -74,18 +81,15 @@ class CommentsService {
      * Update comment status (approve, spam, trash)
      */
     async updateStatus(id, status, userId, userRole) {
-        const comment = await prisma.comment.findUnique({ where: { id } });
+        const comment = await commentsRepository.findUnique({ where: { id } });
 
         if (!comment) {
             throw new NotFoundError('Comment not found');
         }
 
-        // Only moderators and admins can update status
-        if (userRole !== 'ADMIN' && userRole !== 'MODERATOR') {
-            throw new ForbiddenError('Insufficient permissions');
-        }
+        ensureModeratorPermission(userRole);
 
-        return prisma.comment.update({
+        return commentsRepository.update({
             where: { id },
             data: { status },
         });
@@ -95,18 +99,15 @@ class CommentsService {
      * Delete comment
      */
     async delete(id, userId, userRole) {
-        const comment = await prisma.comment.findUnique({ where: { id } });
+        const comment = await commentsRepository.findUnique({ where: { id } });
 
         if (!comment) {
             throw new NotFoundError('Comment not found');
         }
 
-        // Only comment author, moderator or admin can delete
-        if (comment.userId !== userId && userRole !== 'ADMIN' && userRole !== 'MODERATOR') {
-            throw new ForbiddenError('You can only delete your own comments');
-        }
+        ensureDeletePermission(comment, userId, userRole);
 
-        await prisma.comment.delete({ where: { id } });
+        await commentsRepository.delete({ where: { id } });
 
         return { message: 'Comment deleted successfully' };
     }
