@@ -8,9 +8,11 @@ const parseNumber = (value, fallback) => {
 };
 
 const parseCorsOrigin = (origin) => {
-    if (!origin) return 'http://localhost:3000';
-    const origins = origin.split(',').map((o) => o.trim());
-    return origins.length === 1 ? origins[0] : origins;
+    if (!origin) return ['http://localhost:3000'];
+    return origin
+        .split(',')
+        .map((o) => o.trim())
+        .filter(Boolean);
 };
 
 const resolveApiPrefix = (value) => {
