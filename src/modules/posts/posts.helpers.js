@@ -49,7 +49,21 @@ const buildPaginatedResponse = ({ data, total, page, limit }) => ({
 });
 
 const buildReadingTime = (content) => {
-    const plainText = String(content || '').replace(/<[^>]+>/g, ' ');
+    // Use a simple, non-backtracking approach to strip HTML tags.
+    // Replace each '<' up to the next '>' with a space, character by character.
+    const raw = String(content || '');
+    let plainText = '';
+    let inTag = false;
+    for (let i = 0; i < raw.length; i++) {
+        if (raw[i] === '<') {
+            inTag = true;
+            plainText += ' ';
+        } else if (raw[i] === '>') {
+            inTag = false;
+        } else if (!inTag) {
+            plainText += raw[i];
+        }
+    }
     const wordCount = plainText.trim().split(/\s+/).filter(Boolean).length;
     return Math.ceil(wordCount / 200);
 };
