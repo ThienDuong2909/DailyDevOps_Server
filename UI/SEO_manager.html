@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DevOps Admin Dashboard - SEO Management</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1e293b",
+                        "border-dark": "#283039",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111418;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #3b4754;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white font-display overflow-hidden">
+    <div class="flex h-screen w-full">
+        <aside class="hidden lg:flex flex-col w-[280px] h-full bg-[#111418] border-r border-border-dark flex-shrink-0">
+            <div class="p-6 flex flex-col h-full justify-between">
+                <div>
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="bg-center bg-no-repeat bg-cover rounded-full size-12 border-2 border-border-dark"
+                            data-alt="Admin user profile picture showing a stylized robot avatar"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAYwa5RYhMpWN2Zu9mX8Dm2D94pw2ejreOlwViiOGBifn_FunjZvSiMq8aGr5ZtzAkGY-fkzIH_F-jvm-ObMr-0x95JMpIfOe9BMFn44fr0Nc1S-oPjLWGHm6YH1aqw5pK5AEqSTJAtOw3nvpHZBH1VDzTjLmaeEG7Ijur2L_JooJm5pqgMQlAeLpb8eYvwfiRZzMVxvyFNykeOIjM1wma5VpngmF21T0qAJuKQnXBgojIkSPaJY_lkYrM3gUwUYE2I4Be8KNV3B30Q");'>
+                        </div>
+                        <div class="flex flex-col">
+                            <h1 class="text-white text-base font-bold leading-tight">DevOps Admin</h1>
+                            <p class="text-[#9dabb9] text-xs font-mono">v2.4.0-stable</p>
+                        </div>
+                    </div>
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">dashboard</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Dashboard</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">article</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Articles</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">chat</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Comments</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 border-l-4 border-primary group transition-all"
+                            href="#">
+                            <span class="material-symbols-outlined text-primary">search</span>
+                            <p class="text-white text-sm font-medium">SEO Manager</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">monitoring</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Performance</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">manage_accounts</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Roles &amp; Users</p>
+                        </a>
+                    </nav>
+                </div>
+                <div class="pt-4 border-t border-border-dark">
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-surface-dark text-[#9dabb9] hover:text-white transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">settings</span>
+                        <p class="text-sm font-medium">System Settings</p>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-surface-dark text-[#fa6238] hover:text-[#fa6238]/80 transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">logout</span>
+                        <p class="text-sm font-medium">Logout</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+        <main class="flex-1 flex flex-col h-full min-w-0 bg-background-light dark:bg-background-dark overflow-hidden">
+            <header
+                class="h-16 flex items-center justify-between px-6 lg:px-10 border-b border-border-dark bg-[#111418] shrink-0">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-white">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-white text-lg font-bold leading-tight tracking-tight">SEO Management</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative group hidden sm:block">
+                        <input
+                            class="bg-[#283039] border border-border-dark rounded-lg pl-9 pr-3 py-1.5 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary placeholder-[#9dabb9] w-64 transition-all"
+                            placeholder="Search pages or keywords..." type="text" />
+                        <span
+                            class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9dabb9] text-[18px]">search</span>
+                    </div>
+                    <div class="h-8 w-px bg-border-dark mx-2 hidden sm:block"></div>
+                    <button
+                        class="flex items-center justify-center size-9 rounded-full bg-[#283039] text-[#9dabb9] hover:text-white hover:bg-[#3b4754] transition-colors relative"
+                        title="Notifications">
+                        <span class="material-symbols-outlined text-[20px]">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-[#fa6238] rounded-full"></span>
+                    </button>
+                    <button
+                        class="flex items-center justify-center size-9 rounded-full bg-[#283039] text-[#9dabb9] hover:text-white hover:bg-[#3b4754] transition-colors"
+                        title="Settings">
+                        <span class="material-symbols-outlined text-[20px]">settings</span>
+                    </button>
+                </div>
+            </header>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8">
+                <div class="max-w-[1600px] mx-auto flex flex-col gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-4 flex items-center gap-4">
+                            <div
+                                class="size-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500">
+                                <span class="material-symbols-outlined">score</span>
+                            </div>
+                            <div>
+                                <p class="text-[#9dabb9] text-xs font-medium uppercase">Overall Health Score</p>
+                                <h3 class="text-white text-xl font-bold">92/100</h3>
+                            </div>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-4 flex items-center gap-4">
+                            <div
+                                class="size-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                                <span class="material-symbols-outlined">trending_up</span>
+                            </div>
+                            <div>
+                                <p class="text-[#9dabb9] text-xs font-medium uppercase">Organic Traffic</p>
+                                <h3 class="text-white text-xl font-bold">+15.4% <span
+                                        class="text-xs font-normal text-[#9dabb9] ml-1">vs last month</span></h3>
+                            </div>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-4 flex items-center gap-4">
+                            <div
+                                class="size-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined">link</span>
+                            </div>
+                            <div>
+                                <p class="text-[#9dabb9] text-xs font-medium uppercase">Indexed Pages</p>
+                                <h3 class="text-white text-xl font-bold">342</h3>
+                            </div>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-4 flex items-center gap-4">
+                            <div
+                                class="size-10 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-500">
+                                <span class="material-symbols-outlined">warning</span>
+                            </div>
+                            <div>
+                                <p class="text-[#9dabb9] text-xs font-medium uppercase">Critical Issues</p>
+                                <h3 class="text-white text-xl font-bold">3</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 flex flex-col gap-6">
+                            <div class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm">
+                                <div
+                                    class="bg-[#111418] border-b border-border-dark p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                    <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-primary">edit_document</span>
+                                        Page Optimization
+                                    </h3>
+                                    <div class="flex items-center gap-3">
+                                        <div class="relative w-full sm:w-auto">
+                                            <select
+                                                class="appearance-none bg-[#283039] border border-border-dark rounded-lg pl-3 pr-8 py-1.5 text-sm text-[#9dabb9] focus:border-primary focus:ring-1 focus:ring-primary w-full sm:w-64 cursor-pointer">
+                                                <option>Select Page to Edit</option>
+                                                <option selected="">Home - DevOps Blog</option>
+                                                <option>Blog - Kubernetes Guide</option>
+                                                <option>About Us</option>
+                                            </select>
+                                            <span
+                                                class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[#9dabb9] pointer-events-none text-[20px]">arrow_drop_down</span>
+                                        </div>
+                                        <button
+                                            class="flex items-center gap-2 px-3 py-1.5 bg-primary hover:bg-primary/80 rounded-lg text-sm text-white transition-colors whitespace-nowrap">
+                                            <span>Save Changes</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="p-6 space-y-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-[#9dabb9] mb-1">Page Title
+                                                    <span class="text-red-500">*</span></label>
+                                                <div class="relative">
+                                                    <input
+                                                        class="w-full bg-[#283039] border border-border-dark rounded-lg px-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm"
+                                                        type="text"
+                                                        value="DevOps Best Practices &amp; Tutorials | DevOps Blog" />
+                                                    <span
+                                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-xs font-bold">60/60</span>
+                                                </div>
+                                                <p class="text-xs text-[#586069] mt-1">Ideally between 50-60 characters.
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-[#9dabb9] mb-1">URL
+                                                    Slug</label>
+                                                <div class="flex items-center">
+                                                    <span
+                                                        class="bg-[#111418] border border-r-0 border-border-dark rounded-l-lg px-3 py-2 text-[#9dabb9] text-sm">/</span>
+                                                    <input
+                                                        class="w-full bg-[#283039] border border-border-dark rounded-r-lg px-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm"
+                                                        type="text" value="home" />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-[#9dabb9] mb-1">Canonical
+                                                    URL</label>
+                                                <input
+                                                    class="w-full bg-[#283039] border border-border-dark rounded-lg px-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm"
+                                                    placeholder="https://example.com/original-page" type="text" />
+                                            </div>
+                                        </div>
+                                        <div class="space-y-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-[#9dabb9] mb-1">Meta
+                                                    Description</label>
+                                                <textarea
+                                                    class="w-full bg-[#283039] border border-border-dark rounded-lg px-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm resize-none"
+                                                    rows="4">Discover expert DevOps tutorials, Kubernetes guides, and CI/CD best practices to streamline your software development lifecycle. Join our community today.</textarea>
+                                                <div class="flex justify-between items-center mt-1">
+                                                    <p class="text-xs text-[#586069]">Ideally between 150-160
+                                                        characters.</p>
+                                                    <span class="text-green-500 text-xs font-bold">158/160</span>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-[#9dabb9] mb-1">Focus
+                                                    Keywords</label>
+                                                <div
+                                                    class="bg-[#283039] border border-border-dark rounded-lg p-2 flex flex-wrap gap-2 min-h-[42px]">
+                                                    <span
+                                                        class="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs flex items-center gap-1">DevOps
+                                                        <button class="hover:text-white">×</button></span>
+                                                    <span
+                                                        class="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs flex items-center gap-1">Kubernetes
+                                                        <button class="hover:text-white">×</button></span>
+                                                    <span
+                                                        class="bg-primary/20 text-primary px-2 py-0.5 rounded text-xs flex items-center gap-1">CI/CD
+                                                        <button class="hover:text-white">×</button></span>
+                                                    <input
+                                                        class="bg-transparent border-none focus:ring-0 text-white text-sm p-0 w-24"
+                                                        placeholder="Add keyword..." type="text" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="border-t border-border-dark pt-6">
+                                        <h4 class="text-white text-sm font-bold mb-4 flex items-center gap-2">
+                                            <span
+                                                class="material-symbols-outlined text-[#9dabb9] text-lg">preview</span>
+                                            Search Preview
+                                        </h4>
+                                        <div class="bg-[#111418] p-4 rounded-lg border border-border-dark max-w-2xl">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <div
+                                                    class="bg-gray-200 rounded-full size-7 flex items-center justify-center text-gray-600 text-[10px] font-bold">
+                                                    D</div>
+                                                <div class="flex flex-col">
+                                                    <span class="text-[#dadce0] text-sm leading-none">DevOps Blog</span>
+                                                    <span class="text-[#bdc1c6] text-xs">https://devops-blog.com</span>
+                                                </div>
+                                                <span
+                                                    class="material-symbols-outlined text-[#bdc1c6] text-sm ml-auto">more_vert</span>
+                                            </div>
+                                            <h3
+                                                class="text-[#8ab4f8] text-xl font-medium hover:underline cursor-pointer mb-1 truncate">
+                                                DevOps Best Practices &amp; Tutorials | DevOps Blog</h3>
+                                            <p class="text-[#bdc1c6] text-sm leading-snug line-clamp-2">
+                                                <span class="text-[#9aa0a6]">Oct 24, 2023 — </span>Discover expert
+                                                DevOps tutorials, Kubernetes guides, and CI/CD best practices to
+                                                streamline your software development lifecycle. Join our community
+                                                today.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm">
+                                <div class="bg-[#111418] border-b border-border-dark p-4">
+                                    <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-yellow-500">lightbulb</span>
+                                        Suggestions &amp; Improvements
+                                    </h3>
+                                </div>
+                                <div class="divide-y divide-border-dark">
+                                    <div class="p-4 flex items-start gap-3 hover:bg-[#1f2937] transition-colors">
+                                        <span class="material-symbols-outlined text-red-500 mt-0.5">error</span>
+                                        <div class="flex-1">
+                                            <h4 class="text-white text-sm font-medium">Missing Meta Description</h4>
+                                            <p class="text-[#9dabb9] text-xs mt-1">2 articles are missing meta
+                                                descriptions. This affects click-through rates.</p>
+                                        </div>
+                                        <button class="text-primary text-xs font-bold hover:underline">Fix Now</button>
+                                    </div>
+                                    <div class="p-4 flex items-start gap-3 hover:bg-[#1f2937] transition-colors">
+                                        <span class="material-symbols-outlined text-yellow-500 mt-0.5">warning</span>
+                                        <div class="flex-1">
+                                            <h4 class="text-white text-sm font-medium">Low Keyword Density</h4>
+                                            <p class="text-[#9dabb9] text-xs mt-1">"Kubernetes Network Policies" has low
+                                                density for target keyword "Network Security".</p>
+                                        </div>
+                                        <button class="text-primary text-xs font-bold hover:underline">Edit
+                                            Article</button>
+                                    </div>
+                                    <div class="p-4 flex items-start gap-3 hover:bg-[#1f2937] transition-colors">
+                                        <span class="material-symbols-outlined text-blue-400 mt-0.5">info</span>
+                                        <div class="flex-1">
+                                            <h4 class="text-white text-sm font-medium">Image Alt Text</h4>
+                                            <p class="text-[#9dabb9] text-xs mt-1">5 images on the homepage are missing
+                                                alt attributes.</p>
+                                        </div>
+                                        <button class="text-primary text-xs font-bold hover:underline">Review
+                                            Images</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-6">
+                            <div class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm">
+                                <div class="bg-[#111418] border-b border-border-dark p-4">
+                                    <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-[#9dabb9]">settings</span>
+                                        Global Settings
+                                    </h3>
+                                </div>
+                                <div class="p-4 space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-white text-sm font-medium">Search Indexing</p>
+                                            <p class="text-[#9dabb9] text-xs">Allow search engines to index site</p>
+                                        </div>
+                                        <div
+                                            class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                            <input
+                                                class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 right-5 checked:border-primary border-gray-300"
+                                                id="toggle1" name="toggle" type="checkbox" />
+                                            <label
+                                                class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer checked:bg-primary"
+                                                for="toggle1"></label>
+                                        </div>
+                                        <style>
+                                            .toggle-checkbox:checked {
+                                                right: 0;
+                                                border-color: #137fec;
+                                            }
+
+                                            .toggle-checkbox:checked+.toggle-label {
+                                                background-color: #137fec;
+                                            }
+                                        </style>
+                                    </div>
+                                    <div class="border-t border-border-dark my-2"></div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-[#9dabb9] mb-1">Homepage Title
+                                            Suffix</label>
+                                        <input
+                                            class="w-full bg-[#283039] border border-border-dark rounded-lg px-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm"
+                                            type="text" value=" | DevOps Blog" />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-[#9dabb9] mb-1">Robots.txt
+                                            Content</label>
+                                        <textarea
+                                            class="w-full bg-[#283039] border border-border-dark rounded-lg px-3 py-2 text-[#9dabb9] font-mono text-xs resize-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                            rows="3">User-agent: *
+Allow: /
+Disallow: /admin/</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm">
+                                <div class="bg-[#111418] border-b border-border-dark p-4">
+                                    <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-[#9dabb9]">contact_page</span>
+                                        Sitemap &amp; Analytics
+                                    </h3>
+                                </div>
+                                <div class="p-4 space-y-4">
+                                    <div
+                                        class="flex items-center justify-between p-3 bg-[#283039] rounded-lg border border-border-dark">
+                                        <div class="flex items-center gap-3">
+                                            <div class="bg-orange-500/10 p-2 rounded text-orange-500">
+                                                <span class="material-symbols-outlined text-lg">description</span>
+                                            </div>
+                                            <div>
+                                                <p class="text-white text-sm font-medium">sitemap.xml</p>
+                                                <p class="text-[#9dabb9] text-[10px]">Last updated: 2 hours ago</p>
+                                            </div>
+                                        </div>
+                                        <button class="text-[#9dabb9] hover:text-white p-1">
+                                            <span class="material-symbols-outlined text-lg">refresh</span>
+                                        </button>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-[#9dabb9] mb-1">Google Analytics
+                                            ID</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9dabb9]">
+                                                <span class="material-symbols-outlined text-sm">analytics</span>
+                                            </span>
+                                            <input
+                                                class="w-full bg-[#283039] border border-border-dark rounded-lg pl-9 pr-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm font-mono"
+                                                type="text" value="G-XXXXXXXXXX" />
+                                        </div>
+                                    </div>
+                                    <button
+                                        class="w-full py-2 bg-[#283039] hover:bg-[#3b4754] text-white text-sm font-medium rounded-lg border border-border-dark transition-colors flex items-center justify-center gap-2">
+                                        Open Analytics Dashboard
+                                        <span class="material-symbols-outlined text-sm">open_in_new</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm flex-1">
+                                <div class="bg-[#111418] border-b border-border-dark p-4">
+                                    <h3 class="text-white font-bold text-lg flex items-center gap-2">
+                                        <span class="material-symbols-outlined text-[#9dabb9]">key</span>
+                                        Top Performing Keywords
+                                    </h3>
+                                </div>
+                                <div class="p-4">
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between items-center text-sm">
+                                            <span class="text-white">kubernetes networking</span>
+                                            <span class="text-green-500 font-mono font-bold">#1</span>
+                                        </div>
+                                        <div class="w-full bg-[#111418] h-1.5 rounded-full overflow-hidden">
+                                            <div class="bg-primary h-full rounded-full" style="width: 85%"></div>
+                                        </div>
+                                        <div class="flex justify-between items-center text-sm mt-4">
+                                            <span class="text-white">terraform best practices</span>
+                                            <span class="text-green-500 font-mono font-bold">#3</span>
+                                        </div>
+                                        <div class="w-full bg-[#111418] h-1.5 rounded-full overflow-hidden">
+                                            <div class="bg-primary h-full rounded-full" style="width: 65%"></div>
+                                        </div>
+                                        <div class="flex justify-between items-center text-sm mt-4">
+                                            <span class="text-white">devops ci cd</span>
+                                            <span class="text-green-500 font-mono font-bold">#5</span>
+                                        </div>
+                                        <div class="w-full bg-[#111418] h-1.5 rounded-full overflow-hidden">
+                                            <div class="bg-primary h-full rounded-full" style="width: 45%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>

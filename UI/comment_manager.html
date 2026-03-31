@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DevOps Admin Dashboard - Comment Management</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1e293b",
+                        "border-dark": "#283039",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111418;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #3b4754;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white font-display overflow-hidden">
+    <div class="flex h-screen w-full">
+        <aside class="hidden lg:flex flex-col w-[280px] h-full bg-[#111418] border-r border-border-dark flex-shrink-0">
+            <div class="p-6 flex flex-col h-full justify-between">
+                <div>
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="bg-center bg-no-repeat bg-cover rounded-full size-12 border-2 border-border-dark"
+                            data-alt="Admin user profile picture showing a stylized robot avatar"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAYwa5RYhMpWN2Zu9mX8Dm2D94pw2ejreOlwViiOGBifn_FunjZvSiMq8aGr5ZtzAkGY-fkzIH_F-jvm-ObMr-0x95JMpIfOe9BMFn44fr0Nc1S-oPjLWGHm6YH1aqw5pK5AEqSTJAtOw3nvpHZBH1VDzTjLmaeEG7Ijur2L_JooJm5pqgMQlAeLpb8eYvwfiRZzMVxvyFNykeOIjM1wma5VpngmF21T0qAJuKQnXBgojIkSPaJY_lkYrM3gUwUYE2I4Be8KNV3B30Q");'>
+                        </div>
+                        <div class="flex flex-col">
+                            <h1 class="text-white text-base font-bold leading-tight">DevOps Admin</h1>
+                            <p class="text-[#9dabb9] text-xs font-mono">v2.4.0-stable</p>
+                        </div>
+                    </div>
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">dashboard</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Dashboard</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">article</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Articles</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 border-l-4 border-primary group transition-all"
+                            href="#">
+                            <span class="material-symbols-outlined text-primary">chat</span>
+                            <p class="text-white text-sm font-medium">Comments</p>
+                            <span
+                                class="ml-auto bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">4</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">search</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">SEO Manager</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">monitoring</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Performance</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">manage_accounts</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Roles &amp; Users</p>
+                        </a>
+                    </nav>
+                </div>
+                <div class="pt-4 border-t border-border-dark">
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-surface-dark text-[#9dabb9] hover:text-white transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">settings</span>
+                        <p class="text-sm font-medium">System Settings</p>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-surface-dark text-[#fa6238] hover:text-[#fa6238]/80 transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">logout</span>
+                        <p class="text-sm font-medium">Logout</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+        <main class="flex-1 flex flex-col h-full min-w-0 bg-background-light dark:bg-background-dark overflow-hidden">
+            <header
+                class="h-16 flex items-center justify-between px-6 lg:px-10 border-b border-border-dark bg-[#111418] shrink-0">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-white">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-white text-lg font-bold leading-tight tracking-tight">Comment Management</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative group hidden sm:block">
+                        <input
+                            class="bg-[#283039] border border-border-dark rounded-lg pl-9 pr-3 py-1.5 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary placeholder-[#9dabb9] w-64 transition-all"
+                            placeholder="Search comments..." type="text" />
+                        <span
+                            class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9dabb9] text-[18px]">search</span>
+                    </div>
+                    <div class="h-8 w-px bg-border-dark mx-2 hidden sm:block"></div>
+                    <button
+                        class="flex items-center justify-center size-9 rounded-full bg-[#283039] text-[#9dabb9] hover:text-white hover:bg-[#3b4754] transition-colors relative"
+                        title="Notifications">
+                        <span class="material-symbols-outlined text-[20px]">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-[#fa6238] rounded-full"></span>
+                    </button>
+                    <button
+                        class="flex items-center justify-center size-9 rounded-full bg-[#283039] text-[#9dabb9] hover:text-white hover:bg-[#3b4754] transition-colors"
+                        title="Settings">
+                        <span class="material-symbols-outlined text-[20px]">settings</span>
+                    </button>
+                </div>
+            </header>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8">
+                <div class="max-w-[1600px] mx-auto flex flex-col gap-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-4 flex items-center gap-4">
+                            <div
+                                class="size-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined">chat_bubble</span>
+                            </div>
+                            <div>
+                                <p class="text-[#9dabb9] text-xs font-medium uppercase">Total Comments</p>
+                                <h3 class="text-white text-xl font-bold">1,482</h3>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-dark border border-border-dark rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:border-yellow-500/50 transition-colors group">
+                            <div
+                                class="size-10 rounded-lg bg-yellow-500/10 flex items-center justify-center text-yellow-500 group-hover:text-yellow-400">
+                                <span class="material-symbols-outlined">pending</span>
+                            </div>
+                            <div>
+                                <p class="text-[#9dabb9] text-xs font-medium uppercase group-hover:text-yellow-400">
+                                    Pending</p>
+                                <h3 class="text-white text-xl font-bold">4</h3>
+                            </div>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-4 flex items-center gap-4">
+                            <div
+                                class="size-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500">
+                                <span class="material-symbols-outlined">check_circle</span>
+                            </div>
+                            <div>
+                                <p class="text-[#9dabb9] text-xs font-medium uppercase">Approved</p>
+                                <h3 class="text-white text-xl font-bold">1,412</h3>
+                            </div>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-4 flex items-center gap-4">
+                            <div class="size-10 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500">
+                                <span class="material-symbols-outlined">report</span>
+                            </div>
+                            <div>
+                                <p class="text-[#9dabb9] text-xs font-medium uppercase">Spam</p>
+                                <h3 class="text-white text-xl font-bold">66</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm flex flex-col min-h-[600px]">
+                        <div
+                            class="bg-[#111418] border-b border-border-dark p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div
+                                class="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 scrollbar-hide">
+                                <button
+                                    class="px-3 py-1.5 rounded-lg bg-primary text-white text-sm font-medium shadow-lg shadow-primary/20 whitespace-nowrap">All
+                                    Comments</button>
+                                <button
+                                    class="px-3 py-1.5 rounded-lg text-[#9dabb9] hover:text-white hover:bg-[#283039] text-sm font-medium transition-colors whitespace-nowrap">Pending
+                                    <span
+                                        class="ml-1 bg-yellow-500/20 text-yellow-500 px-1.5 rounded text-[10px]">4</span></button>
+                                <button
+                                    class="px-3 py-1.5 rounded-lg text-[#9dabb9] hover:text-white hover:bg-[#283039] text-sm font-medium transition-colors whitespace-nowrap">Approved</button>
+                                <button
+                                    class="px-3 py-1.5 rounded-lg text-[#9dabb9] hover:text-white hover:bg-[#283039] text-sm font-medium transition-colors whitespace-nowrap">Spam</button>
+                                <button
+                                    class="px-3 py-1.5 rounded-lg text-[#9dabb9] hover:text-white hover:bg-[#283039] text-sm font-medium transition-colors whitespace-nowrap">Trash</button>
+                            </div>
+                            <div class="flex items-center gap-3 w-full sm:w-auto">
+                                <div class="relative w-full sm:w-auto">
+                                    <select
+                                        class="appearance-none bg-[#283039] border border-border-dark rounded-lg pl-3 pr-8 py-1.5 text-sm text-[#9dabb9] focus:border-primary focus:ring-1 focus:ring-primary w-full sm:w-48 cursor-pointer">
+                                        <option>Filter by Article</option>
+                                        <option>Kubernetes Network Policies</option>
+                                        <option>DevOps Culture Shift</option>
+                                        <option>Terraform Best Practices</option>
+                                    </select>
+                                    <span
+                                        class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-[#9dabb9] pointer-events-none text-[20px]">arrow_drop_down</span>
+                                </div>
+                                <button
+                                    class="flex items-center gap-2 px-3 py-1.5 bg-[#283039] hover:bg-[#3b4754] border border-border-dark rounded-lg text-sm text-[#9dabb9] hover:text-white transition-colors whitespace-nowrap">
+                                    <span class="material-symbols-outlined text-[18px]">filter_list</span>
+                                    <span>More Filters</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto custom-scrollbar">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr
+                                        class="bg-[#18202a] border-b border-border-dark text-xs uppercase text-[#9dabb9] font-medium">
+                                        <th class="p-4 w-10">
+                                            <input
+                                                class="rounded border-border-dark bg-[#283039] text-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                                                type="checkbox" />
+                                        </th>
+                                        <th class="p-4 min-w-[200px]">Author</th>
+                                        <th class="p-4 min-w-[400px]">Comment</th>
+                                        <th class="p-4 min-w-[150px]">Associated Article</th>
+                                        <th class="p-4 min-w-[120px]">Submitted On</th>
+                                        <th class="p-4 text-right min-w-[100px]">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-border-dark">
+                                    <tr class="hover:bg-[#1f2937] transition-colors group">
+                                        <td class="p-4 align-top pt-5">
+                                            <input
+                                                class="rounded border-border-dark bg-[#283039] text-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                                                type="checkbox" />
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <div class="flex items-start gap-3">
+                                                <div
+                                                    class="size-10 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
+                                                    JD</div>
+                                                <div class="flex flex-col">
+                                                    <span class="text-white font-bold text-sm">John Doe</span>
+                                                    <a class="text-[#9dabb9] text-xs hover:text-primary transition-colors"
+                                                        href="mailto:john.d@example.com">john.d@example.com</a>
+                                                    <span
+                                                        class="text-[#586069] text-[10px] mt-1 font-mono">192.168.1.1</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <div class="relative">
+                                                <div
+                                                    class="absolute -left-3 top-1 w-1 h-full bg-yellow-500/50 rounded-full">
+                                                </div>
+                                                <p class="text-[#d1d5db] text-sm leading-relaxed mb-2">Great article!
+                                                    I've been struggling with Network Policies for a while. One
+                                                    question: does the default deny policy affect the kube-system
+                                                    namespace?</p>
+                                                <div class="flex items-center gap-2">
+                                                    <span
+                                                        class="inline-flex items-center gap-1 bg-yellow-500/10 text-yellow-500 text-[10px] font-bold px-2 py-0.5 rounded border border-yellow-500/20">
+                                                        <span
+                                                            class="material-symbols-outlined text-[12px]">pending</span>
+                                                        Pending
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <a class="text-primary hover:text-primary/80 text-sm font-medium hover:underline"
+                                                href="#">Mastering Kubernetes Network Policies</a>
+                                            <div class="flex items-center gap-1 mt-1">
+                                                <span class="bg-[#283039] text-[#9dabb9] text-[10px] px-1.5 rounded">34
+                                                    comments</span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <span class="text-[#9dabb9] text-sm">Oct 24, 2023</span>
+                                            <p class="text-[#586069] text-xs">at 10:45 AM</p>
+                                        </td>
+                                        <td class="p-4 align-top text-right">
+                                            <div
+                                                class="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    class="p-1.5 rounded text-green-500 hover:bg-green-500/10 transition-colors"
+                                                    title="Approve">
+                                                    <span
+                                                        class="material-symbols-outlined text-[20px]">check_circle</span>
+                                                </button>
+                                                <button
+                                                    class="p-1.5 rounded text-[#9dabb9] hover:text-primary hover:bg-primary/10 transition-colors"
+                                                    title="Reply">
+                                                    <span class="material-symbols-outlined text-[20px]">reply</span>
+                                                </button>
+                                                <button
+                                                    class="p-1.5 rounded text-[#9dabb9] hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                                                    title="Mark as Spam">
+                                                    <span class="material-symbols-outlined text-[20px]">report</span>
+                                                </button>
+                                                <button
+                                                    class="p-1.5 rounded text-[#9dabb9] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                                                    title="Delete">
+                                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-[#1f2937] transition-colors group">
+                                        <td class="p-4 align-top pt-5">
+                                            <input
+                                                class="rounded border-border-dark bg-[#283039] text-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                                                type="checkbox" />
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <div class="flex items-start gap-3">
+                                                <div class="size-10 rounded-full bg-cover bg-center border border-border-dark"
+                                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAnZCGrFGbf56yICttdpKRprUs_mwoAgImdoVlhbNKWHqRKW2e27qdhlrPimlZCwVIF-7V1G1a9zwlq4ZwdklZU8RUjUiTDl6bo_8yZBSVtDDE0hFslldpMjG7zKKB2ow3WE60B__RiO6y29cv9V_msqpeVKYhPA4eQ1mUPkS0WMWYOIkA-BAokhITO8h1TXcBUpdtxsC255HBYSOQaWpo3RP6EEfbgHkw89YcnwA4MHEG1uD_r2dFywFjjJvFazSj75LEBniC7C1Jm");'>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <span class="text-white font-bold text-sm">Sarah L.</span>
+                                                    <span
+                                                        class="bg-primary/20 text-primary text-[10px] font-bold px-1.5 rounded w-fit my-0.5">AUTHOR</span>
+                                                    <span class="text-[#586069] text-[10px] font-mono">10.0.0.5</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <p class="text-[#d1d5db] text-sm leading-relaxed mb-2">Thanks for pointing
+                                                that out! I've updated the section on best practices to include
+                                                namespace considerations.</p>
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="inline-flex items-center gap-1 bg-green-500/10 text-green-500 text-[10px] font-bold px-2 py-0.5 rounded border border-green-500/20">
+                                                    <span class="material-symbols-outlined text-[12px]">check</span>
+                                                    Approved
+                                                </span>
+                                                <span class="text-[#586069] text-[10px] flex items-center gap-1">
+                                                    <span
+                                                        class="material-symbols-outlined text-[12px]">subdirectory_arrow_right</span>
+                                                    In reply to John Doe
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <a class="text-primary hover:text-primary/80 text-sm font-medium hover:underline"
+                                                href="#">Mastering Kubernetes Network Policies</a>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <span class="text-[#9dabb9] text-sm">Oct 24, 2023</span>
+                                            <p class="text-[#586069] text-xs">at 11:20 AM</p>
+                                        </td>
+                                        <td class="p-4 align-top text-right">
+                                            <div
+                                                class="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    class="p-1.5 rounded text-orange-400 hover:bg-orange-400/10 transition-colors"
+                                                    title="Unapprove">
+                                                    <span class="material-symbols-outlined text-[20px]">close</span>
+                                                </button>
+                                                <button
+                                                    class="p-1.5 rounded text-[#9dabb9] hover:text-primary hover:bg-primary/10 transition-colors"
+                                                    title="Reply">
+                                                    <span class="material-symbols-outlined text-[20px]">reply</span>
+                                                </button>
+                                                <button
+                                                    class="p-1.5 rounded text-[#9dabb9] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                                                    title="Delete">
+                                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="bg-red-500/5 hover:bg-red-500/10 transition-colors group">
+                                        <td class="p-4 align-top pt-5">
+                                            <input
+                                                class="rounded border-border-dark bg-[#283039] text-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                                                type="checkbox" />
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <div class="flex items-start gap-3">
+                                                <div
+                                                    class="size-10 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold text-sm">
+                                                    <span class="material-symbols-outlined">person_off</span>
+                                                </div>
+                                                <div class="flex flex-col">
+                                                    <span class="text-white font-bold text-sm">Cheap Rolex</span>
+                                                    <a class="text-[#9dabb9] text-xs hover:text-primary transition-colors"
+                                                        href="#">marketing@spam.com</a>
+                                                    <span
+                                                        class="text-[#586069] text-[10px] mt-1 font-mono">45.23.11.90</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <p
+                                                class="text-[#d1d5db] text-sm leading-relaxed mb-2 line-through opacity-60">
+                                                Buy cheap watches here! Best price guaranteed click link now
+                                                http://spam-link.com</p>
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="inline-flex items-center gap-1 bg-red-500/10 text-red-500 text-[10px] font-bold px-2 py-0.5 rounded border border-red-500/20">
+                                                    <span class="material-symbols-outlined text-[12px]">block</span>
+                                                    Spam
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <a class="text-primary hover:text-primary/80 text-sm font-medium hover:underline"
+                                                href="#">Terraform Best Practices</a>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <span class="text-[#9dabb9] text-sm">Oct 23, 2023</span>
+                                            <p class="text-[#586069] text-xs">at 02:15 AM</p>
+                                        </td>
+                                        <td class="p-4 align-top text-right">
+                                            <div
+                                                class="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    class="p-1.5 rounded text-green-500 hover:bg-green-500/10 transition-colors"
+                                                    title="Not Spam (Approve)">
+                                                    <span
+                                                        class="material-symbols-outlined text-[20px]">check_circle</span>
+                                                </button>
+                                                <button
+                                                    class="p-1.5 rounded text-[#9dabb9] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                                                    title="Delete Permanently">
+                                                    <span
+                                                        class="material-symbols-outlined text-[20px]">delete_forever</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr class="hover:bg-[#1f2937] transition-colors group">
+                                        <td class="p-4 align-top pt-5">
+                                            <input
+                                                class="rounded border-border-dark bg-[#283039] text-primary focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                                                type="checkbox" />
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <div class="flex items-start gap-3">
+                                                <div
+                                                    class="size-10 rounded-full bg-indigo-500 flex items-center justify-center text-white font-bold text-sm">
+                                                    MK</div>
+                                                <div class="flex flex-col">
+                                                    <span class="text-white font-bold text-sm">Mike K.</span>
+                                                    <a class="text-[#9dabb9] text-xs hover:text-primary transition-colors"
+                                                        href="mailto:mike@dev.io">mike@dev.io</a>
+                                                    <span
+                                                        class="text-[#586069] text-[10px] mt-1 font-mono">172.16.0.22</span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <p class="text-[#d1d5db] text-sm leading-relaxed mb-2">Can we get a
+                                                follow-up article on how this integrates with Istio? That would be super
+                                                helpful for our mesh setup.</p>
+                                            <div class="flex items-center gap-2">
+                                                <span
+                                                    class="inline-flex items-center gap-1 bg-green-500/10 text-green-500 text-[10px] font-bold px-2 py-0.5 rounded border border-green-500/20">
+                                                    <span class="material-symbols-outlined text-[12px]">check</span>
+                                                    Approved
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <a class="text-primary hover:text-primary/80 text-sm font-medium hover:underline"
+                                                href="#">Mastering Kubernetes Network Policies</a>
+                                        </td>
+                                        <td class="p-4 align-top">
+                                            <span class="text-[#9dabb9] text-sm">Oct 22, 2023</span>
+                                            <p class="text-[#586069] text-xs">at 09:30 PM</p>
+                                        </td>
+                                        <td class="p-4 align-top text-right">
+                                            <div
+                                                class="flex items-center justify-end gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    class="p-1.5 rounded text-orange-400 hover:bg-orange-400/10 transition-colors"
+                                                    title="Unapprove">
+                                                    <span class="material-symbols-outlined text-[20px]">close</span>
+                                                </button>
+                                                <button
+                                                    class="p-1.5 rounded text-[#9dabb9] hover:text-primary hover:bg-primary/10 transition-colors"
+                                                    title="Reply">
+                                                    <span class="material-symbols-outlined text-[20px]">reply</span>
+                                                </button>
+                                                <button
+                                                    class="p-1.5 rounded text-[#9dabb9] hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                                                    title="Delete">
+                                                    <span class="material-symbols-outlined text-[20px]">delete</span>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="bg-[#111418] border-t border-border-dark p-4 flex items-center justify-between">
+                            <span class="text-sm text-[#9dabb9]">Showing <span class="text-white font-medium">1-4</span>
+                                of <span class="text-white font-medium">1,482</span> comments</span>
+                            <div class="flex items-center gap-2">
+                                <button
+                                    class="px-3 py-1 rounded-lg border border-border-dark text-[#9dabb9] hover:text-white hover:bg-[#283039] disabled:opacity-50 transition-colors text-sm"
+                                    disabled="">Previous</button>
+                                <button
+                                    class="px-3 py-1 rounded-lg border border-border-dark text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors text-sm">Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>

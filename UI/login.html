@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DevOps Admin Login</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white min-h-screen flex flex-col relative overflow-hidden">
+    <!-- Background Decoration -->
+    <div class="absolute inset-0 z-0 opacity-40 dark:opacity-20 pointer-events-none"
+        data-alt="Subtle dot pattern background for texture"
+        style="background-image: radial-gradient(#137fec 0.5px, transparent 0.5px); background-size: 24px 24px;">
+    </div>
+    <!-- Main Layout Container -->
+    <div class="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+        <!-- Login Card -->
+        <div
+            class="w-full max-w-[480px] bg-white dark:bg-[#1a232e] rounded-xl shadow-lg border border-[#dbe0e6] dark:border-gray-700 overflow-hidden">
+            <!-- Header Section -->
+            <div class="flex flex-col items-center pt-10 pb-4 px-8 text-center">
+                <div class="h-16 w-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                    <span class="material-symbols-outlined text-primary text-4xl">terminal</span>
+                </div>
+                <h1 class="text-[#111418] dark:text-white tracking-tight text-[28px] font-bold leading-tight">
+                    DevOps Admin Portal
+                </h1>
+                <p class="text-[#617589] dark:text-gray-400 text-base font-normal leading-normal pt-2">
+                    Please enter your details to access the dashboard.
+                </p>
+            </div>
+            <!-- Form Section -->
+            <div class="px-8 pb-10">
+                <form class="flex flex-col gap-5">
+                    <!-- Email Input -->
+                    <div class="flex flex-col gap-2">
+                        <label class="text-[#111418] dark:text-gray-200 text-sm font-medium leading-normal">
+                            Email Address
+                        </label>
+                        <input
+                            class="form-input flex w-full resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-[#1a232e] focus:border-primary h-12 placeholder:text-[#617589] px-4 text-base font-normal leading-normal transition-all"
+                            placeholder="admin@devopsblog.com" type="email" />
+                    </div>
+                    <!-- Password Input -->
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-center">
+                            <label class="text-[#111418] dark:text-gray-200 text-sm font-medium leading-normal">
+                                Password
+                            </label>
+                        </div>
+                        <div class="relative flex w-full items-center rounded-lg">
+                            <input
+                                class="form-input flex w-full resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-[#dbe0e6] dark:border-gray-600 bg-white dark:bg-[#1a232e] focus:border-primary h-12 placeholder:text-[#617589] px-4 pr-12 text-base font-normal leading-normal transition-all"
+                                placeholder="Enter your password" type="password" />
+                            <div
+                                class="absolute right-0 top-0 bottom-0 flex items-center justify-center pr-4 cursor-pointer text-[#617589] hover:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-[20px]">visibility</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <a class="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                                href="#">
+                                Forgot password?
+                            </a>
+                        </div>
+                    </div>
+                    <!-- Submit Button -->
+                    <div class="pt-2">
+                        <button
+                            class="flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-5 bg-primary hover:bg-blue-600 text-white text-base font-bold leading-normal tracking-[0.015em] transition-colors shadow-md shadow-blue-500/20">
+                            <span class="truncate">Sign In</span>
+                        </button>
+                    </div>
+                </form>
+                <!-- Footer/Copyright -->
+                <div class="mt-8 text-center">
+                    <p class="text-xs text-[#617589] dark:text-gray-500">
+                        © 2023 DevOps Blog. All rights reserved.
+                    </p>
+                </div>
+            </div>
+            <!-- Decorative Bottom Bar -->
+            <div class="h-1.5 w-full bg-gradient-to-r from-blue-400 via-primary to-blue-600"></div>
+        </div>
+        <!-- Additional Links -->
+        <div class="mt-6 text-center">
+            <a class="text-sm text-[#617589] hover:text-[#111418] dark:text-gray-400 dark:hover:text-white transition-colors flex items-center gap-1"
+                href="#">
+                <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+                Return to Blog
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

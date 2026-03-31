@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DevOps Daily - Blog Homepage</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Material Symbols -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- Theme Configuration -->
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-dark": "#0b63c1",
+                        "background-light": "#f8fafc", // Slightly cooler gray/white
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e293b",
+                        "text-main": "#111418",
+                        "text-sub": "#617589",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.375rem", // rounded-md (~6px)
+                        "lg": "0.5rem",       // rounded-lg (~8px)
+                        "xl": "0.75rem",      // rounded-xl (~12px)
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-text-main dark:text-white transition-colors duration-200">
+    <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+        <!-- Top Navigation Bar -->
+        <header
+            class="sticky top-0 z-50 bg-surface-light dark:bg-surface-dark border-b border-gray-200 dark:border-gray-800 shadow-sm">
+            <div class="layout-container flex justify-center w-full">
+                <div class="flex max-w-[1280px] w-full items-center justify-between px-4 py-3 md:px-10">
+                    <!-- Logo & Brand -->
+                    <div class="flex items-center gap-8">
+                        <a class="flex items-center gap-3 text-text-main dark:text-white group" href="#">
+                            <div class="size-8 text-primary">
+                                <span class="material-symbols-outlined !text-[32px]">cloud_circle</span>
+                            </div>
+                            <h2
+                                class="text-xl font-bold leading-tight tracking-[-0.015em] group-hover:text-primary transition-colors">
+                                DevOps Daily</h2>
+                        </a>
+                        <!-- Desktop Nav -->
+                        <nav class="hidden md:flex items-center gap-6 lg:gap-8">
+                            <a class="text-sm font-medium hover:text-primary transition-colors dark:text-gray-300"
+                                href="#">Articles</a>
+                            <a class="text-sm font-medium hover:text-primary transition-colors dark:text-gray-300"
+                                href="#">Tutorials</a>
+                            <a class="text-sm font-medium hover:text-primary transition-colors dark:text-gray-300"
+                                href="#">Tools</a>
+                            <a class="text-sm font-medium hover:text-primary transition-colors dark:text-gray-300"
+                                href="#">About</a>
+                        </nav>
+                    </div>
+                    <!-- Search & Subscribe -->
+                    <div class="flex flex-1 justify-end gap-4 items-center">
+                        <label class="hidden sm:flex flex-col min-w-40 h-10 max-w-64 relative group">
+                            <div
+                                class="flex w-full flex-1 items-center rounded-lg bg-background-light dark:bg-background-dark border border-transparent group-focus-within:border-primary group-focus-within:ring-2 group-focus-within:ring-primary/20 transition-all overflow-hidden">
+                                <div class="pl-3 pr-2 text-text-sub flex items-center justify-center">
+                                    <span class="material-symbols-outlined !text-[20px]">search</span>
+                                </div>
+                                <input
+                                    class="flex w-full flex-1 bg-transparent border-none focus:ring-0 text-sm font-normal text-text-main dark:text-white placeholder:text-text-sub h-full px-0"
+                                    placeholder="Search..." />
+                            </div>
+                        </label>
+                        <button
+                            class="flex items-center justify-center rounded-lg h-10 px-5 bg-primary hover:bg-primary-dark text-white text-sm font-bold shadow-md shadow-primary/20 transition-all active:scale-95">
+                            Subscribe
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- Main Content Wrapper -->
+        <main class="flex flex-1 flex-col items-center w-full px-4 md:px-10 py-6 md:py-10">
+            <div class="w-full max-w-[1280px] flex flex-col gap-8">
+                <!-- Hero Section -->
+                <section class="@container w-full">
+                    <div
+                        class="flex flex-col-reverse md:flex-row gap-6 md:gap-10 items-center bg-surface-light dark:bg-surface-dark rounded-2xl p-6 md:p-8 lg:p-10 border border-gray-100 dark:border-gray-800 shadow-sm">
+                        <!-- Text Content -->
+                        <div class="flex flex-col gap-4 md:w-1/2 items-start justify-center">
+                            <div
+                                class="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary uppercase tracking-wide">
+                                <span class="material-symbols-outlined !text-[16px]">verified</span>
+                                Featured Article
+                            </div>
+                            <h1
+                                class="text-3xl md:text-4xl lg:text-5xl font-black text-text-main dark:text-white leading-tight tracking-[-0.033em]">
+                                Mastering Kubernetes: A Guide for 2024
+                            </h1>
+                            <p class="text-text-sub dark:text-gray-400 text-base md:text-lg leading-relaxed">
+                                Learn the orchestration secrets that will scale your infrastructure efficiently and
+                                reliably. We dive deep into new scheduling algorithms and security patterns.
+                            </p>
+                            <div class="flex items-center gap-4 pt-2">
+                                <button
+                                    class="flex items-center justify-center rounded-lg h-12 px-6 bg-primary hover:bg-primary-dark text-white text-base font-bold shadow-lg shadow-primary/30 transition-all hover:-translate-y-0.5">
+                                    Read Article
+                                </button>
+                                <span class="text-sm text-text-sub">8 min read</span>
+                            </div>
+                        </div>
+                        <!-- Image -->
+                        <div
+                            class="w-full md:w-1/2 aspect-video md:aspect-[4/3] lg:aspect-video rounded-xl overflow-hidden shadow-lg">
+                            <div class="w-full h-full bg-cover bg-center hover:scale-105 transition-transform duration-700"
+                                data-alt="Futuristic blue data center visualization with abstract glowing kubernetes wheel logo"
+                                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCSD2g46KGqb9cGeS82Ec7BfIxg_KbzsZai-Dqyp-kXF22UR6X4yO0_enwCDCa6jSILQkNRhrO-qbNfP28DSjYc3R-LPS8-G-L8OGHYObrLWkSLfIiiV9yuXcIe7RlEshs58ng5Wca4SMVAxh_1KNrYC5g9xvgBqPF7DnBymxGSne4D6OEwRIOQbNEoCDnm6rRwENW4otkn5gG2aladZ8NgWhva1deiWykR5JBCyTbXzvA6UWwzb2W30j-hur9RiZ5z9FuU2mx2CaH1");'>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                <!-- Category Chips (Filters) -->
+                <section class="flex flex-wrap gap-3 py-2 items-center">
+                    <span class="text-sm font-semibold text-text-sub mr-2">Topics:</span>
+                    <!-- Active Chip -->
+                    <button
+                        class="flex h-9 items-center justify-center px-4 rounded-full bg-primary text-white text-sm font-medium shadow-sm transition-transform active:scale-95">
+                        All
+                    </button>
+                    <!-- Inactive Chips -->
+                    <button
+                        class="flex h-9 items-center justify-center px-4 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-main dark:text-gray-300 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
+                        CI/CD
+                    </button>
+                    <button
+                        class="flex h-9 items-center justify-center px-4 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-main dark:text-gray-300 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
+                        Kubernetes
+                    </button>
+                    <button
+                        class="flex h-9 items-center justify-center px-4 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-main dark:text-gray-300 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
+                        Cloud Architecture
+                    </button>
+                    <button
+                        class="flex h-9 items-center justify-center px-4 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-main dark:text-gray-300 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
+                        Automation
+                    </button>
+                    <button
+                        class="flex h-9 items-center justify-center px-4 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-main dark:text-gray-300 text-sm font-medium hover:border-primary hover:text-primary transition-colors">
+                        Security
+                    </button>
+                </section>
+                <!-- Content Grid Area -->
+                <div class="flex flex-col lg:flex-row gap-8">
+                    <!-- Main Articles Grid -->
+                    <div class="flex-1">
+                        <!-- Section Header -->
+                        <div class="flex items-center justify-between pb-6">
+                            <h2 class="text-2xl font-bold text-text-main dark:text-white flex items-center gap-2">
+                                <span class="material-symbols-outlined text-primary">feed</span>
+                                Recent Posts
+                            </h2>
+                            <a class="text-sm font-medium text-primary hover:text-primary-dark hover:underline"
+                                href="#">View All</a>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                            <!-- Card 1 -->
+                            <article
+                                class="flex flex-col group bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
+                                <div class="w-full aspect-video bg-gray-200 relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                                        data-alt="Diagram of GitHub Actions pipeline workflow on a dark screen"
+                                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBorMuWccEsO-365PD-J3ATEJq8PhpyU_A3oQjRX1bRo89MR3qecATcyBlzJfrlU7gvmdUVmrvYoZRlf6caYDPyJTI8YWDOEd4vbt39NM6A2MJwk8h6OMS07FoiPiz6xzq35_PXPXaXD6eAy03p1nFxYGlKmDP7fso1x1UfSYLyUWrph75ulp8rbWi9phwZ2VoNLu9jQOiF1sC8JZIsOQBa-nGWDa1FfBFjqjyLJ-h0MXOsHWMMMnqDS_hVJ1PAU7YjWx9UAPPG7u8c");'>
+                                    </div>
+                                    <div
+                                        class="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold text-primary">
+                                        CI/CD
+                                    </div>
+                                </div>
+                                <div class="p-5 flex flex-col gap-3 flex-1">
+                                    <h3
+                                        class="text-lg font-bold text-text-main dark:text-white leading-snug group-hover:text-primary transition-colors">
+                                        Automating your pipeline with GitHub Actions
+                                    </h3>
+                                    <p class="text-sm text-text-sub dark:text-gray-400 line-clamp-2">
+                                        Discover how to reduce deployment time by 50% using matrix builds and reusable
+                                        workflows.
+                                    </p>
+                                    <div class="mt-auto pt-2 flex items-center gap-2 text-xs text-text-sub font-medium">
+                                        <span>5 min read</span>
+                                        <span class="size-1 rounded-full bg-gray-300"></span>
+                                        <span>Oct 24, 2023</span>
+                                    </div>
+                                </div>
+                            </article>
+                            <!-- Card 2 -->
+                            <article
+                                class="flex flex-col group bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
+                                <div class="w-full aspect-video bg-gray-200 relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                                        data-alt="Comparison chart of Terraform vs Pulumi code syntax"
+                                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA4F9iNe06dKe-tVFawe2CIN6OxPhdjc5hLC2yraMyC1iRajPReJ-w2L0Cg1Q6Jj750I4wflumZtNKvynGBxxfsU4JQ4dC4kkqwmlvRh02Ub4uYttxxrg862hfHqYplJY9ob6bcq8P19AIcdiTpBKaI6tbzipU52-Gbo8UoDcXLvt2q6EFZkHpCwLPGJZiKIErdHj4x_hCq3x6OWh-QmEHJwu-wfrq0Z3lF-1QUScyl4fp3_qwOD5uwzRLSNXKEYPlJ5j1ShULLtSRX");'>
+                                    </div>
+                                    <div
+                                        class="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold text-primary">
+                                        IaC
+                                    </div>
+                                </div>
+                                <div class="p-5 flex flex-col gap-3 flex-1">
+                                    <h3
+                                        class="text-lg font-bold text-text-main dark:text-white leading-snug group-hover:text-primary transition-colors">
+                                        Terraform vs. Pulumi: What to choose?
+                                    </h3>
+                                    <p class="text-sm text-text-sub dark:text-gray-400 line-clamp-2">
+                                        An unbiased look at the two giants of Infrastructure as Code. We compare state
+                                        management and language flexibility.
+                                    </p>
+                                    <div class="mt-auto pt-2 flex items-center gap-2 text-xs text-text-sub font-medium">
+                                        <span>7 min read</span>
+                                        <span class="size-1 rounded-full bg-gray-300"></span>
+                                        <span>Oct 22, 2023</span>
+                                    </div>
+                                </div>
+                            </article>
+                            <!-- Card 3 -->
+                            <article
+                                class="flex flex-col group bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
+                                <div class="w-full aspect-video bg-gray-200 relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                                        data-alt="Dashboard interface showing server monitoring graphs"
+                                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAgxiiSONy7fUaMxtViA2bwq_WV0xaYU5j6g5fB8WYQ8bMJjPsmrURJdBNKOES74nL4kf7I6R00IhqvOCFiP8UbhRFJqo_vYdEGd_Ngg3Bw4oEKTaMTzLJIG8FPbVltawq3q_Bo0vGby5pjwRNXt6vA-mkpDSQhObJ0WB8LG6qTHL-dHYMizuSNjUaMJZtj3HEnxEJzMfwDbtfpQh4qapC9I-GYy2IuK2UFVsacdT19O9sFXeatn0m6OVmVHrPuslzJ4AZLpWDsTzbv");'>
+                                    </div>
+                                    <div
+                                        class="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold text-primary">
+                                        Observability
+                                    </div>
+                                </div>
+                                <div class="p-5 flex flex-col gap-3 flex-1">
+                                    <h3
+                                        class="text-lg font-bold text-text-main dark:text-white leading-snug group-hover:text-primary transition-colors">
+                                        Top 5 Monitoring Tools for SREs
+                                    </h3>
+                                    <p class="text-sm text-text-sub dark:text-gray-400 line-clamp-2">
+                                        Beyond Prometheus: Exploring the next generation of observability platforms for
+                                        high-scale systems.
+                                    </p>
+                                    <div class="mt-auto pt-2 flex items-center gap-2 text-xs text-text-sub font-medium">
+                                        <span>4 min read</span>
+                                        <span class="size-1 rounded-full bg-gray-300"></span>
+                                        <span>Oct 20, 2023</span>
+                                    </div>
+                                </div>
+                            </article>
+                            <!-- Card 4 -->
+                            <article
+                                class="flex flex-col group bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
+                                <div class="w-full aspect-video bg-gray-200 relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                                        data-alt="Lock icon overlaid on binary code background"
+                                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDbFges7BUsPGve6Xv_EhG2O984geMaKzrf5qECqixxR5c5_f89wn1iVARgC7EY6vXGtY41fqTCwwPt8e_DwBDLUVR3KHm5uupVIX5DhBIod01RI-2WMNsKLlRC7PTVuD8oevbLGahiNhXj0NxgSSAsXPmImm7rhNzu3uFf4RDuq3stZ9fMq2RsYClZ2o3kIr6zzIz6IMXlFGwAB_QQSe2afE0ALPgt_M6saXO9KajSgyEOx77RcCEYAD8QLvn3GIKevDvxTswqTmzz");'>
+                                    </div>
+                                    <div
+                                        class="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold text-primary">
+                                        Security
+                                    </div>
+                                </div>
+                                <div class="p-5 flex flex-col gap-3 flex-1">
+                                    <h3
+                                        class="text-lg font-bold text-text-main dark:text-white leading-snug group-hover:text-primary transition-colors">
+                                        Securing Your Docker Containers
+                                    </h3>
+                                    <p class="text-sm text-text-sub dark:text-gray-400 line-clamp-2">
+                                        Best practices for image scanning, runtime security, and minimizing your attack
+                                        surface.
+                                    </p>
+                                    <div class="mt-auto pt-2 flex items-center gap-2 text-xs text-text-sub font-medium">
+                                        <span>6 min read</span>
+                                        <span class="size-1 rounded-full bg-gray-300"></span>
+                                        <span>Oct 18, 2023</span>
+                                    </div>
+                                </div>
+                            </article>
+                            <!-- Card 5 -->
+                            <article
+                                class="flex flex-col group bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
+                                <div class="w-full aspect-video bg-gray-200 relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                                        data-alt="Cloud computing network concept illustration"
+                                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCKj0jxge0pWMzD3SWtm2iUSvp3WiOW9ctEsvc7-J-nkBVJ6aOi3JjQuhLsE3dT7RVjO5fPmLSQODGQNS8xcgn8whjQLtVpV_ZyAdUeG1Us7dJERiPyD1gULx00IKXw7TqTGzr4SuMNVoh9df2KwAh-TNGDnjwVnrSPvPlAuou-Lu7E_QofXeKmFavQYEPCiOJWn2q7T2p2BL8NSlvkRIA8mKBkap2tGHPJmvvrvBT5AAcdnqlEYtOjJTXnlpzeVj593KyZjNwaoPQg");'>
+                                    </div>
+                                    <div
+                                        class="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold text-primary">
+                                        Cloud
+                                    </div>
+                                </div>
+                                <div class="p-5 flex flex-col gap-3 flex-1">
+                                    <h3
+                                        class="text-lg font-bold text-text-main dark:text-white leading-snug group-hover:text-primary transition-colors">
+                                        Multi-Cloud Strategy: A Reality Check
+                                    </h3>
+                                    <p class="text-sm text-text-sub dark:text-gray-400 line-clamp-2">
+                                        Is multi-cloud worth the complexity? We analyze the cost and operational
+                                        overhead for 2024.
+                                    </p>
+                                    <div class="mt-auto pt-2 flex items-center gap-2 text-xs text-text-sub font-medium">
+                                        <span>10 min read</span>
+                                        <span class="size-1 rounded-full bg-gray-300"></span>
+                                        <span>Oct 15, 2023</span>
+                                    </div>
+                                </div>
+                            </article>
+                            <!-- Card 6 -->
+                            <article
+                                class="flex flex-col group bg-surface-light dark:bg-surface-dark rounded-xl border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm hover:shadow-lg hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
+                                <div class="w-full aspect-video bg-gray-200 relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
+                                        data-alt="Python code on a laptop screen"
+                                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA3IokKqazAADzH39LNESnkYxiwOfWAVK9Wvz59BWu_4cFC-3fEepOyBD0pmBRoNNJLuWH6Q--lgkxm1SWsQY_WAeVFQYoSNPdQ5CJYL9HFNunb5PzzS2yyat1uL2Kw90SIXHcSZQi3hVKGLvXN0TMfw0ZiWB1ehHMTBmMfR5T8AxaR2HjQyUwCDk2HSw5v9clGfz6EESA-FJfiPAG29UB3pqV8dWOzCHz1LuzRv8Ccb8zxscbC5_xcL7tDto0RkS2bcipbWFYGpCvh");'>
+                                    </div>
+                                    <div
+                                        class="absolute top-3 left-3 bg-white/90 dark:bg-black/80 backdrop-blur-sm px-2 py-1 rounded text-xs font-bold text-primary">
+                                        Automation
+                                    </div>
+                                </div>
+                                <div class="p-5 flex flex-col gap-3 flex-1">
+                                    <h3
+                                        class="text-lg font-bold text-text-main dark:text-white leading-snug group-hover:text-primary transition-colors">
+                                        Python for DevOps: Essential Scripts
+                                    </h3>
+                                    <p class="text-sm text-text-sub dark:text-gray-400 line-clamp-2">
+                                        5 Python scripts every DevOps engineer should have in their toolkit for daily
+                                        automation tasks.
+                                    </p>
+                                    <div class="mt-auto pt-2 flex items-center gap-2 text-xs text-text-sub font-medium">
+                                        <span>6 min read</span>
+                                        <span class="size-1 rounded-full bg-gray-300"></span>
+                                        <span>Oct 12, 2023</span>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                        <!-- Load More -->
+                        <div class="flex justify-center pt-10">
+                            <button
+                                class="flex items-center gap-2 px-6 py-3 rounded-lg border border-gray-300 dark:border-gray-700 text-text-main dark:text-white font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                                Load More Articles
+                                <span class="material-symbols-outlined !text-[20px]">expand_more</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Sidebar (Desktop Only) -->
+                    <aside class="hidden lg:flex flex-col w-80 shrink-0 gap-8">
+                        <!-- Popular Tools Widget -->
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark rounded-xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm sticky top-24">
+                            <h3 class="text-lg font-bold mb-4 text-text-main dark:text-white">Trending Tools</h3>
+                            <div class="flex flex-col gap-4">
+                                <a class="flex items-center gap-3 group" href="#">
+                                    <div
+                                        class="size-10 rounded bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center text-primary font-bold">
+                                        K8</div>
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-sm font-semibold text-text-main dark:text-white group-hover:text-primary">Kubernetes</span>
+                                        <span class="text-xs text-text-sub">Orchestration</span>
+                                    </div>
+                                </a>
+                                <div class="h-px bg-gray-100 dark:bg-gray-800 w-full"></div>
+                                <a class="flex items-center gap-3 group" href="#">
+                                    <div
+                                        class="size-10 rounded bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-orange-600 font-bold">
+                                        Gi</div>
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-sm font-semibold text-text-main dark:text-white group-hover:text-primary">GitLab</span>
+                                        <span class="text-xs text-text-sub">DevOps Platform</span>
+                                    </div>
+                                </a>
+                                <div class="h-px bg-gray-100 dark:bg-gray-800 w-full"></div>
+                                <a class="flex items-center gap-3 group" href="#">
+                                    <div
+                                        class="size-10 rounded bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center text-purple-600 font-bold">
+                                        Tf</div>
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-sm font-semibold text-text-main dark:text-white group-hover:text-primary">Terraform</span>
+                                        <span class="text-xs text-text-sub">IaC</span>
+                                    </div>
+                                </a>
+                                <div class="h-px bg-gray-100 dark:bg-gray-800 w-full"></div>
+                                <a class="flex items-center gap-3 group" href="#">
+                                    <div
+                                        class="size-10 rounded bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 font-bold">
+                                        An</div>
+                                    <div class="flex flex-col">
+                                        <span
+                                            class="text-sm font-semibold text-text-main dark:text-white group-hover:text-primary">Ansible</span>
+                                        <span class="text-xs text-text-sub">Automation</span>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                        <!-- Ad / Promo Placeholder -->
+                        <div class="bg-primary/5 rounded-xl p-6 border border-primary/10 text-center">
+                            <span class="material-symbols-outlined text-primary !text-4xl mb-3">rocket_launch</span>
+                            <h3 class="text-base font-bold text-text-main dark:text-white mb-2">Deploy Faster</h3>
+                            <p class="text-sm text-text-sub mb-4">Try our new cloud benchmark tool for free.</p>
+                            <button
+                                class="w-full py-2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-primary font-bold text-sm rounded hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">Start
+                                Now</button>
+                        </div>
+                    </aside>
+                </div>
+                <!-- Newsletter Section -->
+                <section
+                    class="w-full mt-8 rounded-2xl bg-gradient-to-r from-primary to-blue-500 overflow-hidden relative shadow-lg">
+                    <div class="absolute inset-0 opacity-10" data-alt="Abstract geometric pattern background"
+                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCuXF0VgbeGaIe_yKVopmVCCEBTsq8p0anyE10DE-GLlyW7nOzfRZD0eG-o1lIqe4YMwf5wnW4fo8PqwABfl9Rp_AnM0tXxjvgyR38MJW7qpK1Ax2VgTEQldvugZaMd-Q7j6TsI2I2DBEqBkrDM_omVuu14mGs9mXYf_r5fTj3APZtAg3pfogweKJIfRXLFhzOMd6ifGx1gsHyO9g9Vzcvks5AW7BnarcN87Ggmsfvz3wI4fRarS0SmHXUFmtamr6zlU-zEzHnvFoTa");'>
+                    </div>
+                    <div class="relative flex flex-col md:flex-row items-center justify-between p-8 md:p-12 gap-6">
+                        <div class="flex flex-col gap-2 md:w-1/2 text-center md:text-left">
+                            <h2 class="text-2xl md:text-3xl font-black text-white tracking-tight">Stay in the loop</h2>
+                            <p class="text-blue-100 text-sm md:text-base">Join 10,000+ DevOps engineers. Get weekly
+                                tips, tutorials, and tools delivered to your inbox.</p>
+                        </div>
+                        <div class="w-full md:w-auto flex-1 max-w-md">
+                            <form class="flex flex-col sm:flex-row gap-2">
+                                <input
+                                    class="flex-1 px-4 py-3 rounded-lg border-0 focus:ring-2 focus:ring-white/50 text-text-main outline-none"
+                                    placeholder="Enter your email" required="" type="email" />
+                                <button
+                                    class="px-6 py-3 bg-surface-dark text-white font-bold rounded-lg hover:bg-gray-900 transition-colors shadow-lg"
+                                    type="submit">
+                                    Subscribe
+                                </button>
+                            </form>
+                            <p class="text-xs text-blue-100 mt-2 text-center md:text-left opacity-80">No spam,
+                                unsubscribe anytime.</p>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+        <!-- Footer -->
+        <footer
+            class="w-full bg-surface-light dark:bg-surface-dark border-t border-gray-200 dark:border-gray-800 mt-10">
+            <div class="layout-container flex justify-center w-full">
+                <div class="flex flex-col max-w-[1280px] w-full px-4 py-10 md:px-10">
+                    <div class="flex flex-col md:flex-row justify-between items-start gap-10">
+                        <div class="flex flex-col gap-4 max-w-xs">
+                            <div class="flex items-center gap-2 text-text-main dark:text-white">
+                                <div class="size-6 text-primary">
+                                    <span class="material-symbols-outlined">cloud_circle</span>
+                                </div>
+                                <h3 class="font-bold text-lg">DevOps Daily</h3>
+                            </div>
+                            <p class="text-sm text-text-sub">
+                                The leading resource for DevOps professionals, SREs, and Platform Engineers. Building
+                                the future of infrastructure together.
+                            </p>
+                            <div class="flex gap-4 mt-2">
+                                <a class="text-text-sub hover:text-primary transition-colors" href="#"><span
+                                        class="material-symbols-outlined">public</span></a> <!-- social placeholder -->
+                                <a class="text-text-sub hover:text-primary transition-colors" href="#"><span
+                                        class="material-symbols-outlined">alternate_email</span></a>
+                                <a class="text-text-sub hover:text-primary transition-colors" href="#"><span
+                                        class="material-symbols-outlined">rss_feed</span></a>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-12 md:gap-20">
+                            <div class="flex flex-col gap-3">
+                                <h4 class="font-bold text-text-main dark:text-white text-sm">Content</h4>
+                                <a class="text-sm text-text-sub hover:text-primary" href="#">Articles</a>
+                                <a class="text-sm text-text-sub hover:text-primary" href="#">Tutorials</a>
+                                <a class="text-sm text-text-sub hover:text-primary" href="#">Case Studies</a>
+                                <a class="text-sm text-text-sub hover:text-primary" href="#">Videos</a>
+                            </div>
+                            <div class="flex flex-col gap-3">
+                                <h4 class="font-bold text-text-main dark:text-white text-sm">Company</h4>
+                                <a class="text-sm text-text-sub hover:text-primary" href="#">About Us</a>
+                                <a class="text-sm text-text-sub hover:text-primary" href="#">Careers</a>
+                                <a class="text-sm text-text-sub hover:text-primary" href="#">Contact</a>
+                                <a class="text-sm text-text-sub hover:text-primary" href="#">Privacy Policy</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="h-px bg-gray-200 dark:bg-gray-800 w-full my-8"></div>
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-text-sub">
+                        <p>© 2024 DevOps Daily. All rights reserved.</p>
+                        <p class="flex items-center gap-1">Made with <span
+                                class="material-symbols-outlined !text-[16px] text-red-500">favorite</span> for the
+                            community</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+
+</html>

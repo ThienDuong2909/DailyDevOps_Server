@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Admin: Role Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-dark": "#0f65bd",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e2329",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+<style type="text/tailwindcss">
+        @layer utilities {
+            .no-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+            .no-scrollbar {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white overflow-hidden">
+<div class="flex h-screen w-full">
+<aside class="w-20 lg:w-64 flex-shrink-0 bg-surface-light dark:bg-[#111418] border-r border-[#e5e7eb] dark:border-gray-800 flex flex-col transition-all duration-300 z-20">
+<div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-[#e5e7eb] dark:border-gray-800">
+<div class="size-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary" style="font-size: 24px;">terminal</span>
+</div>
+<span class="ml-3 font-bold text-lg hidden lg:block text-[#111418] dark:text-white">DevOps<span class="text-primary">Admin</span></span>
+</div>
+<nav class="flex-1 overflow-y-auto py-6 flex flex-col gap-2 px-3">
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] hover:text-[#111418] dark:hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">dashboard</span>
+<span class="font-medium hidden lg:block">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] hover:text-[#111418] dark:hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">article</span>
+<span class="font-medium hidden lg:block">Content</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] hover:text-[#111418] dark:hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">monitoring</span>
+<span class="font-medium hidden lg:block">Performance</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg bg-primary/10 text-primary dark:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined text-primary">group</span>
+<span class="font-medium hidden lg:block text-[#111418] dark:text-white">Users &amp; Roles</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] hover:text-[#111418] dark:hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">dns</span>
+<span class="font-medium hidden lg:block">System Health</span>
+</a>
+<div class="my-2 border-t border-[#e5e7eb] dark:border-gray-800"></div>
+<a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] hover:text-[#111418] dark:hover:text-white transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:text-primary">settings</span>
+<span class="font-medium hidden lg:block">Settings</span>
+</a>
+</nav>
+<div class="p-4 border-t border-[#e5e7eb] dark:border-gray-800">
+<div class="flex items-center gap-3">
+<div class="bg-center bg-no-repeat bg-cover rounded-full size-9 border border-[#e5e7eb] dark:border-gray-700 cursor-pointer" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuANDdNsjySkhVqiRY2cUpnA84RJJsui75RV3sJ18uJzofyK-P-Idv1o7YpcHquJ9IYZsrLf8lThPziLxmzuMrEJAhxv1xONrp2D8KQSLQCLFgMWQq3KicVqScUcpOJ3_CDC0a4NulIBBPOTZvN7dXzJRKRR_sFBl5ARedPMrG8C4ANNIFNEDEzFDXKCJ3iul3hYUVjlIy1RKHSSWji8QEbnAaPItknW1FiXtUHKyBaGH0iT2ZhK0Q-8vt5tYdIZpCY5ZG4EbdQkNujx");'></div>
+<div class="hidden lg:flex flex-col overflow-hidden">
+<span class="text-sm font-bold truncate dark:text-white">Admin User</span>
+<span class="text-xs text-[#617589] truncate">admin@devops.com</span>
+</div>
+</div>
+</div>
+</aside>
+<div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-background-light dark:bg-background-dark">
+<header class="h-16 bg-surface-light/90 dark:bg-[#111418]/90 backdrop-blur-md border-b border-[#e5e7eb] dark:border-gray-800 flex items-center justify-between px-6 lg:px-10 z-10 sticky top-0">
+<h1 class="text-xl font-bold text-[#111418] dark:text-white">Role Management</h1>
+<div class="flex items-center gap-4">
+<div class="hidden md:flex items-center bg-[#f0f2f4] dark:bg-[#222831] rounded-lg px-3 py-1.5 h-10 w-64 border border-transparent focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all">
+<span class="material-symbols-outlined text-[#617589]" style="font-size: 20px;">search</span>
+<input class="bg-transparent border-none text-sm ml-2 w-full focus:ring-0 placeholder-[#617589] text-[#111418] dark:text-white" placeholder="Search roles or users..."/>
+</div>
+<button class="size-10 flex items-center justify-center rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] transition-colors relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111418]"></span>
+</button>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto p-6 lg:p-8 no-scrollbar">
+<div class="max-w-[1600px] mx-auto flex flex-col gap-8">
+<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+<div>
+<h2 class="text-lg font-bold text-[#111418] dark:text-white">User Roles &amp; Permissions</h2>
+<p class="text-sm text-[#617589] mt-1">Manage access control across the DevOps platform</p>
+</div>
+<div class="flex gap-3">
+<button class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1e2329] border border-[#e5e7eb] dark:border-gray-700 rounded-lg text-sm font-medium text-[#111418] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm">
+<span class="material-symbols-outlined" style="font-size: 18px;">download</span>
+                            Export Audit Log
+                        </button>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg text-sm font-medium text-white transition-colors shadow-md shadow-primary/20">
+<span class="material-symbols-outlined" style="font-size: 18px;">add</span>
+                            Create New Role
+                        </button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-primary/20 dark:border-primary/20 ring-1 ring-primary/10 shadow-sm flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
+<div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+<div class="p-6 flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<div class="size-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined">admin_panel_settings</span>
+</div>
+<div class="flex -space-x-2">
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-200" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDBz7dMwD29ui8gswGzDobgMxpEaLyaDL_GQMUmpPQBTSl_DlvokJg3Nl7YTRaAu12HUcqumpNS9GPMCKV3BRzWQrJaidh3HFlw1v3hq4HGMIIuA8h_VcqMIGpJqD98C3zQQwU2VzFbPnbnCqPh8hycYZuW-EEDXhFmKF7sljiZO0Di52taSZMZBcwNsN3ODQtJHO1Ypg8Z5KAvCurJ_tziHKrt55h8Y9CgDw7xsshlS5J14r4vKQlAE9RVujkG_n-zZ_pfFXddXlOd"); background-size: cover;'></div>
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-200" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBqsj4ASNmW9FORsAe8MmQEnP8I3GKvzQpIszFa9SdQCroppvPh-qmbfmkI9b0J7Uh7Un2aoAJzkJHz9PibmIJz12JqJaUmdLUsRuhj7XrZBPE_X-M4MxiQB0cXZeRAxs0y2VpCw_7NXSgkG09177dRKCMRoG_opS165MZ7q3Dm5UHy3k4tepZRXKzQ6EknuaSLkl3d9s78hUXX_06v_GvQ1RYlr3t_3qvZwdLb6s7UbW524-K_KaI1Ltt4RJbLADelKdpRSida25xy"); background-size: cover;'></div>
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-100 flex items-center justify-center text-[10px] font-bold text-[#617589]">+2</div>
+</div>
+</div>
+<h3 class="text-lg font-bold text-[#111418] dark:text-white mb-1">Administrator</h3>
+<p class="text-xs text-[#617589] mb-4">Full access to all settings and user management.</p>
+<div class="mt-auto flex items-center justify-between pt-4 border-t border-[#f0f2f4] dark:border-gray-800">
+<span class="text-sm font-medium text-[#111418] dark:text-white">4 Users</span>
+<button class="text-primary hover:text-primary-dark text-sm font-medium">Edit Role</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
+<div class="absolute top-0 left-0 w-1 h-full bg-purple-500"></div>
+<div class="p-6 flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<div class="size-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-600">
+<span class="material-symbols-outlined">shield_person</span>
+</div>
+<div class="flex -space-x-2">
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-200" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDbZ1434nm6AEJTs3mUz02Mrsype1ExKmjDBTonZSUVU_IGoVEnG5ZNJZKOExsLABiV8S3aSRZqZUDGI4PJ2PsNHUoZiC0AXUow47fX9qHzPui_DQR4zW3BU0juVVKxD3VyKjBNSTxK7VFRi17NZeeayfA-CaDUUBd7g06En-tSh8Q7FiKY51CUoY35ZDXcOEv7NV2Wi9IIRwFVwlmTeMfl8-LIEthd0Lr2enf_-nKPW-1qhOL-K3-6k4wlFUNTMBCsXXfHjDFdLm9X"); background-size: cover;'></div>
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-200" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDAWFwkuZVPVCj5INF8Tw2JZBWxeID5kt4e8f1d2c3oqeeqmAVFJBwJEzUecgUziKtTt7uqjWBJasgyY7cV7Z7KBxnZonfS9kumFthqBcg19jE3WinqDmiMYjlx3k7OgpOoBtZEB5gwoIoIx6NsMhfOiEAacBOM60SdiLTwOjSZ7jeGKO-e5LMcInY0tF36TWgFk2gO1zzBhH0aUFX9swF_HpT4skjQ0yaLjJhgP0Ew45G-Kx2q0qQHoK9MEs-iHjI0axJoJN-ILTTa"); background-size: cover;'></div>
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-200" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCOIzvGM56mANaTA-hkG1zIucdok39YIts9lakIfTG5-gPQHGh4O8cTZrlcGnQDX5nHAwnJsZlLUVDrQi8HMyjMn_QkicIXuTcjRE5s50DBpd2MbbD6r5cGSzTBkOMzArJiEQcbX8A6Ipyq3DI6RWouCnyPUE2pX5Q2yhkzSAluweN9QDhIAi0XHpQpgwbz-chYD7daMRS8Bk7L6P0k652sFzBH_fX33ztEir06Q6ZRhvb_JjmNaG8h3OnZOUiq8u0Q8gkQnmDhu5gu"); background-size: cover;'></div>
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-100 flex items-center justify-center text-[10px] font-bold text-[#617589]">+5</div>
+</div>
+</div>
+<h3 class="text-lg font-bold text-[#111418] dark:text-white mb-1">Moderator</h3>
+<p class="text-xs text-[#617589] mb-4">Can manage content, comments, and user reports.</p>
+<div class="mt-auto flex items-center justify-between pt-4 border-t border-[#f0f2f4] dark:border-gray-800">
+<span class="text-sm font-medium text-[#111418] dark:text-white">8 Users</span>
+<button class="text-primary hover:text-primary-dark text-sm font-medium">Edit Role</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
+<div class="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
+<div class="p-6 flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<div class="size-10 rounded-lg bg-blue-400/10 flex items-center justify-center text-blue-500">
+<span class="material-symbols-outlined">edit_document</span>
+</div>
+<div class="flex -space-x-2">
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-200" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuC8KH83LXQFUs7bf8PBpdT4_-7Hk7nfwQPiSt5Fmhf5Ojw5tbX25wxikSRVXkJDhc5jynGLnKLm8YM7bo4DwUikkHjbq94oEYV07iK34CDNu-nMlU7nSfbKkUj_eugCTp5lNkLTbsvHrA9F-oeoSP8N14k-BbQT-3RnERTnyCmFkOSPsf8FzqbxT69BqFHiur7gVA1TuWpxE0mIb6LL1FqPaCTjJyZI_hsNPdEWtR6P6Fefqzv2caCaFjKnnEC5VCIZrSahGpF-z_0d"); background-size: cover;'></div>
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-200" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAumfdR7asMD6ptHiKH7yGyfruzXzq2-V1FioWErqL_uwufXyVS21iQm1T8UJrN1HYG12fIeoXCJrTNFOxOHNYHOq2xY44N4SQ4I79eQ9sgPi9IszP9zFYoF3PLN4Wd5bQGQm4iagA34nOXyaoLSlbYs3LwenD8CYRxIh9EHHH9FnBp6Z9GavnfT6e_NC_W49Z6zxJmAAk-aSd1uIFJKcd7NEPb-3K1Pu0QwaV-q0USXcoZKQcIvXqYg4NRu_QKt33VM8YzBof2I7xV"); background-size: cover;'></div>
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-100 flex items-center justify-center text-[10px] font-bold text-[#617589]">+12</div>
+</div>
+</div>
+<h3 class="text-lg font-bold text-[#111418] dark:text-white mb-1">Editor</h3>
+<p class="text-xs text-[#617589] mb-4">Create, edit and publish blog posts and media.</p>
+<div class="mt-auto flex items-center justify-between pt-4 border-t border-[#f0f2f4] dark:border-gray-800">
+<span class="text-sm font-medium text-[#111418] dark:text-white">14 Users</span>
+<button class="text-primary hover:text-primary-dark text-sm font-medium">Edit Role</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm flex flex-col relative overflow-hidden group hover:shadow-md transition-all">
+<div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>
+<div class="p-6 flex flex-col h-full">
+<div class="flex justify-between items-start mb-4">
+<div class="size-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-600">
+<span class="material-symbols-outlined">visibility</span>
+</div>
+<div class="flex -space-x-2">
+<div class="size-8 rounded-full border-2 border-white dark:border-[#1e2329] bg-gray-100 flex items-center justify-center text-xs font-bold text-[#617589]">856</div>
+</div>
+</div>
+<h3 class="text-lg font-bold text-[#111418] dark:text-white mb-1">Viewer</h3>
+<p class="text-xs text-[#617589] mb-4">Read-only access to published content.</p>
+<div class="mt-auto flex items-center justify-between pt-4 border-t border-[#f0f2f4] dark:border-gray-800">
+<span class="text-sm font-medium text-[#111418] dark:text-white">856 Users</span>
+<button class="text-primary hover:text-primary-dark text-sm font-medium">Edit Role</button>
+</div>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full pb-6">
+<div class="lg:col-span-2 bg-surface-light dark:bg-surface-dark rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm overflow-hidden flex flex-col h-[600px]">
+<div class="p-5 border-b border-[#e5e7eb] dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-[#1e2329]">
+<div class="flex items-center gap-2">
+<h3 class="font-bold text-[#111418] dark:text-white">All Users</h3>
+<span class="bg-gray-200 dark:bg-gray-700 text-[#617589] dark:text-gray-300 text-xs px-2 py-0.5 rounded-full font-medium">882</span>
+</div>
+<div class="flex gap-2">
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-2">
+<span class="material-symbols-outlined text-gray-400" style="font-size: 18px;">filter_list</span>
+</span>
+<select class="pl-8 pr-8 py-1.5 text-xs bg-white dark:bg-[#111418] border border-[#e5e7eb] dark:border-gray-700 rounded-md text-[#111418] dark:text-white focus:ring-primary focus:border-primary">
+<option>All Roles</option>
+<option>Administrator</option>
+<option>Moderator</option>
+<option>Editor</option>
+<option>Viewer</option>
+</select>
+</div>
+</div>
+</div>
+<div class="overflow-auto flex-1 p-0">
+<table class="w-full text-left text-sm">
+<thead class="bg-[#f8f9fa] dark:bg-[#222831] text-[#617589] font-medium sticky top-0 z-10">
+<tr>
+<th class="px-5 py-3 font-medium">User</th>
+<th class="px-5 py-3 font-medium">Role</th>
+<th class="px-5 py-3 font-medium">Status</th>
+<th class="px-5 py-3 font-medium">Last Active</th>
+<th class="px-5 py-3 font-medium text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[#f0f2f4] dark:divide-gray-800 text-[#111418] dark:text-gray-300">
+<tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
+<td class="px-5 py-3">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-gray-200 bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBo4tWoLcSoqXUxBW8uZNd5ovAGPWC4bD6oVyIgoFGSW9zceRwokNjTJ4ixebB6Fu0BPQjYvM60JUGmIEjjf8XvsOG6UC0cQEaGAv9IVVYf5xV-EzSuXIwdQwKBJKDz7ECbctercDATvskWp1zm_sL1cZ5zZjUAbuLSCRYfxJihUQG910n_xbArMkMwsX7EELiPJM2OawhgNFdb5y2A7TaenLJNU7hFLocrYAmzDcYCIU8KEXemhL84Ohec3ZeE6KmFSKk63Op-ZcBt");'></div>
+<div>
+<div class="font-medium text-[#111418] dark:text-white">Sarah Jenkins</div>
+<div class="text-xs text-[#617589]">sarah.j@devops.com</div>
+</div>
+</div>
+</td>
+<td class="px-5 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 border border-blue-200 dark:border-blue-800">
+                                            Editor
+                                        </span>
+</td>
+<td class="px-5 py-3">
+<span class="inline-flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+<span class="size-1.5 rounded-full bg-green-500"></span>
+                                            Active
+                                        </span>
+</td>
+<td class="px-5 py-3 text-xs text-[#617589]">2 mins ago</td>
+<td class="px-5 py-3 text-right">
+<button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-[#617589] transition-colors">
+<span class="material-symbols-outlined" style="font-size: 18px;">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
+<td class="px-5 py-3">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-gray-200 bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAvXEjKxbPpNiemOeAwEz40Uxq-laIf7x8ombUw2nhvUZqvG8_FoEX-zOrzMKpUtFXQxM1b8Q-k-Pvg_e7x4afJO-qPhOD-ayJ03Donj-YMRcEoJYzh0MmKKux-xKdTADoeZoaM1xcEjHs5J0eQgRm8djEmdXXVePO1nKV36ZxeMF3jMW5UF64S3lWwQtvHnFFR655J2eLpAM9zd8nYPpJJhsVSUwj2TjEYl47fhlMlavna2vNudB2fGZ_KlJhGMyFhzCx6ZTTio59d");'></div>
+<div>
+<div class="font-medium text-[#111418] dark:text-white">Michael Chen</div>
+<div class="text-xs text-[#617589]">m.chen@devops.com</div>
+</div>
+</div>
+</td>
+<td class="px-5 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20">
+                                            Administrator
+                                        </span>
+</td>
+<td class="px-5 py-3">
+<span class="inline-flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+<span class="size-1.5 rounded-full bg-green-500"></span>
+                                            Active
+                                        </span>
+</td>
+<td class="px-5 py-3 text-xs text-[#617589]">1 hour ago</td>
+<td class="px-5 py-3 text-right">
+<button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-[#617589] transition-colors">
+<span class="material-symbols-outlined" style="font-size: 18px;">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
+<td class="px-5 py-3">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-gray-200 bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuD-hnoJ6UEjBcdGHSbdRAsOCfOsS4sn93zgxhF9KFRZcaAvjnyrniyTO4Y7UYW169K7C0WFP7BY2q58KdvA2jtJbrHPxcwUmSdk-dJ1GoNPVWtiWj6Yw4-i3_Z664mxyBVAuZA4EH6Y8JW0BQl1LhUHN1Go4GDgfwzJSeVsa8FlZTwvGkAotYatyBZzTQT1NLkc5kucJVUupHNtrSbjNiAk0vjVKlK8JswG058EpW4bxgFWd_VQrfMik3yG1LrrHEyTlMbOGCvshr0y");'></div>
+<div>
+<div class="font-medium text-[#111418] dark:text-white">Jessica Wong</div>
+<div class="text-xs text-[#617589]">jess.wong@devops.com</div>
+</div>
+</div>
+</td>
+<td class="px-5 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200 border border-purple-200 dark:border-purple-800">
+                                            Moderator
+                                        </span>
+</td>
+<td class="px-5 py-3">
+<span class="inline-flex items-center gap-1.5 text-xs text-[#617589]">
+<span class="size-1.5 rounded-full bg-gray-400"></span>
+                                            Offline
+                                        </span>
+</td>
+<td class="px-5 py-3 text-xs text-[#617589]">3 days ago</td>
+<td class="px-5 py-3 text-right">
+<button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-[#617589] transition-colors">
+<span class="material-symbols-outlined" style="font-size: 18px;">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
+<td class="px-5 py-3">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-gray-200 bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAkbsQHNg4BQ3p3HZfkNhYZlcXIAOu-1PwPuXYe_VQ4tdV58wNCVc2w_4bZYAtEDIhGdB2HCQ4M5BBThowwLB53HVHpDKOtyi0NeomncwIk_3CDQcRDp-wVAtjK0mwLMJJFpJAseK8GwSPtgLqQfDnE76d4xXduyr_Mzv6g5UTAH8PGU_suo2Wl_AmbrvtB4TSHTQ_rOgNEB2CBNi_HUCxKY_9u1gMNT01sRVtBc4NHJ4VecDeQYZA5ivtjCuvUoViq5GCfGINrlpZH");'></div>
+<div>
+<div class="font-medium text-[#111418] dark:text-white">David Miller</div>
+<div class="text-xs text-[#617589]">d.miller@devops.com</div>
+</div>
+</div>
+</td>
+<td class="px-5 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-600">
+                                            Viewer
+                                        </span>
+</td>
+<td class="px-5 py-3">
+<span class="inline-flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400">
+<span class="size-1.5 rounded-full bg-green-500"></span>
+                                            Active
+                                        </span>
+</td>
+<td class="px-5 py-3 text-xs text-[#617589]">Just now</td>
+<td class="px-5 py-3 text-right">
+<button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-[#617589] transition-colors">
+<span class="material-symbols-outlined" style="font-size: 18px;">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group">
+<td class="px-5 py-3">
+<div class="flex items-center gap-3">
+<div class="size-8 rounded-full bg-gray-200 bg-cover" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuApM8RKXwyfRlda4PVB8Apd40xdPfJ0yvXTW7w4_LWFX9300dc0lAO0D0J5oslLSbm5_LLw7gNTFRmXUK8XyxjXJTEjeBKFq_QiJCi91HLtbRnfIAV5Cukt9B9gvzcxXGVRLS2uKBnyVn1xKxEfZUx10ybS2FiKh_aq2_nEyAbtMbHCVB21ySCQCI2mWTHU_50DOxo4OXTYCZTDdO6HzT9f6hJsCaPoNZj66oxmH9GjCxJo44b-y-h4Ca4e7kcy3vBoDb4wQsykFbON");'></div>
+<div>
+<div class="font-medium text-[#111418] dark:text-white">Emily Blunt</div>
+<div class="text-xs text-[#617589]">e.blunt@devops.com</div>
+</div>
+</div>
+</td>
+<td class="px-5 py-3">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 border border-blue-200 dark:border-blue-800">
+                                            Editor
+                                        </span>
+</td>
+<td class="px-5 py-3">
+<span class="inline-flex items-center gap-1.5 text-xs text-[#617589]">
+<span class="size-1.5 rounded-full bg-gray-400"></span>
+                                            Offline
+                                        </span>
+</td>
+<td class="px-5 py-3 text-xs text-[#617589]">Yesterday</td>
+<td class="px-5 py-3 text-right">
+<button class="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-[#617589] transition-colors">
+<span class="material-symbols-outlined" style="font-size: 18px;">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 border-t border-[#e5e7eb] dark:border-gray-800 flex items-center justify-between">
+<span class="text-xs text-[#617589]">Showing 1-5 of 882 users</span>
+<div class="flex gap-2">
+<button class="px-3 py-1 text-xs border border-[#e5e7eb] dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-[#617589] transition-colors">Previous</button>
+<button class="px-3 py-1 text-xs border border-[#e5e7eb] dark:border-gray-700 rounded hover:bg-gray-50 dark:hover:bg-gray-800 text-[#617589] transition-colors">Next</button>
+</div>
+</div>
+</div>
+<div class="bg-surface-light dark:bg-surface-dark rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm overflow-hidden flex flex-col h-[600px]">
+<div class="p-5 border-b border-[#e5e7eb] dark:border-gray-800 flex flex-col gap-1 bg-gray-50/50 dark:bg-[#1e2329]">
+<div class="flex justify-between items-center">
+<h3 class="font-bold text-[#111418] dark:text-white">Role Permissions</h3>
+<span class="text-xs font-mono bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">Editor</span>
+</div>
+<p class="text-xs text-[#617589]">Configure access levels for the selected role.</p>
+</div>
+<div class="overflow-auto flex-1 p-5 space-y-6">
+<div>
+<h4 class="text-xs font-bold text-[#617589] uppercase tracking-wider mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 16px;">article</span>
+                                Content Management
+                            </h4>
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-[#111418] dark:text-white">Create Posts</span>
+<span class="text-[10px] text-[#617589]">Allow creating new blog entries</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-[#111418] dark:text-white">Edit Others' Posts</span>
+<span class="text-[10px] text-[#617589]">Modify content created by other users</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-[#111418] dark:text-white">Publish Content</span>
+<span class="text-[10px] text-[#617589]">Make drafts public</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+<div>
+<h4 class="text-xs font-bold text-[#617589] uppercase tracking-wider mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 16px;">image</span>
+                                Media Library
+                            </h4>
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-[#111418] dark:text-white">Upload Files</span>
+<span class="text-[10px] text-[#617589]">Upload images and documents</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-[#111418] dark:text-white">Delete Files</span>
+<span class="text-[10px] text-[#617589]">Remove files permanently</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+<div>
+<h4 class="text-xs font-bold text-[#617589] uppercase tracking-wider mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined" style="font-size: 16px;">settings</span>
+                                System
+                            </h4>
+<div class="space-y-3">
+<div class="flex items-center justify-between">
+<div class="flex flex-col">
+<span class="text-sm font-medium text-[#111418] dark:text-white">Manage Settings</span>
+<span class="text-[10px] text-[#617589]">Access global configuration</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox" value=""/>
+<div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary/20 dark:peer-focus:ring-primary/30 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-[#e5e7eb] dark:border-gray-800 bg-gray-50/50 dark:bg-[#1e2329]">
+<button class="w-full py-2 bg-primary hover:bg-primary-dark text-white rounded-lg text-sm font-medium transition-colors shadow-sm">Save Changes</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</div>
+</body></html>

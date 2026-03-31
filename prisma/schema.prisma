@@ -101,8 +101,11 @@ model Post {
   id              String     @id @default(cuid())
   title           String
   slug            String     @unique
+  subtitle        String?    @db.Text
   excerpt         String?
   content         String     @db.Text
+  contentHtml     String?    @map("content_html") @db.LongText
+  contentJson     Json?      @map("content_json")
   featuredImage   String?    @map("featured_image")
   status          PostStatus @default(DRAFT)
   viewCount       Int        @default(0) @map("view_count")

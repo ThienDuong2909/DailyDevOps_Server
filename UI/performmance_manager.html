@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Admin: Performance Management</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "primary-dark": "#0f65bd",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e2329",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "2xl": "1rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .no-scrollbar::-webkit-scrollbar {
+                display: none;
+            }
+            .no-scrollbar {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white overflow-hidden">
+    <div class="flex h-screen w-full">
+        <aside
+            class="w-20 lg:w-64 flex-shrink-0 bg-surface-light dark:bg-[#111418] border-r border-[#e5e7eb] dark:border-gray-800 flex flex-col transition-all duration-300 z-20">
+            <div
+                class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-[#e5e7eb] dark:border-gray-800">
+                <div class="size-8 rounded bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <span class="material-symbols-outlined text-primary" style="font-size: 24px;">terminal</span>
+                </div>
+                <span class="ml-3 font-bold text-lg hidden lg:block text-[#111418] dark:text-white">DevOps<span
+                        class="text-primary">Admin</span></span>
+            </div>
+            <nav class="flex-1 overflow-y-auto py-6 flex flex-col gap-2 px-3">
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] hover:text-[#111418] dark:hover:text-white transition-colors group"
+                    href="#">
+                    <span class="material-symbols-outlined group-hover:text-primary">dashboard</span>
+                    <span class="font-medium hidden lg:block">Dashboard</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] hover:text-[#111418] dark:hover:text-white transition-colors group"
+                    href="#">
+                    <span class="material-symbols-outlined group-hover:text-primary">article</span>
+                    <span class="font-medium hidden lg:block">Content</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg bg-primary/10 text-primary dark:text-white transition-colors group"
+                    href="#">
+                    <span class="material-symbols-outlined text-primary">monitoring</span>
+                    <span class="font-medium hidden lg:block text-[#111418] dark:text-white">Performance</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] hover:text-[#111418] dark:hover:text-white transition-colors group"
+                    href="#">
+                    <span class="material-symbols-outlined group-hover:text-primary">group</span>
+                    <span class="font-medium hidden lg:block">Users</span>
+                </a>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] hover:text-[#111418] dark:hover:text-white transition-colors group"
+                    href="#">
+                    <span class="material-symbols-outlined group-hover:text-primary">dns</span>
+                    <span class="font-medium hidden lg:block">System Health</span>
+                </a>
+                <div class="my-2 border-t border-[#e5e7eb] dark:border-gray-800"></div>
+                <a class="flex items-center gap-3 px-3 py-3 rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] hover:text-[#111418] dark:hover:text-white transition-colors group"
+                    href="#">
+                    <span class="material-symbols-outlined group-hover:text-primary">settings</span>
+                    <span class="font-medium hidden lg:block">Settings</span>
+                </a>
+            </nav>
+            <div class="p-4 border-t border-[#e5e7eb] dark:border-gray-800">
+                <div class="flex items-center gap-3">
+                    <div class="bg-center bg-no-repeat bg-cover rounded-full size-9 border border-[#e5e7eb] dark:border-gray-700 cursor-pointer"
+                        style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuANDdNsjySkhVqiRY2cUpnA84RJJsui75RV3sJ18uJzofyK-P-Idv1o7YpcHquJ9IYZsrLf8lThPziLxmzuMrEJAhxv1xONrp2D8KQSLQCLFgMWQq3KicVqScUcpOJ3_CDC0a4NulIBBPOTZvN7dXzJRKRR_sFBl5ARedPMrG8C4ANNIFNEDEzFDXKCJ3iul3hYUVjlIy1RKHSSWji8QEbnAaPItknW1FiXtUHKyBaGH0iT2ZhK0Q-8vt5tYdIZpCY5ZG4EbdQkNujx");'>
+                    </div>
+                    <div class="hidden lg:flex flex-col overflow-hidden">
+                        <span class="text-sm font-bold truncate dark:text-white">Admin User</span>
+                        <span class="text-xs text-[#617589] truncate">admin@devops.com</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden bg-background-light dark:bg-background-dark">
+            <header
+                class="h-16 bg-surface-light/90 dark:bg-[#111418]/90 backdrop-blur-md border-b border-[#e5e7eb] dark:border-gray-800 flex items-center justify-between px-6 lg:px-10 z-10 sticky top-0">
+                <h1 class="text-xl font-bold text-[#111418] dark:text-white">Performance Management</h1>
+                <div class="flex items-center gap-4">
+                    <div
+                        class="hidden md:flex items-center bg-[#f0f2f4] dark:bg-[#222831] rounded-lg px-3 py-1.5 h-10 w-64 border border-transparent focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/50 transition-all">
+                        <span class="material-symbols-outlined text-[#617589]" style="font-size: 20px;">search</span>
+                        <input
+                            class="bg-transparent border-none text-sm ml-2 w-full focus:ring-0 placeholder-[#617589] text-[#111418] dark:text-white"
+                            placeholder="Search metrics..." />
+                    </div>
+                    <button
+                        class="size-10 flex items-center justify-center rounded-lg text-[#617589] hover:bg-[#f0f2f4] dark:hover:bg-[#222831] transition-colors relative">
+                        <span class="material-symbols-outlined">notifications</span>
+                        <span
+                            class="absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border-2 border-white dark:border-[#111418]"></span>
+                    </button>
+                </div>
+            </header>
+            <main class="flex-1 overflow-y-auto p-6 lg:p-8 no-scrollbar">
+                <div class="max-w-[1600px] mx-auto flex flex-col gap-8">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-medium text-[#617589]">Overview for:</span>
+                            <div class="relative">
+                                <select
+                                    class="appearance-none bg-white dark:bg-[#1e2329] border border-[#e5e7eb] dark:border-gray-700 text-[#111418] dark:text-white text-sm rounded-lg pl-3 pr-10 py-2 focus:ring-primary focus:border-primary cursor-pointer font-medium shadow-sm">
+                                    <option>Last 24 Hours</option>
+                                    <option selected="">Last 7 Days</option>
+                                    <option>Last 30 Days</option>
+                                    <option>This Quarter</option>
+                                </select>
+                                <span
+                                    class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-[#617589]"
+                                    style="font-size: 20px;">expand_more</span>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button
+                                class="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1e2329] border border-[#e5e7eb] dark:border-gray-700 rounded-lg text-sm font-medium text-[#111418] dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors shadow-sm">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">download</span>
+                                Export Report
+                            </button>
+                            <button
+                                class="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-dark rounded-lg text-sm font-medium text-white transition-colors shadow-md shadow-primary/20">
+                                <span class="material-symbols-outlined" style="font-size: 18px;">refresh</span>
+                                Refresh
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark p-5 rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-[#617589]">Total Visits</span>
+                                <span
+                                    class="material-symbols-outlined text-primary/80 bg-primary/10 p-1 rounded">trending_up</span>
+                            </div>
+                            <span class="text-2xl font-bold text-[#111418] dark:text-white mt-2">142,593</span>
+                            <div
+                                class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 mt-1">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">arrow_upward</span>
+                                <span>12.5% vs last period</span>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark p-5 rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-[#617589]">Unique Visitors</span>
+                                <span
+                                    class="material-symbols-outlined text-purple-500/80 bg-purple-500/10 p-1 rounded">person</span>
+                            </div>
+                            <span class="text-2xl font-bold text-[#111418] dark:text-white mt-2">89,402</span>
+                            <div
+                                class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 mt-1">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">arrow_upward</span>
+                                <span>8.2% vs last period</span>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark p-5 rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-[#617589]">Page Views</span>
+                                <span
+                                    class="material-symbols-outlined text-blue-500/80 bg-blue-500/10 p-1 rounded">visibility</span>
+                            </div>
+                            <span class="text-2xl font-bold text-[#111418] dark:text-white mt-2">452.1K</span>
+                            <div
+                                class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 mt-1">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">arrow_upward</span>
+                                <span>15.3% vs last period</span>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark p-5 rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-[#617589]">Avg. Session</span>
+                                <span
+                                    class="material-symbols-outlined text-orange-500/80 bg-orange-500/10 p-1 rounded">timer</span>
+                            </div>
+                            <span class="text-2xl font-bold text-[#111418] dark:text-white mt-2">4m 32s</span>
+                            <div
+                                class="flex items-center gap-1 text-xs font-medium text-red-500 dark:text-red-400 mt-1">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+                                <span>1.2% vs last period</span>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark p-5 rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm flex flex-col gap-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-[#617589]">Bounce Rate</span>
+                                <span
+                                    class="material-symbols-outlined text-red-500/80 bg-red-500/10 p-1 rounded">call_missed_outgoing</span>
+                            </div>
+                            <span class="text-2xl font-bold text-[#111418] dark:text-white mt-2">42.8%</span>
+                            <div
+                                class="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 mt-1">
+                                <span class="material-symbols-outlined" style="font-size: 14px;">arrow_downward</span>
+                                <span>5.1% (Improved)</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div
+                            class="lg:col-span-2 bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm flex flex-col">
+                            <div class="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 class="text-lg font-bold text-[#111418] dark:text-white">Traffic Overview</h3>
+                                    <p class="text-xs text-[#617589]">Visitors over time</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <span
+                                        class="px-2 py-1 text-xs font-medium rounded bg-primary/10 text-primary cursor-pointer">Visits</span>
+                                    <span
+                                        class="px-2 py-1 text-xs font-medium rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-[#617589] cursor-pointer transition-colors">Bandwidth</span>
+                                </div>
+                            </div>
+                            <div class="relative w-full h-[300px] flex items-end gap-1">
+                                <svg class="w-full h-full overflow-visible" preserveAspectRatio="none"
+                                    viewBox="0 0 100 50">
+                                    <defs>
+                                        <linearGradient id="chartGradient" x1="0" x2="0" y1="0" y2="1">
+                                            <stop offset="0%" stop-color="#137fec" stop-opacity="0.3"></stop>
+                                            <stop offset="100%" stop-color="#137fec" stop-opacity="0"></stop>
+                                        </linearGradient>
+                                    </defs>
+                                    <path
+                                        d="M0,50 L0,35 C5,32 10,40 15,30 C20,20 25,25 30,15 C35,5 40,20 45,25 C50,30 55,20 60,15 C65,10 70,18 75,22 C80,26 85,15 90,10 C95,5 100,20 100,50 Z"
+                                        fill="url(#chartGradient)" stroke="none"></path>
+                                    <path
+                                        d="M0,35 C5,32 10,40 15,30 C20,20 25,25 30,15 C35,5 40,20 45,25 C50,30 55,20 60,15 C65,10 70,18 75,22 C80,26 85,15 90,10 C95,5 100,20 100,25"
+                                        fill="none" stroke="#137fec" stroke-width="2"
+                                        vector-effect="non-scaling-stroke"></path>
+                                    <line stroke="#e5e7eb" stroke-dasharray="2,2" stroke-width="0.5" x1="0" x2="100"
+                                        y1="12.5" y2="12.5"></line>
+                                    <line stroke="#e5e7eb" stroke-dasharray="2,2" stroke-width="0.5" x1="0" x2="100"
+                                        y1="25" y2="25"></line>
+                                    <line stroke="#e5e7eb" stroke-dasharray="2,2" stroke-width="0.5" x1="0" x2="100"
+                                        y1="37.5" y2="37.5"></line>
+                                </svg>
+                                <div
+                                    class="absolute bottom-[-20px] left-0 w-full flex justify-between text-xs text-[#617589]">
+                                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm flex flex-col gap-6">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-bold text-[#111418] dark:text-white">Server Resources</h3>
+                                <span
+                                    class="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded-full font-medium">Healthy</span>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-[#617589]">CPU Usage</span>
+                                    <span class="font-bold text-[#111418] dark:text-white">45%</span>
+                                </div>
+                                <div class="w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-full h-2.5">
+                                    <div class="bg-primary h-2.5 rounded-full" style="width: 45%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-[#617589]">
+                                    <span>8 Cores</span>
+                                    <span>3.2 GHz</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-[#617589]">Memory Usage</span>
+                                    <span class="font-bold text-yellow-600 dark:text-yellow-400">78%</span>
+                                </div>
+                                <div class="w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-full h-2.5">
+                                    <div class="bg-yellow-500 h-2.5 rounded-full" style="width: 78%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-[#617589]">
+                                    <span>12.5 GB Used</span>
+                                    <span>16 GB Total</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-[#617589]">Disk I/O</span>
+                                    <span class="font-bold text-[#111418] dark:text-white">22%</span>
+                                </div>
+                                <div class="w-full bg-[#f0f2f4] dark:bg-gray-700 rounded-full h-2.5">
+                                    <div class="bg-purple-500 h-2.5 rounded-full" style="width: 22%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-[#617589]">
+                                    <span>Read: 45 MB/s</span>
+                                    <span>Write: 12 MB/s</span>
+                                </div>
+                            </div>
+                            <div class="mt-auto pt-4 border-t border-[#f0f2f4] dark:border-gray-700">
+                                <button
+                                    class="w-full py-2 text-sm text-primary font-medium hover:bg-primary/5 rounded transition-colors">View
+                                    detailed metrics</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm overflow-hidden flex flex-col h-[400px]">
+                            <div
+                                class="p-5 border-b border-[#e5e7eb] dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-[#1e2329]">
+                                <h3 class="font-bold text-[#111418] dark:text-white">Real-time Access Logs</h3>
+                                <button class="text-xs text-primary font-medium hover:underline">View All</button>
+                            </div>
+                            <div class="overflow-auto flex-1 p-0">
+                                <table class="w-full text-left text-sm">
+                                    <thead
+                                        class="bg-[#f8f9fa] dark:bg-[#222831] text-[#617589] font-medium sticky top-0">
+                                        <tr>
+                                            <th class="px-5 py-3 font-medium">Time</th>
+                                            <th class="px-5 py-3 font-medium">Status</th>
+                                            <th class="px-5 py-3 font-medium">Method</th>
+                                            <th class="px-5 py-3 font-medium">Path</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody
+                                        class="divide-y divide-[#f0f2f4] dark:divide-gray-800 text-[#111418] dark:text-gray-300">
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                            <td class="px-5 py-3 font-mono text-xs text-[#617589]">10:42:05</td>
+                                            <td class="px-5 py-3"><span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">200</span>
+                                            </td>
+                                            <td class="px-5 py-3 font-mono text-xs">GET</td>
+                                            <td class="px-5 py-3 truncate max-w-[150px] text-[#617589]">/api/v1/metrics
+                                            </td>
+                                        </tr>
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                            <td class="px-5 py-3 font-mono text-xs text-[#617589]">10:42:02</td>
+                                            <td class="px-5 py-3"><span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">200</span>
+                                            </td>
+                                            <td class="px-5 py-3 font-mono text-xs">POST</td>
+                                            <td class="px-5 py-3 truncate max-w-[150px] text-[#617589]">/auth/login</td>
+                                        </tr>
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                            <td class="px-5 py-3 font-mono text-xs text-[#617589]">10:41:58</td>
+                                            <td class="px-5 py-3"><span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">304</span>
+                                            </td>
+                                            <td class="px-5 py-3 font-mono text-xs">GET</td>
+                                            <td class="px-5 py-3 truncate max-w-[150px] text-[#617589]">/assets/main.css
+                                            </td>
+                                        </tr>
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                            <td class="px-5 py-3 font-mono text-xs text-[#617589]">10:41:45</td>
+                                            <td class="px-5 py-3"><span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">200</span>
+                                            </td>
+                                            <td class="px-5 py-3 font-mono text-xs">GET</td>
+                                            <td class="px-5 py-3 truncate max-w-[150px] text-[#617589]">/dashboard</td>
+                                        </tr>
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                            <td class="px-5 py-3 font-mono text-xs text-[#617589]">10:41:30</td>
+                                            <td class="px-5 py-3"><span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">404</span>
+                                            </td>
+                                            <td class="px-5 py-3 font-mono text-xs">GET</td>
+                                            <td class="px-5 py-3 truncate max-w-[150px] text-[#617589]">/old-link</td>
+                                        </tr>
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                                            <td class="px-5 py-3 font-mono text-xs text-[#617589]">10:41:12</td>
+                                            <td class="px-5 py-3"><span
+                                                    class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">200</span>
+                                            </td>
+                                            <td class="px-5 py-3 font-mono text-xs">GET</td>
+                                            <td class="px-5 py-3 truncate max-w-[150px] text-[#617589]">/api/v1/users
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-light dark:bg-surface-dark rounded-xl border border-[#e5e7eb] dark:border-gray-800 shadow-sm overflow-hidden flex flex-col h-[400px]">
+                            <div
+                                class="p-5 border-b border-[#e5e7eb] dark:border-gray-800 flex justify-between items-center bg-gray-50/50 dark:bg-[#1e2329]">
+                                <h3 class="font-bold text-[#111418] dark:text-white flex items-center gap-2">
+                                    Error Logs
+                                    <span
+                                        class="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">3
+                                        New</span>
+                                </h3>
+                                <div class="flex gap-2">
+                                    <button class="text-xs text-[#617589] hover:text-primary font-medium">Clear</button>
+                                    <button class="text-xs text-primary font-medium hover:underline">Download
+                                        CSV</button>
+                                </div>
+                            </div>
+                            <div class="overflow-auto flex-1 p-0">
+                                <div class="flex flex-col">
+                                    <div
+                                        class="p-4 border-b border-[#f0f2f4] dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <span class="text-xs font-mono text-red-500 font-bold">CRITICAL</span>
+                                            <span class="text-xs text-[#617589]">2 mins ago</span>
+                                        </div>
+                                        <p
+                                            class="text-sm text-[#111418] dark:text-white font-medium mb-1 group-hover:text-primary transition-colors">
+                                            Database connection timeout</p>
+                                        <p class="text-xs text-[#617589] font-mono truncate">Error: Connection lost at
+                                            PostgreSQLPool.connect()</p>
+                                    </div>
+                                    <div
+                                        class="p-4 border-b border-[#f0f2f4] dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <span class="text-xs font-mono text-orange-500 font-bold">WARNING</span>
+                                            <span class="text-xs text-[#617589]">15 mins ago</span>
+                                        </div>
+                                        <p
+                                            class="text-sm text-[#111418] dark:text-white font-medium mb-1 group-hover:text-primary transition-colors">
+                                            High Memory Usage detected</p>
+                                        <p class="text-xs text-[#617589] font-mono truncate">Process 2341 (node)
+                                            exceeding 1.2GB limit</p>
+                                    </div>
+                                    <div
+                                        class="p-4 border-b border-[#f0f2f4] dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <span class="text-xs font-mono text-red-500 font-bold">ERROR</span>
+                                            <span class="text-xs text-[#617589]">42 mins ago</span>
+                                        </div>
+                                        <p
+                                            class="text-sm text-[#111418] dark:text-white font-medium mb-1 group-hover:text-primary transition-colors">
+                                            Payment Gateway API Failure</p>
+                                        <p class="text-xs text-[#617589] font-mono truncate">503 Service Unavailable
+                                            from Stripe API</p>
+                                    </div>
+                                    <div
+                                        class="p-4 border-b border-[#f0f2f4] dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+                                        <div class="flex justify-between items-start mb-1">
+                                            <span class="text-xs font-mono text-orange-500 font-bold">WARNING</span>
+                                            <span class="text-xs text-[#617589]">1 hr ago</span>
+                                        </div>
+                                        <p
+                                            class="text-sm text-[#111418] dark:text-white font-medium mb-1 group-hover:text-primary transition-colors">
+                                            Rate limit exceeded for user #9921</p>
+                                        <p class="text-xs text-[#617589] font-mono truncate">Throttling requests from IP
+                                            192.168.1.45</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+</body>
+
+</html>

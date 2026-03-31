@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DevOps Article Detail</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-[#111418] dark:text-white overflow-x-hidden">
+    <div class="relative flex min-h-screen flex-col">
+        <!-- TopNavBar -->
+        <header
+            class="sticky top-0 z-50 flex items-center justify-between whitespace-nowrap border-b border-solid border-b-[#e5e7eb] bg-white/90 dark:bg-[#111418]/90 backdrop-blur-md px-4 py-3 shadow-sm lg:px-10">
+            <div class="flex items-center gap-4 lg:gap-8">
+                <div class="flex items-center gap-2 text-primary">
+                    <div class="size-8 rounded bg-primary/10 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary" style="font-size: 24px;">terminal</span>
+                    </div>
+                    <h2
+                        class="text-[#111418] dark:text-white text-lg font-bold leading-tight tracking-[-0.015em] hidden sm:block">
+                        DevOpsDaily</h2>
+                </div>
+                <nav class="hidden md:flex items-center gap-6">
+                    <a class="text-[#111418] dark:text-white text-sm font-medium hover:text-primary transition-colors"
+                        href="#">CI/CD</a>
+                    <a class="text-[#111418] dark:text-white text-sm font-medium hover:text-primary transition-colors"
+                        href="#">Cloud</a>
+                    <a class="text-[#111418] dark:text-white text-sm font-medium hover:text-primary transition-colors"
+                        href="#">Security</a>
+                    <a class="text-[#111418] dark:text-white text-sm font-medium hover:text-primary transition-colors"
+                        href="#">Observability</a>
+                </nav>
+            </div>
+            <div class="flex flex-1 justify-end gap-4">
+                <label class="hidden sm:flex flex-col min-w-40 h-10 max-w-64">
+                    <div class="flex w-full flex-1 items-stretch rounded-lg h-full bg-[#f0f2f4] dark:bg-[#222831]">
+                        <div class="text-[#617589] flex border-none items-center justify-center pl-4 rounded-l-lg">
+                            <span class="material-symbols-outlined text-[#617589]"
+                                style="font-size: 20px;">search</span>
+                        </div>
+                        <input
+                            class="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-[#111418] dark:text-white focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-[#617589] px-4 pl-2 text-sm font-normal"
+                            placeholder="Search articles..." />
+                    </div>
+                </label>
+                <button
+                    class="flex min-w-[84px] cursor-pointer items-center justify-center rounded-lg h-10 px-4 bg-primary hover:bg-primary/90 transition-colors text-white text-sm font-bold shadow-md shadow-primary/20">
+                    <span class="truncate">Subscribe</span>
+                </button>
+                <div class="bg-center bg-no-repeat bg-cover rounded-full size-10 border border-[#e5e7eb] dark:border-gray-700 cursor-pointer"
+                    data-alt="User profile avatar placeholder"
+                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuANDdNsjySkhVqiRY2cUpnA84RJJsui75RV3sJ18uJzofyK-P-Idv1o7YpcHquJ9IYZsrLf8lThPziLxmzuMrEJAhxv1xONrp2D8KQSLQCLFgMWQq3KicVqScUcpOJ3_CDC0a4NulIBBPOTZvN7dXzJRKRR_sFBl5ARedPMrG8C4ANNIFNEDEzFDXKCJ3iul3hYUVjlIy1RKHSSWji8QEbnAaPItknW1FiXtUHKyBaGH0iT2ZhK0Q-8vt5tYdIZpCY5ZG4EbdQkNujx");'>
+                </div>
+            </div>
+        </header>
+        <main class="flex-grow">
+            <!-- Progress Bar -->
+            <div class="h-1 w-full bg-[#e5e7eb] dark:bg-gray-800 sticky top-[64px] z-40">
+                <div class="h-full bg-primary w-[45%]"></div>
+            </div>
+            <div class="layout-container flex h-full grow flex-col px-4 sm:px-8 lg:px-40 py-8">
+                <div class="layout-content-container flex flex-col max-w-[1200px] mx-auto w-full">
+                    <!-- Breadcrumbs -->
+                    <div class="flex flex-wrap gap-2 mb-6 text-sm">
+                        <a class="text-[#617589] hover:text-primary font-medium transition-colors" href="#">Home</a>
+                        <span class="text-[#617589] font-medium">/</span>
+                        <a class="text-[#617589] hover:text-primary font-medium transition-colors"
+                            href="#">Kubernetes</a>
+                        <span class="text-[#617589] font-medium">/</span>
+                        <span class="text-[#111418] dark:text-white font-medium">Autoscaling</span>
+                    </div>
+                    <!-- Page Header Area -->
+                    <div class="mb-8">
+                        <span
+                            class="inline-block px-3 py-1 mb-4 text-xs font-bold tracking-wide uppercase text-primary bg-primary/10 rounded-full">
+                            Optimization
+                        </span>
+                        <h1
+                            class="text-[#111418] dark:text-white text-3xl md:text-5xl font-black leading-[1.15] tracking-tight mb-4">
+                            Mastering Kubernetes Autoscaling in 2024: A Comprehensive Guide
+                        </h1>
+                        <p class="text-[#617589] text-lg md:text-xl font-normal leading-relaxed max-w-3xl">
+                            Learn how to optimize your cluster efficiency using Horizontal Pod Autoscaler (HPA) and
+                            Vertical Pod Autoscaler (VPA) effectively to reduce costs and improve performance.
+                        </p>
+                    </div>
+                    <!-- Author Meta -->
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-4 border-b border-[#f0f2f4] dark:border-gray-800 pb-8 mb-8">
+                        <div class="flex items-center gap-4">
+                            <div class="bg-center bg-no-repeat bg-cover rounded-full size-12 shadow-sm"
+                                data-alt="Author portrait of Sarah DevOps"
+                                style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBmw642KgabHtS05HloXt6rUXOitI4T5csrKLMUzrcnpdEHeAoRYE9o4iSTZl8ipzh-Aw3b_5aEOZCOVv273yPeCKpK34qNrsCo2v7NINJp_DAhYYhIFNVaYGKdvVYsauhnrf7Nl6y3hD6CnTByfTvHdEl3pTbJcDh8zr3S9S6FoqdLGBvVX-PgINUBE11XRxUylB19hY4Wu-GyqCCRsR6hRRsOWwJ0_ToViL_QteNAFsLq4B9ZP1aEWrbz-HBrYQb5CUOls5u4CWl8");'>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-[#111418] dark:text-white font-bold text-base">Sarah DevOps</span>
+                                <div class="flex flex-wrap items-center gap-2 text-sm text-[#617589]">
+                                    <span>Cloud Architect</span>
+                                    <span class="size-1 rounded-full bg-[#617589]"></span>
+                                    <span>Oct 24, 2023</span>
+                                    <span class="size-1 rounded-full bg-[#617589]"></span>
+                                    <span>8 min read</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button
+                                class="size-10 flex items-center justify-center rounded-full bg-[#f0f2f4] dark:bg-[#222831] text-[#617589] hover:text-primary hover:bg-primary/10 transition-colors">
+                                <span class="material-symbols-outlined text-xl">bookmark_border</span>
+                            </button>
+                            <button
+                                class="size-10 flex items-center justify-center rounded-full bg-[#f0f2f4] dark:bg-[#222831] text-[#617589] hover:text-primary hover:bg-primary/10 transition-colors">
+                                <span class="material-symbols-outlined text-xl">share</span>
+                            </button>
+                            <button
+                                class="size-10 flex items-center justify-center rounded-full bg-[#f0f2f4] dark:bg-[#222831] text-[#617589] hover:text-primary hover:bg-primary/10 transition-colors">
+                                <span class="material-symbols-outlined text-xl">more_horiz</span>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Header Image -->
+                    <div class="w-full h-[300px] md:h-[480px] rounded-xl overflow-hidden mb-12 shadow-sm">
+                        <div class="w-full h-full bg-center bg-no-repeat bg-cover transform hover:scale-105 transition-transform duration-700"
+                            data-alt="Abstract blue cloud network illustration representing Kubernetes scaling"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAMPGCea-hjKEZW9a7UELR0Nrh1TS2G5_4lHW49uwWofVi11UYG-Y3fB4McuWloOMiFBbAIAnaMXXg2EKWTELQd3t5zmd58QAweA3QMo3slvmC9qMLJ1GK6A9zxaV-IrgKvxzOVpXHIi3-BPzkATNpbMzYffS5zRS0Q0gDOJgHffcR2Z6WvwWqzerHrby3cqzW6SneSJ0wK7VJPuGWtx4OSq8ARlbP3_OrrmBij1J0y4jBPYdGb9dz5ICUAoTeInZeR0niH8CH5XeCg");'>
+                        </div>
+                    </div>
+                    <!-- Main Layout Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-12">
+                        <!-- Left Column: Article Content -->
+                        <div class="lg:col-span-8 flex flex-col gap-8">
+                            <!-- Introduction -->
+                            <div
+                                class="prose prose-lg prose-blue dark:prose-invert max-w-none text-[#111418] dark:text-gray-300">
+                                <p class="leading-loose mb-6">
+                                    Kubernetes has revolutionized the way we deploy and manage applications. However,
+                                    simply running your applications on Kubernetes doesn't guarantee efficiency. One of
+                                    the most powerful features of Kubernetes is its ability to automatically scale
+                                    workloads based on demand. In this guide, we'll dive deep into the two primary
+                                    autoscaling mechanisms: <strong>Horizontal Pod Autoscaler (HPA)</strong> and
+                                    <strong>Vertical Pod Autoscaler (VPA)</strong>.
+                                </p>
+                                <h2 class="text-2xl font-bold text-[#111418] dark:text-white mt-10 mb-4" id="hpa">
+                                    Understanding Horizontal Pod Autoscaling (HPA)</h2>
+                                <p class="leading-loose mb-6">
+                                    HPA automatically updates a workload resource (such as a Deployment or StatefulSet),
+                                    with the aim of automatically scaling the workload to match demand. It does this by
+                                    monitoring metrics like CPU utilization or custom metrics.
+                                </p>
+                                <!-- Callout Box -->
+                                <div
+                                    class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-primary p-6 rounded-r-lg my-8">
+                                    <div class="flex gap-4">
+                                        <span class="material-symbols-outlined text-primary text-3xl">lightbulb</span>
+                                        <div>
+                                            <h4 class="font-bold text-[#111418] dark:text-white text-lg mb-2">Pro Tip:
+                                                Metric Selection</h4>
+                                            <p class="text-[#617589] dark:text-gray-300">
+                                                Don't just rely on CPU. Memory leaks can trick HPA into scaling
+                                                unnecessarily. Consider using custom metrics like
+                                                <code>requests_per_second</code> for more accurate scaling in web
+                                                applications.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="leading-loose mb-6">
+                                    Here is a standard configuration for an HPA that scales based on CPU usage:
+                                </p>
+                            </div>
+                            <!-- Code Block -->
+                            <div
+                                class="rounded-lg bg-[#1e293b] text-gray-200 overflow-hidden my-2 shadow-lg ring-1 ring-white/10">
+                                <div
+                                    class="flex items-center justify-between px-4 py-2 bg-[#0f172a] border-b border-gray-700">
+                                    <span class="text-xs font-mono text-blue-400">hpa-config.yaml</span>
+                                    <button
+                                        class="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors">
+                                        <span class="material-symbols-outlined"
+                                            style="font-size: 14px;">content_copy</span>
+                                        Copy
+                                    </button>
+                                </div>
+                                <div class="p-4 overflow-x-auto">
+                                    <pre class="font-mono text-sm leading-relaxed"><code>apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: php-apache
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: php-apache
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 50</code></pre>
+                                </div>
+                            </div>
+                            <div
+                                class="prose prose-lg prose-blue dark:prose-invert max-w-none text-[#111418] dark:text-gray-300">
+                                <h2 class="text-2xl font-bold text-[#111418] dark:text-white mt-10 mb-4" id="vpa">
+                                    Vertical Pod Autoscaler (VPA)</h2>
+                                <p class="leading-loose mb-6">
+                                    While HPA scales out (adding more replicas), VPA scales up (increasing resource
+                                    limits for existing pods). This is crucial for stateful workloads where adding more
+                                    replicas might not be feasible or efficient.
+                                </p>
+                                <p class="leading-loose mb-6">
+                                    VPA frees the users from necessity of setting up-to-date resource requests and
+                                    limits for the containers in their pods. When configured, it will set the requests
+                                    automatically based on usage and thus allow proper scheduling on nodes so that
+                                    appropriate resource amount is available for each pod.
+                                </p>
+                                <h2 class="text-2xl font-bold text-[#111418] dark:text-white mt-10 mb-4"
+                                    id="conclusion">Conclusion</h2>
+                                <p class="leading-loose mb-6">
+                                    Combining HPA and VPA requires careful configuration to avoid "thrashing" where the
+                                    two scalers fight against each other. The general recommendation is to use VPA for
+                                    rightsizing and HPA for demand scaling, ensuring they rely on different metrics or
+                                    operate on different time scales.
+                                </p>
+                            </div>
+                            <!-- Tags -->
+                            <div class="flex flex-wrap gap-2 mt-8 pt-8 border-t border-[#f0f2f4] dark:border-gray-800">
+                                <a class="px-4 py-2 bg-[#f0f2f4] dark:bg-[#222831] hover:bg-primary/20 text-[#617589] hover:text-primary rounded-full text-sm font-medium transition-colors"
+                                    href="#">#Kubernetes</a>
+                                <a class="px-4 py-2 bg-[#f0f2f4] dark:bg-[#222831] hover:bg-primary/20 text-[#617589] hover:text-primary rounded-full text-sm font-medium transition-colors"
+                                    href="#">#DevOps</a>
+                                <a class="px-4 py-2 bg-[#f0f2f4] dark:bg-[#222831] hover:bg-primary/20 text-[#617589] hover:text-primary rounded-full text-sm font-medium transition-colors"
+                                    href="#">#Scaling</a>
+                                <a class="px-4 py-2 bg-[#f0f2f4] dark:bg-[#222831] hover:bg-primary/20 text-[#617589] hover:text-primary rounded-full text-sm font-medium transition-colors"
+                                    href="#">#CloudNative</a>
+                            </div>
+                            <!-- Author Bio Card -->
+                            <div
+                                class="bg-[#f8f9fa] dark:bg-[#1e2329] rounded-xl p-8 mt-8 flex flex-col sm:flex-row gap-6 items-start border border-[#e5e7eb] dark:border-gray-700">
+                                <div class="bg-center bg-no-repeat bg-cover rounded-full w-20 h-20 shrink-0 border-4 border-white dark:border-[#111418] shadow-sm"
+                                    data-alt="Author portrait of Sarah DevOps"
+                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDjT5nwelxP2djjtsptKA6eACVZU2JqBb0z_19NwYMSejWlbJrPnllEKucCSrHvWLYtnTJzBjc3og0KkRz2F5RuW40Yi3LjV3fu1G_GaeqhfdRxVANceUrH4GvVdR6d9hpx9NeSzRSpWLo0dNFNfXc6yHVmKff9SBATKWEDbQ4CbdJYH8itfdS_cj6x0_6iY4j6i14EOje7H808K4y11tv2O5IKqP20n1h2jfC79e3qXQE834esQwRFedE3638ENVcYtKvL9kgiD9Rs");'>
+                                </div>
+                                <div class="flex flex-col gap-3">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <p class="text-[#111418] dark:text-white text-xl font-bold">Sarah DevOps</p>
+                                            <p class="text-[#617589] text-sm">Cloud Architect &amp; Kubernetes
+                                                Maintainer</p>
+                                        </div>
+                                        <button
+                                            class="text-primary hover:text-primary/80 font-semibold text-sm">Follow</button>
+                                    </div>
+                                    <p class="text-[#617589] dark:text-gray-400 leading-relaxed text-sm">
+                                        Sarah has over 10 years of experience in distributed systems. She loves
+                                        automating complex infrastructure and simplifying developer workflows. When not
+                                        coding, she's hiking the Alps.
+                                    </p>
+                                    <div class="flex gap-4 mt-1">
+                                        <a class="text-[#617589] hover:text-primary" href="#"><span
+                                                class="material-symbols-outlined text-xl">language</span></a>
+                                        <a class="text-[#617589] hover:text-primary" href="#"><span
+                                                class="material-symbols-outlined text-xl">alternate_email</span></a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Comments Section -->
+                            <div class="mt-12" id="comments">
+                                <h3 class="text-2xl font-bold text-[#111418] dark:text-white mb-6">Discussion (3)</h3>
+                                <!-- Comment Box -->
+                                <div class="mb-10">
+                                    <textarea
+                                        class="w-full bg-[#f8f9fa] dark:bg-[#1e2329] border border-[#e5e7eb] dark:border-gray-700 rounded-lg p-4 text-[#111418] dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-[#617589]"
+                                        placeholder="What are your thoughts on autoscaling?" rows="4"></textarea>
+                                    <div class="flex justify-end mt-3">
+                                        <button
+                                            class="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-6 rounded-lg text-sm shadow-md transition-all transform hover:-translate-y-0.5">Post
+                                            Comment</button>
+                                    </div>
+                                </div>
+                                <!-- Comment List -->
+                                <div class="flex flex-col gap-8">
+                                    <!-- Comment 1 -->
+                                    <div class="flex gap-4">
+                                        <div class="bg-center bg-no-repeat bg-cover rounded-full size-10 shrink-0"
+                                            data-alt="User avatar"
+                                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAQ33DqTZNomncjsLaR_1A1lsgX4tMgFWYZgODjQKY0-B2CZzZVm8leqGdiApKv22mR4NI3tzKk_QfCrblMM6SmDO94Z21uTcqRIiJePrrcoWZDuEHMVzBGFrJVI2_M6KzPx65CAjECPi4Pz_YrrhHV0M4hACQujbQBzIsxHKFDe1QfusQQdlxLOPZvF-YdjZNcbJw5hgH_duYENsUy_nAkExxgVNWIjzB1A3OHzE5TwJbmgiQUNhJkx5339A6WSqm5MqNKTfmiiz1R");'>
+                                        </div>
+                                        <div class="flex flex-col gap-2 w-full">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-[#111418] dark:text-white text-sm">Alex
+                                                        Chen</span>
+                                                    <span class="text-xs text-[#617589]">2 hours ago</span>
+                                                </div>
+                                            </div>
+                                            <p class="text-[#111418] dark:text-gray-300 text-sm leading-relaxed">
+                                                Great article! I've struggled with VPA restarting pods unexpectedly. Do
+                                                you have any tips for handling that in production environments?
+                                            </p>
+                                            <div class="flex items-center gap-4 mt-1">
+                                                <button
+                                                    class="flex items-center gap-1 text-xs text-[#617589] hover:text-primary">
+                                                    <span class="material-symbols-outlined text-sm">thumb_up</span> 12
+                                                </button>
+                                                <button
+                                                    class="text-xs text-[#617589] hover:text-primary font-medium">Reply</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <!-- Comment 2 -->
+                                    <div class="flex gap-4">
+                                        <div class="bg-center bg-no-repeat bg-cover rounded-full size-10 shrink-0"
+                                            data-alt="User avatar"
+                                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCCJH72j1gS7LhjVwETeuW2jS-4bpG-zHb5Xj2JKdgeuOyMLVB8PY9015-IZWZNCALxk0SPNe6Orbh3iEG-wCEhzo6d7BAlsW-HHAdf8ouWBQwkTOxMScxW3AN_-u6BrR5BzT5Cu_u5guE_1Chm-EYFQRkAa75CzBCXWenmNPPCy6TFNvQoHqQUczAIoBAFImiYZOh7xeOr30HX96ycpqDpkYxerniLqVBe0HFLGH579vCcfO_isoNinTgW9XSeR6JK1FZr9D5L9I2z");'>
+                                        </div>
+                                        <div class="flex flex-col gap-2 w-full">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-bold text-[#111418] dark:text-white text-sm">Maria
+                                                        Rodriguez</span>
+                                                    <span class="text-xs text-[#617589]">5 hours ago</span>
+                                                </div>
+                                            </div>
+                                            <p class="text-[#111418] dark:text-gray-300 text-sm leading-relaxed">
+                                                The combination of KEDA with HPA is also a game changer for event-driven
+                                                scaling. Would love to see a follow-up on that!
+                                            </p>
+                                            <div class="flex items-center gap-4 mt-1">
+                                                <button
+                                                    class="flex items-center gap-1 text-xs text-[#617589] hover:text-primary">
+                                                    <span class="material-symbols-outlined text-sm">thumb_up</span> 8
+                                                </button>
+                                                <button
+                                                    class="text-xs text-[#617589] hover:text-primary font-medium">Reply</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Right Column: Sidebar -->
+                        <div class="lg:col-span-4 flex flex-col gap-8">
+                            <!-- Table of Contents -->
+                            <div class="sticky top-24">
+                                <div
+                                    class="bg-white dark:bg-[#1e2329] border border-[#f0f2f4] dark:border-gray-800 rounded-xl p-6 shadow-sm mb-6">
+                                    <h4 class="text-sm font-bold text-[#617589] uppercase tracking-wider mb-4">On this
+                                        page</h4>
+                                    <ul
+                                        class="flex flex-col gap-3 relative border-l-2 border-[#f0f2f4] dark:border-gray-700 ml-1">
+                                        <li class="relative pl-4">
+                                            <span
+                                                class="absolute -left-[2px] top-0 bottom-0 w-[2px] bg-primary rounded-full"></span>
+                                            <a class="text-primary font-medium text-sm block" href="#">Introduction</a>
+                                        </li>
+                                        <li class="pl-4">
+                                            <a class="text-[#617589] hover:text-[#111418] dark:hover:text-white transition-colors text-sm block"
+                                                href="#hpa">Understanding HPA</a>
+                                        </li>
+                                        <li class="pl-4">
+                                            <a class="text-[#617589] hover:text-[#111418] dark:hover:text-white transition-colors text-sm block"
+                                                href="#vpa">Vertical Pod Autoscaler</a>
+                                        </li>
+                                        <li class="pl-4">
+                                            <a class="text-[#617589] hover:text-[#111418] dark:hover:text-white transition-colors text-sm block"
+                                                href="#conclusion">Conclusion</a>
+                                        </li>
+                                        <li class="pl-4">
+                                            <a class="text-[#617589] hover:text-[#111418] dark:hover:text-white transition-colors text-sm block"
+                                                href="#comments">Discussion</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <!-- Social Share Vertical -->
+                                <div
+                                    class="bg-white dark:bg-[#1e2329] border border-[#f0f2f4] dark:border-gray-800 rounded-xl p-6 shadow-sm mb-6">
+                                    <h4 class="text-sm font-bold text-[#617589] uppercase tracking-wider mb-4">Share
+                                    </h4>
+                                    <div class="flex lg:flex-col gap-4">
+                                        <button
+                                            class="flex items-center gap-3 text-[#111418] dark:text-white hover:text-primary transition-colors text-sm font-medium w-full p-2 hover:bg-[#f8f9fa] dark:hover:bg-white/5 rounded-lg group">
+                                            <span class="text-xl group-hover:scale-110 transition-transform">𝕏</span>
+                                            <span>Twitter</span>
+                                        </button>
+                                        <button
+                                            class="flex items-center gap-3 text-[#111418] dark:text-white hover:text-primary transition-colors text-sm font-medium w-full p-2 hover:bg-[#f8f9fa] dark:hover:bg-white/5 rounded-lg group">
+                                            <span
+                                                class="text-xl text-[#0077b5] group-hover:scale-110 transition-transform">in</span>
+                                            <span>LinkedIn</span>
+                                        </button>
+                                        <button
+                                            class="flex items-center gap-3 text-[#111418] dark:text-white hover:text-primary transition-colors text-sm font-medium w-full p-2 hover:bg-[#f8f9fa] dark:hover:bg-white/5 rounded-lg group">
+                                            <span
+                                                class="text-xl text-[#1877f2] group-hover:scale-110 transition-transform">f</span>
+                                            <span>Facebook</span>
+                                        </button>
+                                        <div class="h-px w-full bg-[#f0f2f4] dark:bg-gray-700 my-1 lg:block hidden">
+                                        </div>
+                                        <button
+                                            class="flex items-center gap-3 text-[#617589] hover:text-[#111418] dark:hover:text-white transition-colors text-sm font-medium w-full p-2 hover:bg-[#f8f9fa] dark:hover:bg-white/5 rounded-lg">
+                                            <span class="material-symbols-outlined text-xl">link</span>
+                                            <span>Copy Link</span>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Newsletter Mini -->
+                                <div
+                                    class="bg-primary text-white rounded-xl p-6 shadow-lg relative overflow-hidden group">
+                                    <div
+                                        class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500">
+                                    </div>
+                                    <h4 class="font-bold text-lg mb-2 relative z-10">DevOps Weekly</h4>
+                                    <p class="text-blue-100 text-sm mb-4 relative z-10">Get the best DevOps articles
+                                        delivered to your inbox.</p>
+                                    <div class="flex flex-col gap-2 relative z-10">
+                                        <input
+                                            class="w-full rounded bg-white/20 border-none placeholder:text-blue-100 text-white text-sm py-2 px-3 focus:ring-1 focus:ring-white"
+                                            placeholder="Your email" type="email" />
+                                        <button
+                                            class="w-full bg-white text-primary font-bold text-sm py-2 rounded shadow-sm hover:bg-blue-50 transition-colors">Join
+                                            Now</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <!-- Footer -->
+        <footer class="border-t border-[#e5e7eb] dark:border-gray-800 bg-white dark:bg-[#111418] py-12 mt-12">
+            <div
+                class="layout-content-container max-w-[1200px] mx-auto px-4 lg:px-40 flex flex-col md:flex-row justify-between gap-8">
+                <div class="flex flex-col gap-4 max-w-xs">
+                    <div class="flex items-center gap-2 text-primary">
+                        <div class="size-6 rounded bg-primary/10 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-primary"
+                                style="font-size: 18px;">terminal</span>
+                        </div>
+                        <span class="text-[#111418] dark:text-white text-base font-bold">DevOpsDaily</span>
+                    </div>
+                    <p class="text-[#617589] text-sm leading-relaxed">
+                        Empowering developers and operations teams with the latest insights in cloud native
+                        technologies.
+                    </p>
+                </div>
+                <div class="flex gap-12">
+                    <div class="flex flex-col gap-3">
+                        <h5 class="text-[#111418] dark:text-white font-bold text-sm">Resources</h5>
+                        <a class="text-[#617589] hover:text-primary text-sm" href="#">Blog</a>
+                        <a class="text-[#617589] hover:text-primary text-sm" href="#">Tutorials</a>
+                        <a class="text-[#617589] hover:text-primary text-sm" href="#">Cheatsheets</a>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <h5 class="text-[#111418] dark:text-white font-bold text-sm">Company</h5>
+                        <a class="text-[#617589] hover:text-primary text-sm" href="#">About</a>
+                        <a class="text-[#617589] hover:text-primary text-sm" href="#">Careers</a>
+                        <a class="text-[#617589] hover:text-primary text-sm" href="#">Contact</a>
+                    </div>
+                    <div class="flex flex-col gap-3">
+                        <h5 class="text-[#111418] dark:text-white font-bold text-sm">Legal</h5>
+                        <a class="text-[#617589] hover:text-primary text-sm" href="#">Privacy</a>
+                        <a class="text-[#617589] hover:text-primary text-sm" href="#">Terms</a>
+                    </div>
+                </div>
+            </div>
+            <div
+                class="layout-content-container max-w-[1200px] mx-auto px-4 lg:px-40 mt-12 pt-8 border-t border-[#f0f2f4] dark:border-gray-800 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <p class="text-[#617589] text-sm">© 2024 DevOpsDaily. All rights reserved.</p>
+                <div class="flex gap-4">
+                    <a class="text-[#617589] hover:text-primary" href="#"><span
+                            class="material-symbols-outlined text-xl">wifi</span></a> <!-- rss -->
+                    <a class="text-[#617589] hover:text-primary" href="#"><span
+                            class="material-symbols-outlined text-xl">public</span></a>
+                </div>
+            </div>
+        </footer>
+    </div>
+</body>
+
+</html>

@@ -20,6 +20,7 @@ const usersRoutes = require('./modules/users/users.routes');
 const subscribersRoutes = require('./modules/subscribers/subscribers.routes');
 const settingsRoutes = require('./modules/settings/settings.routes');
 const seoRoutes = require('./modules/seo/seo.routes');
+const seoPublicRoutes = require('./modules/seo/seo.public.routes');
 
 const app = express();
 
@@ -86,6 +87,12 @@ const limiter = rateLimit({
     legacyHeaders: false,
 });
 app.use(`/${config.apiPrefix}/`, limiter);
+
+// ============================================
+// PUBLIC SEO ROUTES (before rate-limited API routes)
+// Sitemap data & post metadata — no auth, cached
+// ============================================
+app.use(`/${config.apiPrefix}/seo`, seoPublicRoutes);
 
 // ============================================
 // HEALTH CHECK

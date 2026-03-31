@@ -289,9 +289,12 @@ async function seedPosts() {
         await prisma.post.create({
             data: {
                 title: def.title,
+                subtitle: def.excerpt,
                 slug: def.slug,
                 excerpt: def.excerpt,
                 content: htmlContent,
+                contentHtml: htmlContent,
+                contentJson: null,
                 featuredImage,
                 status: 'PUBLISHED',
                 readingTime,

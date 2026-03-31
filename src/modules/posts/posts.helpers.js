@@ -49,7 +49,8 @@ const buildPaginatedResponse = ({ data, total, page, limit }) => ({
 });
 
 const buildReadingTime = (content) => {
-    const wordCount = content.split(/\s+/).length;
+    const plainText = String(content || '').replace(/<[^>]+>/g, ' ');
+    const wordCount = plainText.trim().split(/\s+/).filter(Boolean).length;
     return Math.ceil(wordCount / 200);
 };
 
@@ -87,6 +88,36 @@ const buildTagReplace = (tagIds) => {
     };
 };
 
+const normalizeEditorPayload = (dto = {}) => {
+    const resolvedContent = dto.contentHtml || dto.content || '';
+
+    return {
+        ...dto,
+        subtitle: dto.subtitle ?? dto.excerpt ?? null,
+        excerpt: dto.subtitle ?? dto.excerpt ?? null,
+        contentHtml: resolvedContent,
+        content: resolvedContent,
+        contentJson: dto.contentJson ?? null,
+    };
+};
+
+const serializePost = (post) => {
+    if (!post) {
+        return post;
+    }
+
+    return {
+        ...post,
+        subtitle: post.subtitle ?? post.excerpt ?? null,
+        excerpt: post.subtitle ?? post.excerpt ?? null,
+        content: post.contentHtml ?? post.content ?? '',
+        contentHtml: post.contentHtml ?? post.content ?? '',
+        contentJson: post.contentJson ?? null,
+    };
+};
+
+const serializePosts = (posts = []) => posts.map(serializePost);
+
 module.exports = {
     buildListQuery,
     buildPaginatedResponse,
@@ -95,4 +126,7 @@ module.exports = {
     buildTagConnect,
     buildTagReplace,
     generateSlug,
+    normalizeEditorPayload,
+    serializePost,
+    serializePosts,
 };

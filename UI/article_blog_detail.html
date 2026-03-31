@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DevOps Admin Dashboard - Edit Article</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1e293b",
+                        "border-dark": "#283039",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111418;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #3b4754;
+            border-radius: 4px;
+        }
+
+        .editor-content h2 {
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+            color: white;
+        }
+
+        .editor-content p {
+            margin-bottom: 1em;
+            line-height: 1.6;
+            color: #d1d5db;
+        }
+
+        .editor-content code {
+            background: #283039;
+            padding: 0.2em 0.4em;
+            border-radius: 0.25rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: #fa6238;
+        }
+
+        .editor-content pre {
+            background: #111418;
+            padding: 1em;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin-bottom: 1em;
+            border: 1px solid #283039;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white font-display overflow-hidden">
+    <div class="flex h-screen w-full">
+        <aside class="hidden lg:flex flex-col w-[280px] h-full bg-[#111418] border-r border-border-dark flex-shrink-0">
+            <div class="p-6 flex flex-col h-full justify-between">
+                <div>
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="bg-center bg-no-repeat bg-cover rounded-full size-12 border-2 border-border-dark"
+                            data-alt="Admin user profile picture showing a stylized robot avatar"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAYwa5RYhMpWN2Zu9mX8Dm2D94pw2ejreOlwViiOGBifn_FunjZvSiMq8aGr5ZtzAkGY-fkzIH_F-jvm-ObMr-0x95JMpIfOe9BMFn44fr0Nc1S-oPjLWGHm6YH1aqw5pK5AEqSTJAtOw3nvpHZBH1VDzTjLmaeEG7Ijur2L_JooJm5pqgMQlAeLpb8eYvwfiRZzMVxvyFNykeOIjM1wma5VpngmF21T0qAJuKQnXBgojIkSPaJY_lkYrM3gUwUYE2I4Be8KNV3B30Q");'>
+                        </div>
+                        <div class="flex flex-col">
+                            <h1 class="text-white text-base font-bold leading-tight">DevOps Admin</h1>
+                            <p class="text-[#9dabb9] text-xs font-mono">v2.4.0-stable</p>
+                        </div>
+                    </div>
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">dashboard</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Dashboard</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 border-l-4 border-primary group transition-all"
+                            href="#">
+                            <span class="material-symbols-outlined text-primary">article</span>
+                            <p class="text-white text-sm font-medium">Articles</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">chat</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Comments</p>
+                            <span
+                                class="ml-auto bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full">23</span>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">search</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">SEO Manager</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">monitoring</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Performance</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">manage_accounts</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Roles &amp; Users</p>
+                        </a>
+                    </nav>
+                </div>
+                <div class="pt-4 border-t border-border-dark">
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-surface-dark text-[#9dabb9] hover:text-white transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">settings</span>
+                        <p class="text-sm font-medium">System Settings</p>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-surface-dark text-[#fa6238] hover:text-[#fa6238]/80 transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">logout</span>
+                        <p class="text-sm font-medium">Logout</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+        <main class="flex-1 flex flex-col h-full min-w-0 bg-background-light dark:bg-background-dark overflow-hidden">
+            <header
+                class="h-16 flex items-center justify-between px-6 lg:px-10 border-b border-border-dark bg-[#111418] shrink-0">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-white">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <a class="text-[#9dabb9] hover:text-white transition-colors flex items-center justify-center size-8 rounded-full hover:bg-[#283039]"
+                            href="#">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                        </a>
+                        <div class="h-6 w-px bg-border-dark mx-1"></div>
+                        <h2 class="text-white text-lg font-bold leading-tight tracking-tight">Edit Article</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs text-[#9dabb9] hidden sm:block mr-2">Last saved: <span class="text-white">Today
+                            at 10:45 AM</span></span>
+                    <button
+                        class="flex items-center gap-2 h-9 px-4 bg-[#283039] hover:bg-[#3b4754] text-[#9dabb9] hover:text-white text-sm font-bold rounded-lg transition-colors border border-border-dark">
+                        <span class="material-symbols-outlined text-[18px]">visibility</span>
+                        <span class="hidden sm:inline">Preview</span>
+                    </button>
+                    <button
+                        class="flex items-center gap-2 h-9 px-4 bg-primary hover:bg-primary/90 text-white text-sm font-bold rounded-lg transition-colors shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined text-[18px]">save</span>
+                        <span class="hidden sm:inline">Save Changes</span>
+                    </button>
+                </div>
+            </header>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8">
+                <div class="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    <div class="lg:col-span-8 flex flex-col gap-6">
+                        <div class="flex flex-col gap-3">
+                            <input
+                                class="w-full bg-transparent border-0 border-b border-border-dark focus:border-primary focus:ring-0 text-3xl font-bold text-white placeholder-[#586069] px-0 py-2 transition-colors"
+                                placeholder="Enter article title here..." type="text"
+                                value="Mastering Kubernetes Network Policies" />
+                            <div class="flex items-center gap-2 text-sm">
+                                <span class="text-[#9dabb9] select-none">https://devops-blog.com/p/</span>
+                                <div class="relative flex-1 group">
+                                    <input
+                                        class="w-full bg-[#111418] border border-border-dark rounded px-2 py-1 text-xs font-mono text-[#9dabb9] focus:text-white focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                                        type="text" value="mastering-k8s-network-policies" />
+                                    <button
+                                        class="absolute right-2 top-1/2 -translate-y-1/2 text-[#9dabb9] hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="Regenerate from title">
+                                        <span class="material-symbols-outlined text-[16px]">autorenew</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div
+                            class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm flex flex-col min-h-[600px]">
+                            <div
+                                class="bg-[#111418] border-b border-border-dark p-2 flex flex-wrap gap-1 sticky top-0 z-10">
+                                <div class="flex items-center gap-1 pr-2 border-r border-[#283039] mr-1">
+                                    <select
+                                        class="bg-transparent text-white text-sm font-medium border-none focus:ring-0 cursor-pointer h-8 rounded hover:bg-[#283039]">
+                                        <option>Normal</option>
+                                        <option>Heading 1</option>
+                                        <option>Heading 2</option>
+                                        <option>Heading 3</option>
+                                        <option>Code Block</option>
+                                    </select>
+                                </div>
+                                <button
+                                    class="p-1.5 rounded text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors"
+                                    title="Bold">
+                                    <span class="material-symbols-outlined text-[20px]">format_bold</span>
+                                </button>
+                                <button
+                                    class="p-1.5 rounded text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors"
+                                    title="Italic">
+                                    <span class="material-symbols-outlined text-[20px]">format_italic</span>
+                                </button>
+                                <button
+                                    class="p-1.5 rounded text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors"
+                                    title="Underline">
+                                    <span class="material-symbols-outlined text-[20px]">format_underlined</span>
+                                </button>
+                                <div class="w-px h-6 bg-[#283039] my-auto mx-1"></div>
+                                <button
+                                    class="p-1.5 rounded text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors"
+                                    title="Link">
+                                    <span class="material-symbols-outlined text-[20px]">link</span>
+                                </button>
+                                <button
+                                    class="p-1.5 rounded text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors"
+                                    title="Image">
+                                    <span class="material-symbols-outlined text-[20px]">image</span>
+                                </button>
+                                <button
+                                    class="p-1.5 rounded text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors"
+                                    title="Code">
+                                    <span class="material-symbols-outlined text-[20px]">code</span>
+                                </button>
+                                <div class="w-px h-6 bg-[#283039] my-auto mx-1"></div>
+                                <button
+                                    class="p-1.5 rounded text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors"
+                                    title="Bullet List">
+                                    <span class="material-symbols-outlined text-[20px]">format_list_bulleted</span>
+                                </button>
+                                <button
+                                    class="p-1.5 rounded text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors"
+                                    title="Numbered List">
+                                    <span class="material-symbols-outlined text-[20px]">format_list_numbered</span>
+                                </button>
+                                <button
+                                    class="p-1.5 rounded text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors"
+                                    title="Quote">
+                                    <span class="material-symbols-outlined text-[20px]">format_quote</span>
+                                </button>
+                                <div class="ml-auto flex items-center gap-1">
+                                    <button
+                                        class="p-1.5 rounded text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors"
+                                        title="Fullscreen">
+                                        <span class="material-symbols-outlined text-[20px]">fullscreen</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex-1 p-6 lg:p-8 bg-[#1e293b] text-base outline-none custom-scrollbar editor-content"
+                                contenteditable="true">
+                                <p>Kubernetes Network Policies are crucial for securing your cluster networking. By
+                                    default, pods are non-isolated; they accept traffic from any source. In this guide,
+                                    we will explore how to restrict traffic effectively.</p>
+                                <h2>Understanding the Basics</h2>
+                                <p>A <code>NetworkPolicy</code> is a specification of how groups of pods are allowed to
+                                    communicate with each other and other network endpoints.</p>
+                                <pre><code class="language-yaml">apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - ipBlock:
+        cidr: 172.17.0.0/16
+        except:
+        - 172.17.1.0/24
+    - namespaceSelector:
+        matchLabels:
+          project: myproject
+    - podSelector:
+        matchLabels:
+          role: frontend
+    ports:
+    - protocol: TCP
+      port: 6379</code></pre>
+                                <p>The example above demonstrates a simple policy that restricts ingress traffic to pods
+                                    with the label <code>role: db</code>.</p>
+                                <h2>Best Practices</h2>
+                                <p>Always start with a default deny policy for your namespaces. This ensures that you
+                                    explicitly allow traffic only where necessary.</p>
+                            </div>
+                            <div
+                                class="bg-[#111418] border-t border-border-dark px-4 py-2 flex items-center justify-between text-xs text-[#9dabb9]">
+                                <span>p: HTML</span>
+                                <div class="flex gap-4">
+                                    <span>Words: 142</span>
+                                    <span>Characters: 980</span>
+                                    <span>Reading time: 1 min</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-6">
+                            <div class="flex items-center gap-2 mb-4">
+                                <span class="material-symbols-outlined text-primary">search</span>
+                                <h3 class="text-white font-bold text-base">Search Engine Optimization</h3>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-[#9dabb9] mb-1.5 uppercase">Meta
+                                        Title</label>
+                                    <input
+                                        class="w-full bg-[#111418] border border-border-dark rounded-lg px-4 py-2 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary placeholder-[#586069] transition-all"
+                                        type="text" value="Mastering Kubernetes Network Policies | DevOps Blog" />
+                                    <p class="text-[10px] text-[#9dabb9] mt-1 text-right">54/60 characters</p>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-[#9dabb9] mb-1.5 uppercase">Meta
+                                        Description</label>
+                                    <textarea
+                                        class="w-full bg-[#111418] border border-border-dark rounded-lg px-4 py-2 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary placeholder-[#586069] transition-all resize-none"
+                                        rows="3">Learn how to secure your Kubernetes cluster networking using Network Policies. A comprehensive guide with examples and best practices.</textarea>
+                                    <p class="text-[10px] text-[#9dabb9] mt-1 text-right">145/160 characters</p>
+                                </div>
+                                <div>
+                                    <label
+                                        class="block text-xs font-medium text-[#9dabb9] mb-1.5 uppercase">Keywords</label>
+                                    <div
+                                        class="w-full bg-[#111418] border border-border-dark rounded-lg px-2 py-2 text-sm flex flex-wrap gap-2 min-h-[42px] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+                                        <span
+                                            class="bg-[#283039] text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                                            kubernetes <button class="hover:text-[#fa6238]"><span
+                                                    class="material-symbols-outlined text-[14px]">close</span></button>
+                                        </span>
+                                        <span
+                                            class="bg-[#283039] text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                                            security <button class="hover:text-[#fa6238]"><span
+                                                    class="material-symbols-outlined text-[14px]">close</span></button>
+                                        </span>
+                                        <span
+                                            class="bg-[#283039] text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                                            networking <button class="hover:text-[#fa6238]"><span
+                                                    class="material-symbols-outlined text-[14px]">close</span></button>
+                                        </span>
+                                        <input
+                                            class="bg-transparent border-none p-0 text-sm text-white focus:ring-0 placeholder-[#586069] flex-1 min-w-[100px]"
+                                            placeholder="Add keyword..." type="text" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="lg:col-span-4 flex flex-col gap-6">
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-5 shadow-sm">
+                            <h3 class="text-white font-bold text-sm mb-4">Publishing</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-[#9dabb9] mb-1.5">Status</label>
+                                    <select
+                                        class="w-full bg-[#111418] border border-border-dark rounded-lg px-3 py-2 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary cursor-pointer">
+                                        <option value="published">Published</option>
+                                        <option value="draft">Draft</option>
+                                        <option value="scheduled">Scheduled</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-[#9dabb9] mb-1.5">Visibility</label>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input checked=""
+                                                class="text-primary bg-[#111418] border-border-dark focus:ring-primary"
+                                                name="visibility" type="radio" />
+                                            <span class="text-sm text-white">Public</span>
+                                        </label>
+                                        <label class="flex items-center gap-2 cursor-pointer">
+                                            <input
+                                                class="text-primary bg-[#111418] border-border-dark focus:ring-primary"
+                                                name="visibility" type="radio" />
+                                            <span class="text-sm text-white">Private</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-[#9dabb9] mb-1.5">Publish Date</label>
+                                    <div class="relative">
+                                        <span
+                                            class="material-symbols-outlined absolute left-3 top-2 text-[#9dabb9] text-[18px]">calendar_today</span>
+                                        <input
+                                            class="w-full bg-[#111418] border border-border-dark rounded-lg pl-10 pr-3 py-2 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary [color-scheme:dark]"
+                                            type="date" value="2023-10-24" />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 pt-4 border-t border-border-dark flex justify-between items-center">
+                                <button
+                                    class="text-red-400 text-sm hover:text-red-300 font-medium transition-colors">Move
+                                    to Trash</button>
+                                <span class="text-xs text-[#9dabb9] italic">rev. 12</span>
+                            </div>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-5 shadow-sm">
+                            <h3 class="text-white font-bold text-sm mb-4">Author</h3>
+                            <div
+                                class="flex items-center gap-3 mb-3 p-2 bg-[#111418] rounded-lg border border-border-dark">
+                                <div class="size-8 rounded-full bg-cover bg-center"
+                                    style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAnZCGrFGbf56yICttdpKRprUs_mwoAgImdoVlhbNKWHqRKW2e27qdhlrPimlZCwVIF-7V1G1a9zwlq4ZwdklZU8RUjUiTDl6bo_8yZBSVtDDE0hFslldpMjG7zKKB2ow3WE60B__RiO6y29cv9V_msqpeVKYhPA4eQ1mUPkS0WMWYOIkA-BAokhITO8h1TXcBUpdtxsC255HBYSOQaWpo3RP6EEfbgHkw89YcnwA4MHEG1uD_r2dFywFjjJvFazSj75LEBniC7C1Jm");'>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-bold text-white">Sarah L.</span>
+                                    <span class="text-[10px] text-[#9dabb9]">Editor in Chief</span>
+                                </div>
+                                <button class="ml-auto text-[#9dabb9] hover:text-primary"><span
+                                        class="material-symbols-outlined text-[18px]">close</span></button>
+                            </div>
+                            <div class="relative group">
+                                <span
+                                    class="material-symbols-outlined absolute left-3 top-2.5 text-[#9dabb9] text-[18px]">person_search</span>
+                                <input
+                                    class="w-full bg-[#111418] border border-border-dark rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary placeholder-[#586069]"
+                                    placeholder="Assign another author..." type="text" />
+                            </div>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-5 shadow-sm">
+                            <h3 class="text-white font-bold text-sm mb-4">Taxonomy</h3>
+                            <div class="mb-5">
+                                <div class="flex justify-between items-center mb-2">
+                                    <label class="text-xs font-medium text-[#9dabb9]">Categories</label>
+                                    <button class="text-[10px] text-primary hover:text-white font-bold uppercase">Add
+                                        New</button>
+                                </div>
+                                <div
+                                    class="bg-[#111418] border border-border-dark rounded-lg p-3 max-h-40 overflow-y-auto custom-scrollbar space-y-2">
+                                    <label class="flex items-center gap-2 cursor-pointer group">
+                                        <input checked=""
+                                            class="rounded border-border-dark bg-[#283039] text-primary focus:ring-0 focus:ring-offset-0"
+                                            type="checkbox" />
+                                        <span
+                                            class="text-sm text-white group-hover:text-primary transition-colors">Kubernetes</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            class="rounded border-border-dark bg-[#283039] text-primary focus:ring-0 focus:ring-offset-0"
+                                            type="checkbox" />
+                                        <span
+                                            class="text-sm text-white group-hover:text-primary transition-colors">DevOps
+                                            Culture</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer group">
+                                        <input checked=""
+                                            class="rounded border-border-dark bg-[#283039] text-primary focus:ring-0 focus:ring-offset-0"
+                                            type="checkbox" />
+                                        <span
+                                            class="text-sm text-white group-hover:text-primary transition-colors">Security</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            class="rounded border-border-dark bg-[#283039] text-primary focus:ring-0 focus:ring-offset-0"
+                                            type="checkbox" />
+                                        <span
+                                            class="text-sm text-white group-hover:text-primary transition-colors">CI/CD</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer group">
+                                        <input
+                                            class="rounded border-border-dark bg-[#283039] text-primary focus:ring-0 focus:ring-offset-0"
+                                            type="checkbox" />
+                                        <span
+                                            class="text-sm text-white group-hover:text-primary transition-colors">Cloud
+                                            Native</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-[#9dabb9] mb-1.5">Tags</label>
+                                <input
+                                    class="w-full bg-[#111418] border border-border-dark rounded-lg px-3 py-2 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary placeholder-[#586069]"
+                                    placeholder="Separate with commas..." type="text" />
+                                <p class="text-[10px] text-[#9dabb9] mt-1.5 italic">Used for search and related posts.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="bg-surface-dark border border-border-dark rounded-xl p-5 shadow-sm">
+                            <h3 class="text-white font-bold text-sm mb-4">Featured Image</h3>
+                            <div
+                                class="aspect-video w-full bg-[#111418] border-2 border-dashed border-[#283039] hover:border-primary rounded-lg flex flex-col items-center justify-center cursor-pointer transition-colors group relative overflow-hidden">
+                                <img alt="Preview"
+                                    class="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:opacity-30 transition-opacity"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjEysfTyZ26PBX00Mx5FFP2GgQRsdNrPg8sJsdQ22KmvBSGAM7oMMbGZnrssdVDysi-UmYHyE1mOBADvOky1iW_8XrD6CHzoOx68FhljxVlFeDkc_I4d_4tGEoDeOqcZ54UmhRLnt7ImMZa-OZ18uoN4DCzxXO2_h4RpK7MKwGXxXbHQoGTJFDmeFfvYAbOD9zLB1gizkpnQ7VSvTm016qCwhUAZ9RJpN-UlABamA0Vdjj7lvRhLIL5BmBCMbeF9Z359osv4QaMSE2" />
+                                <div class="z-10 flex flex-col items-center">
+                                    <span
+                                        class="material-symbols-outlined text-[#9dabb9] group-hover:text-white text-3xl mb-2 transition-colors">cloud_upload</span>
+                                    <span
+                                        class="text-xs text-[#9dabb9] group-hover:text-white font-medium transition-colors">Replace
+                                        Image</span>
+                                </div>
+                            </div>
+                            <p class="text-[10px] text-[#9dabb9] mt-2 text-center">Recommended size: 1200x630px</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>

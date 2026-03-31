@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>DevOps Admin Dashboard - System Settings</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1e293b",
+                        "border-dark": "#283039",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: { "DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #111418;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #3b4754;
+            border-radius: 4px;
+        }
+
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #137fec;
+        }
+
+        .toggle-checkbox:checked+.toggle-label {
+            background-color: #137fec;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-[#111418] dark:text-white font-display overflow-hidden">
+    <div class="flex h-screen w-full">
+        <aside class="hidden lg:flex flex-col w-[280px] h-full bg-[#111418] border-r border-border-dark flex-shrink-0">
+            <div class="p-6 flex flex-col h-full justify-between">
+                <div>
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="bg-center bg-no-repeat bg-cover rounded-full size-12 border-2 border-border-dark"
+                            data-alt="Admin user profile picture showing a stylized robot avatar"
+                            style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuAYwa5RYhMpWN2Zu9mX8Dm2D94pw2ejreOlwViiOGBifn_FunjZvSiMq8aGr5ZtzAkGY-fkzIH_F-jvm-ObMr-0x95JMpIfOe9BMFn44fr0Nc1S-oPjLWGHm6YH1aqw5pK5AEqSTJAtOw3nvpHZBH1VDzTjLmaeEG7Ijur2L_JooJm5pqgMQlAeLpb8eYvwfiRZzMVxvyFNykeOIjM1wma5VpngmF21T0qAJuKQnXBgojIkSPaJY_lkYrM3gUwUYE2I4Be8KNV3B30Q");'>
+                        </div>
+                        <div class="flex flex-col">
+                            <h1 class="text-white text-base font-bold leading-tight">DevOps Admin</h1>
+                            <p class="text-[#9dabb9] text-xs font-mono">v2.4.0-stable</p>
+                        </div>
+                    </div>
+                    <nav class="flex flex-col gap-2">
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">dashboard</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Dashboard</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">article</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Articles</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">chat</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Comments</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">search</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">SEO Manager</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">monitoring</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Performance</p>
+                        </a>
+                        <a class="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-surface-dark group transition-colors"
+                            href="#">
+                            <span
+                                class="material-symbols-outlined text-[#9dabb9] group-hover:text-white">manage_accounts</span>
+                            <p class="text-[#9dabb9] text-sm font-medium group-hover:text-white">Roles &amp; Users</p>
+                        </a>
+                    </nav>
+                </div>
+                <div class="pt-4 border-t border-border-dark">
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg bg-primary/10 border-l-4 border-primary text-white transition-all"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg text-primary">settings</span>
+                        <p class="text-sm font-medium">System Settings</p>
+                    </a>
+                    <a class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-surface-dark text-[#fa6238] hover:text-[#fa6238]/80 transition-colors"
+                        href="#">
+                        <span class="material-symbols-outlined text-lg">logout</span>
+                        <p class="text-sm font-medium">Logout</p>
+                    </a>
+                </div>
+            </div>
+        </aside>
+        <main class="flex-1 flex flex-col h-full min-w-0 bg-background-light dark:bg-background-dark overflow-hidden">
+            <header
+                class="h-16 flex items-center justify-between px-6 lg:px-10 border-b border-border-dark bg-[#111418] shrink-0">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-white">
+                        <span class="material-symbols-outlined">menu</span>
+                    </button>
+                    <div class="flex items-center gap-3">
+                        <h2 class="text-white text-lg font-bold leading-tight tracking-tight">System Settings</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="relative group hidden sm:block">
+                        <input
+                            class="bg-[#283039] border border-border-dark rounded-lg pl-9 pr-3 py-1.5 text-sm text-white focus:border-primary focus:ring-1 focus:ring-primary placeholder-[#9dabb9] w-64 transition-all"
+                            placeholder="Search settings..." type="text" />
+                        <span
+                            class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[#9dabb9] text-[18px]">search</span>
+                    </div>
+                    <div class="h-8 w-px bg-border-dark mx-2 hidden sm:block"></div>
+                    <button
+                        class="flex items-center justify-center size-9 rounded-full bg-[#283039] text-[#9dabb9] hover:text-white hover:bg-[#3b4754] transition-colors relative"
+                        title="Notifications">
+                        <span class="material-symbols-outlined text-[20px]">notifications</span>
+                        <span class="absolute top-2 right-2 size-2 bg-[#fa6238] rounded-full"></span>
+                    </button>
+                </div>
+            </header>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8">
+                <div class="max-w-5xl mx-auto flex flex-col gap-8">
+                    <section class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm">
+                        <div class="p-6 border-b border-border-dark flex justify-between items-center">
+                            <div>
+                                <h3 class="text-white text-lg font-bold">General Information</h3>
+                                <p class="text-[#9dabb9] text-sm mt-1">Configure basic site details, localization, and
+                                    branding.</p>
+                            </div>
+                            <span
+                                class="material-symbols-outlined text-primary bg-primary/10 p-2 rounded-lg">tune</span>
+                        </div>
+                        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-[#9dabb9] mb-1">Site Name</label>
+                                    <input
+                                        class="w-full bg-[#283039] border border-border-dark rounded-lg px-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm"
+                                        type="text" value="DevOps Blog" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-[#9dabb9] mb-1">Tagline</label>
+                                    <input
+                                        class="w-full bg-[#283039] border border-border-dark rounded-lg px-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm"
+                                        type="text" value="Automate Everything, Deploy Anywhere" />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-[#9dabb9] mb-1">Site Language</label>
+                                    <select
+                                        class="w-full bg-[#283039] border border-border-dark rounded-lg px-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm appearance-none">
+                                        <option>English (US)</option>
+                                        <option>Spanish (ES)</option>
+                                        <option>French (FR)</option>
+                                        <option>German (DE)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-[#9dabb9] mb-1">Timezone</label>
+                                    <select
+                                        class="w-full bg-[#283039] border border-border-dark rounded-lg px-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm appearance-none">
+                                        <option>(UTC-08:00) Pacific Time</option>
+                                        <option selected="">(UTC+00:00) Coordinated Universal Time</option>
+                                        <option>(UTC+01:00) Central European Time</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-4">
+                                <label class="block text-sm font-medium text-[#9dabb9]">Site Logo</label>
+                                <div
+                                    class="flex-1 bg-[#283039] border-2 border-dashed border-[#3b4754] rounded-lg flex flex-col items-center justify-center p-6 text-center hover:border-primary/50 transition-colors cursor-pointer group">
+                                    <div
+                                        class="size-16 bg-[#111418] rounded-full flex items-center justify-center mb-3 border border-border-dark shadow-lg">
+                                        <span
+                                            class="material-symbols-outlined text-[#9dabb9] text-3xl group-hover:text-primary transition-colors">cloud_upload</span>
+                                    </div>
+                                    <p class="text-white text-sm font-medium">Click to upload or drag &amp; drop</p>
+                                    <p class="text-[#9dabb9] text-xs mt-1">SVG, PNG, JPG (max. 2MB)</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-[#111418] px-6 py-4 border-t border-border-dark flex justify-end">
+                            <button
+                                class="bg-primary hover:bg-primary/90 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">save</span>
+                                Save Changes
+                            </button>
+                        </div>
+                    </section>
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+                        <section
+                            class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm flex flex-col">
+                            <div class="p-6 border-b border-border-dark">
+                                <h3 class="text-white text-lg font-bold">Email Notifications</h3>
+                                <p class="text-[#9dabb9] text-sm mt-1">Manage system alerts and newsletter settings.</p>
+                            </div>
+                            <div class="p-6 space-y-6 flex-1">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-white text-sm font-medium">System Alerts</p>
+                                        <p class="text-[#9dabb9] text-xs">Receive emails about critical system errors
+                                        </p>
+                                    </div>
+                                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                        <input checked=""
+                                            class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer right-0 border-primary"
+                                            id="toggle-sys" type="checkbox" />
+                                        <label
+                                            class="toggle-label block overflow-hidden h-5 rounded-full bg-primary cursor-pointer"
+                                            for="toggle-sys"></label>
+                                    </div>
+                                </div>
+                                <div class="border-t border-border-dark"></div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-white text-sm font-medium">New User Registration</p>
+                                        <p class="text-[#9dabb9] text-xs">Notify when a new admin user is created</p>
+                                    </div>
+                                    <div class="relative inline-block w-10 mr-2 align-middle select-none">
+                                        <input
+                                            class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer right-5 border-gray-300"
+                                            id="toggle-user" type="checkbox" />
+                                        <label
+                                            class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"
+                                            for="toggle-user"></label>
+                                    </div>
+                                </div>
+                                <div class="border-t border-border-dark"></div>
+                                <div class="space-y-4">
+                                    <h4 class="text-white text-sm font-bold">SMTP Configuration</h4>
+                                    <div>
+                                        <label class="block text-sm font-medium text-[#9dabb9] mb-1">Sender
+                                            Email</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#9dabb9]">
+                                                <span class="material-symbols-outlined text-lg">mail</span>
+                                            </span>
+                                            <input
+                                                class="w-full bg-[#283039] border border-border-dark rounded-lg pl-10 pr-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm"
+                                                placeholder="noreply@devopsblog.com" type="email"
+                                                value="system@devops-blog.com" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-[#111418] px-6 py-4 border-t border-border-dark flex justify-end">
+                                <button class="text-[#9dabb9] hover:text-white text-sm font-medium mr-4">Test
+                                    Email</button>
+                                <button
+                                    class="bg-[#283039] hover:bg-[#3b4754] text-white text-sm font-medium px-4 py-2 rounded-lg border border-border-dark transition-colors">Save
+                                    Settings</button>
+                            </div>
+                        </section>
+                        <section
+                            class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm flex flex-col">
+                            <div class="p-6 border-b border-border-dark">
+                                <h3 class="text-white text-lg font-bold">Backup &amp; Maintenance</h3>
+                                <p class="text-[#9dabb9] text-sm mt-1">Configure automated backups and maintenance mode.
+                                </p>
+                            </div>
+                            <div class="p-6 space-y-6 flex-1">
+                                <div
+                                    class="flex items-center justify-between p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                                    <div class="flex items-center gap-3">
+                                        <span class="material-symbols-outlined text-yellow-500">construction</span>
+                                        <div>
+                                            <p class="text-white text-sm font-medium">Maintenance Mode</p>
+                                            <p class="text-yellow-500/80 text-xs">Site is currently live</p>
+                                        </div>
+                                    </div>
+                                    <div class="relative inline-block w-10 align-middle select-none">
+                                        <input
+                                            class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer right-5 border-gray-300"
+                                            id="toggle-maint" type="checkbox" />
+                                        <label
+                                            class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"
+                                            for="toggle-maint"></label>
+                                    </div>
+                                </div>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-[#9dabb9] mb-1">Backup
+                                            Frequency</label>
+                                        <select
+                                            class="w-full bg-[#283039] border border-border-dark rounded-lg px-3 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary text-sm">
+                                            <option>Daily at 00:00 UTC</option>
+                                            <option>Weekly on Sundays</option>
+                                            <option>Monthly</option>
+                                            <option>Disabled</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-[#9dabb9] mb-1">Storage
+                                            Destination</label>
+                                        <div
+                                            class="flex items-center gap-2 bg-[#283039] border border-border-dark rounded-lg px-3 py-2">
+                                            <span class="material-symbols-outlined text-[#9dabb9] text-lg">cloud</span>
+                                            <input
+                                                class="w-full bg-transparent border-none p-0 text-white focus:ring-0 text-sm"
+                                                type="text" value="s3://devops-blog-backups" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between pt-2">
+                                    <div class="text-xs text-[#9dabb9]">Last backup: <span class="text-white">Today,
+                                            04:00 AM</span></div>
+                                    <div class="text-xs text-[#9dabb9]">Size: <span class="text-white">1.2 GB</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-[#111418] px-6 py-4 border-t border-border-dark flex justify-end">
+                                <button
+                                    class="bg-[#283039] hover:bg-[#3b4754] text-white text-sm font-medium px-4 py-2 rounded-lg border border-border-dark transition-colors flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-[18px]">backup</span>
+                                    Backup Now
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+                    <section class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm">
+                        <div class="p-6 border-b border-border-dark">
+                            <h3 class="text-white text-lg font-bold">Third-Party Integrations</h3>
+                            <p class="text-[#9dabb9] text-sm mt-1">Connect your blog with external services and tools.
+                            </p>
+                        </div>
+                        <div class="divide-y divide-border-dark">
+                            <div
+                                class="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-[#283039]/30 transition-colors">
+                                <div
+                                    class="size-12 rounded-lg bg-[#36C5F0]/10 flex items-center justify-center border border-[#36C5F0]/20 shrink-0">
+                                    <span class="material-symbols-outlined text-[#36C5F0] text-2xl">forum</span>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-white font-medium flex items-center gap-2">
+                                        Slack Notifications
+                                        <span
+                                            class="text-xs bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full border border-green-500/20">Active</span>
+                                    </h4>
+                                    <p class="text-[#9dabb9] text-sm mt-1">Post new articles and comment alerts to a
+                                        Slack channel.</p>
+                                </div>
+                                <button
+                                    class="text-[#9dabb9] hover:text-white px-3 py-2 rounded-lg border border-border-dark bg-[#111418] text-sm font-medium transition-colors">Configure</button>
+                            </div>
+                            <div
+                                class="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-[#283039]/30 transition-colors">
+                                <div
+                                    class="size-12 rounded-lg bg-[#F9AB00]/10 flex items-center justify-center border border-[#F9AB00]/20 shrink-0">
+                                    <span class="material-symbols-outlined text-[#F9AB00] text-2xl">analytics</span>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-white font-medium flex items-center gap-2">Google Analytics 4</h4>
+                                    <p class="text-[#9dabb9] text-sm mt-1">Track traffic, user behavior, and site
+                                        performance.</p>
+                                </div>
+                                <button
+                                    class="text-white px-3 py-2 rounded-lg bg-primary hover:bg-primary/90 text-sm font-medium transition-colors">Connect</button>
+                            </div>
+                            <div
+                                class="p-6 flex flex-col sm:flex-row items-start sm:items-center gap-4 hover:bg-[#283039]/30 transition-colors">
+                                <div
+                                    class="size-12 rounded-lg bg-white/10 flex items-center justify-center border border-white/20 shrink-0">
+                                    <span class="material-symbols-outlined text-white text-2xl">terminal</span>
+                                </div>
+                                <div class="flex-1">
+                                    <h4 class="text-white font-medium flex items-center gap-2">
+                                        GitHub Sync
+                                        <span
+                                            class="text-xs bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full border border-green-500/20">Active</span>
+                                    </h4>
+                                    <p class="text-[#9dabb9] text-sm mt-1">Automatically backup content markdown files
+                                        to a private repository.</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[#9dabb9] text-xs font-mono">last sync: 5m ago</span>
+                                    <button
+                                        class="text-[#9dabb9] hover:text-white px-3 py-2 rounded-lg border border-border-dark bg-[#111418] text-sm font-medium transition-colors">Manage</button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="flex justify-end gap-3 pb-8">
+                        <button
+                            class="px-6 py-2.5 rounded-lg border border-border-dark text-[#9dabb9] hover:text-white hover:bg-[#283039] transition-colors text-sm font-medium">Discard
+                            Changes</button>
+                        <button
+                            class="px-6 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 transition-all text-sm font-bold flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[20px]">check</span>
+                            Save All Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+
+</html>

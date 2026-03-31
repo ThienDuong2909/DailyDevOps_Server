@@ -16,6 +16,9 @@ const {
     buildTagConnect,
     buildTagReplace,
     generateSlug,
+    normalizeEditorPayload,
+    serializePost,
+    serializePosts,
 } = require('./posts.helpers');
 
 class PostsService {
@@ -36,7 +39,7 @@ class PostsService {
             postsRepository.count({ where }),
         ]);
 
-        return buildPaginatedResponse({ data: posts, total, page, limit });
+        return buildPaginatedResponse({ data: serializePosts(posts), total, page, limit });
     }
 
     /**
@@ -62,7 +65,7 @@ class PostsService {
             throw new NotFoundError('Post not found');
         }
 
-        return post;
+        return serializePost(post);
     }
 
     /**
@@ -84,29 +87,32 @@ class PostsService {
             data: { viewCount: { increment: 1 } },
         });
 
-        return post;
+        return serializePost(post);
     }
 
     /**
      * Create a new post
      */
     async create(dto, authorId) {
-        const { tagIds, ...postData } = dto;
-        const slug = dto.slug || generateSlug(dto.title);
+        const normalizedDto = normalizeEditorPayload(dto);
+        const { tagIds, ...postData } = normalizedDto;
+        const slug = normalizedDto.slug || generateSlug(normalizedDto.title);
         const uniqueSlug = await this.ensureUniqueSlug(slug);
-        const readingTime = buildReadingTime(dto.content);
+        const readingTime = buildReadingTime(normalizedDto.content);
 
-        return postsRepository.create({
+        const post = await postsRepository.create({
             data: {
                 ...postData,
                 slug: uniqueSlug,
                 readingTime,
                 authorId,
-                publishedAt: buildPublishedAt(dto.status, null),
+                publishedAt: buildPublishedAt(normalizedDto.status, null),
                 tags: buildTagConnect(tagIds),
             },
             include: adminWriteInclude,
         });
+
+        return serializePost(post);
     }
 
     /**
@@ -120,21 +126,22 @@ class PostsService {
             throw new ForbiddenError('You can only edit your own posts');
         }
 
-        const { tagIds, ...postData } = dto;
+        const normalizedDto = normalizeEditorPayload(dto);
+        const { tagIds, ...postData } = normalizedDto;
 
         let slug = post.slug;
-        if (dto.title && dto.title !== post.title) {
-            slug = await this.ensureUniqueSlug(generateSlug(dto.title), id);
+        if (normalizedDto.title && normalizedDto.title !== post.title) {
+            slug = await this.ensureUniqueSlug(generateSlug(normalizedDto.title), id);
         }
 
         let readingTime = post.readingTime;
-        if (dto.content) {
-            readingTime = buildReadingTime(dto.content);
+        if (normalizedDto.content) {
+            readingTime = buildReadingTime(normalizedDto.content);
         }
 
-        const publishedAt = buildPublishedAt(dto.status, post.publishedAt);
+        const publishedAt = buildPublishedAt(normalizedDto.status, post.publishedAt);
 
-        return postsRepository.update({
+        const updatedPost = await postsRepository.update({
             where: { id },
             data: {
                 ...postData,
@@ -145,6 +152,8 @@ class PostsService {
             },
             include: adminWriteInclude,
         });
+
+        return serializePost(updatedPost);
     }
 
     /**
@@ -191,7 +200,7 @@ class PostsService {
                 acc[curr.status] = curr._count;
                 return acc;
             }, {}),
-            recentPosts,
+            recentPosts: serializePosts(recentPosts),
         };
     }
 
@@ -206,7 +215,7 @@ class PostsService {
 
         if (!post) return [];
 
-        return postsRepository.findMany({
+        const posts = await postsRepository.findMany({
             where: {
                 id: { not: postId },
                 status: 'PUBLISHED',
@@ -225,6 +234,8 @@ class PostsService {
             orderBy: { viewCount: 'desc' },
             include: relatedPostsInclude,
         });
+
+        return serializePosts(posts);
     }
 
     // ============================================
