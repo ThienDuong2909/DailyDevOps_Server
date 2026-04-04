@@ -36,6 +36,22 @@ pipeline {
         // trên cùng 1 agent (mỗi pipeline có ~/.docker riêng, không ghi đè nhau)
         DOCKER_CONFIG = "${WORKSPACE}/.docker"
         BUILD_CONTEXT = '.'
+        SERVER_NODE_ENV = "${env.NODE_ENV ?: 'production'}"
+        SERVER_PORT = "${env.PORT ?: '3001'}"
+        SERVER_API_PREFIX = "${env.API_PREFIX ?: 'api/v1'}"
+        SERVER_APP_URL = "${env.APP_URL ?: 'https://blog.thienduong.info'}"
+        SERVER_CORS_ORIGIN = "${env.CORS_ORIGIN ?: 'https://blog.thienduong.info,https://www.blog.thienduong.info'}"
+        SERVER_RATE_LIMIT_WINDOW_MS = "${env.RATE_LIMIT_WINDOW_MS ?: '60000'}"
+        SERVER_RATE_LIMIT_MAX_REQUESTS = "${env.RATE_LIMIT_MAX_REQUESTS ?: '100'}"
+        SERVER_SCHEDULED_PUBLISH_INTERVAL_MS = "${env.SCHEDULED_PUBLISH_INTERVAL_MS ?: '30000'}"
+        SERVER_SWAGGER_ENABLED = "${env.SWAGGER_ENABLED ?: 'false'}"
+        SERVER_JWT_ACCESS_EXPIRES_IN = "${env.JWT_ACCESS_EXPIRES_IN ?: '15m'}"
+        SERVER_JWT_REFRESH_EXPIRES_IN = "${env.JWT_REFRESH_EXPIRES_IN ?: '7d'}"
+        SERVER_JWT_MFA_CHALLENGE_EXPIRES_IN = "${env.JWT_MFA_CHALLENGE_EXPIRES_IN ?: '10m'}"
+        SERVER_SMTP_PORT = "${env.SMTP_PORT ?: '465'}"
+        SERVER_SMTP_SECURE = "${env.SMTP_SECURE ?: 'true'}"
+        SERVER_S3_REGION = "${env.S3_REGION ?: 'auto'}"
+        SERVER_SENTRY_TRACES_SAMPLE_RATE = "${env.SENTRY_TRACES_SAMPLE_RATE ?: '0'}"
     }
 
     stages {
@@ -118,6 +134,58 @@ pipeline {
                         }
                     }
                     echo 'Quality Gate passed successfully.'
+                }
+            }
+        }
+
+        stage('Inject Runtime Environment') {
+            steps {
+                echo 'Generating backend runtime environment file for smoke test...'
+                withCredentials([
+                    string(credentialsId: 'DATABASE_URL', variable: 'DATABASE_URL'),
+                    string(credentialsId: 'JWT_ACCESS_SECRET', variable: 'JWT_ACCESS_SECRET'),
+                    string(credentialsId: 'JWT_REFRESH_SECRET', variable: 'JWT_REFRESH_SECRET'),
+                    string(credentialsId: 'JWT_MFA_SECRET', variable: 'JWT_MFA_SECRET'),
+                    string(credentialsId: 'SMTP_PASS', variable: 'SMTP_PASS'),
+                    string(credentialsId: 'S3_ACCESS_KEY_ID', variable: 'S3_ACCESS_KEY_ID'),
+                    string(credentialsId: 'S3_SECRET_ACCESS_KEY', variable: 'S3_SECRET_ACCESS_KEY'),
+                    string(credentialsId: 'SENTRY_DSN', variable: 'SENTRY_DSN')
+                ]) {
+                    sh '''
+                        cat > .env << EOF
+NODE_ENV=${NODE_ENV:-${SERVER_NODE_ENV}}
+PORT=${PORT:-${SERVER_PORT}}
+API_PREFIX=${API_PREFIX:-${SERVER_API_PREFIX}}
+DATABASE_URL=${DATABASE_URL}
+JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+JWT_MFA_SECRET=${JWT_MFA_SECRET}
+JWT_ACCESS_EXPIRES_IN=${JWT_ACCESS_EXPIRES_IN:-${SERVER_JWT_ACCESS_EXPIRES_IN}}
+JWT_REFRESH_EXPIRES_IN=${JWT_REFRESH_EXPIRES_IN:-${SERVER_JWT_REFRESH_EXPIRES_IN}}
+JWT_MFA_CHALLENGE_EXPIRES_IN=${JWT_MFA_CHALLENGE_EXPIRES_IN:-${SERVER_JWT_MFA_CHALLENGE_EXPIRES_IN}}
+CORS_ORIGIN=${CORS_ORIGIN:-${SERVER_CORS_ORIGIN}}
+RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-${SERVER_RATE_LIMIT_WINDOW_MS}}
+RATE_LIMIT_MAX_REQUESTS=${RATE_LIMIT_MAX_REQUESTS:-${SERVER_RATE_LIMIT_MAX_REQUESTS}}
+SCHEDULED_PUBLISH_INTERVAL_MS=${SCHEDULED_PUBLISH_INTERVAL_MS:-${SERVER_SCHEDULED_PUBLISH_INTERVAL_MS}}
+SWAGGER_ENABLED=${SWAGGER_ENABLED:-${SERVER_SWAGGER_ENABLED}}
+APP_URL=${APP_URL:-${SERVER_APP_URL}}
+SMTP_HOST=${SMTP_HOST:-}
+SMTP_PORT=${SMTP_PORT:-${SERVER_SMTP_PORT}}
+SMTP_SECURE=${SMTP_SECURE:-${SERVER_SMTP_SECURE}}
+SMTP_USER=${SMTP_USER:-}
+SMTP_PASS=${SMTP_PASS}
+CONTACT_INBOX=${CONTACT_INBOX:-${SMTP_USER:-}}
+EMAIL_FROM=${EMAIL_FROM:-${SMTP_USER:-no-reply@localhost}}
+S3_ENDPOINT=${S3_ENDPOINT:-}
+S3_REGION=${S3_REGION:-${SERVER_S3_REGION}}
+S3_BUCKET=${S3_BUCKET:-}
+S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
+S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
+SENTRY_DSN=${SENTRY_DSN}
+SENTRY_TRACES_SAMPLE_RATE=${SENTRY_TRACES_SAMPLE_RATE:-${SERVER_SENTRY_TRACES_SAMPLE_RATE}}
+EOF
+                    '''
+                    sh 'echo "Backend env file created with $(wc -l < .env) variables"'
                 }
             }
         }
@@ -214,6 +282,7 @@ pipeline {
     post {
         always {
             echo 'Performing post-build cleanup...'
+            sh 'rm -f .env'
             sh "docker rm -f server-smoke-${BUILD_NUMBER} || true"
             sh "docker logout || true"
             sh "rm -rf k8s-repo"
