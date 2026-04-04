@@ -1,12 +1,29 @@
 const express = require('express');
+const multer = require('multer');
 const postsService = require('./posts.service');
 const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate, optionalAuth, authorize } = require('../../middlewares/auth.middleware');
-const { createPostSchema, updatePostSchema, queryPostSchema } = require('./posts.validation');
+const {
+    createPostSchema,
+    updatePostSchema,
+    queryPostSchema,
+    autocompletePostSchema,
+    rejectPostSchema,
+    postIdParamSchema,
+    restoreVersionSchema,
+    versionParamsSchema,
+} = require('./posts.validation');
 const { sendCreated, sendOk } = require('../../common/http/responses');
 const asyncHandler = require('express-async-handler');
+const { BadRequestError } = require('../../middlewares/error.middleware');
 
 const router = express.Router();
+const notionImportUpload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 25 * 1024 * 1024,
+    },
+});
 
 // ============================================
 // PUBLIC ROUTES
@@ -59,6 +76,28 @@ router.get(
     })
 );
 
+router.get(
+    '/search',
+    validate(queryPostSchema, 'query'),
+    asyncHandler(async (req, res) => {
+        const result = await postsService.findPublished(req.query);
+        return sendOk(res, {
+            ...result,
+        });
+    })
+);
+
+router.get(
+    '/autocomplete',
+    validate(autocompletePostSchema, 'query'),
+    asyncHandler(async (req, res) => {
+        const suggestions = await postsService.autocomplete(req.query);
+        return sendOk(res, {
+            data: suggestions,
+        });
+    })
+);
+
 // ============================================
 // ADMIN ROUTES
 // ============================================
@@ -66,15 +105,19 @@ router.get(
 /**
  * @route   GET /api/posts
  * @desc    Get all posts (Admin)
- * @access  Private (ADMIN, MODERATOR, EDITOR)
+ * @access  Private (ADMIN, MODERATOR, EDITOR, AUTHOR)
  */
 router.get(
     '/',
     authenticate,
-    authorize('ADMIN', 'MODERATOR', 'EDITOR'),
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
     validate(queryPostSchema, 'query'),
     asyncHandler(async (req, res) => {
-        const result = await postsService.findAll(req.query);
+        const scopedQuery =
+            req.user.role === 'AUTHOR'
+                ? { ...req.query, authorId: req.user.id }
+                : req.query;
+        const result = await postsService.findAll(scopedQuery);
         return sendOk(res, {
             ...result,
         });
@@ -101,12 +144,13 @@ router.get(
 /**
  * @route   GET /api/posts/:id
  * @desc    Get post by ID (Admin)
- * @access  Private (ADMIN, MODERATOR, EDITOR)
+ * @access  Private (ADMIN, MODERATOR, EDITOR, AUTHOR)
  */
 router.get(
     '/:id',
     authenticate,
-    authorize('ADMIN', 'MODERATOR', 'EDITOR'),
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(postIdParamSchema, 'params'),
     asyncHandler(async (req, res) => {
         const post = await postsService.findById(req.params.id);
         return sendOk(res, {
@@ -118,15 +162,32 @@ router.get(
 /**
  * @route   POST /api/posts
  * @desc    Create new post
- * @access  Private (ADMIN, EDITOR)
+ * @access  Private (ADMIN, EDITOR, AUTHOR)
  */
+router.post(
+    '/import/notion',
+    authenticate,
+    authorize('ADMIN', 'EDITOR', 'AUTHOR'),
+    notionImportUpload.single('file'),
+    asyncHandler(async (req, res) => {
+        if (!req.file) {
+            throw new BadRequestError('Notion export zip is required');
+        }
+
+        const post = await postsService.importFromNotion(req.file, req.user.id, req.user.role);
+        return sendCreated(res, {
+            data: post,
+        });
+    })
+);
+
 router.post(
     '/',
     authenticate,
-    authorize('ADMIN', 'EDITOR'),
+    authorize('ADMIN', 'EDITOR', 'AUTHOR'),
     validate(createPostSchema),
     asyncHandler(async (req, res) => {
-        const post = await postsService.create(req.body, req.user.id);
+        const post = await postsService.create(req.body, req.user.id, req.user.role);
         return sendCreated(res, {
             data: post,
         });
@@ -136,12 +197,12 @@ router.post(
 /**
  * @route   PUT /api/posts/:id
  * @desc    Update post
- * @access  Private (ADMIN, EDITOR)
+ * @access  Private (ADMIN, MODERATOR, EDITOR, AUTHOR)
  */
 router.put(
     '/:id',
     authenticate,
-    authorize('ADMIN', 'EDITOR'),
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
     validate(updatePostSchema),
     asyncHandler(async (req, res) => {
         const post = await postsService.update(
@@ -159,12 +220,12 @@ router.put(
 /**
  * @route   DELETE /api/posts/:id
  * @desc    Delete post
- * @access  Private (ADMIN, EDITOR)
+ * @access  Private (ADMIN, MODERATOR, EDITOR, AUTHOR)
  */
 router.delete(
     '/:id',
     authenticate,
-    authorize('ADMIN', 'EDITOR'),
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
     asyncHandler(async (req, res) => {
         const result = await postsService.delete(
             req.params.id,
@@ -174,6 +235,83 @@ router.delete(
         return sendOk(res, {
             ...result,
         });
+    })
+);
+
+router.get(
+    '/:id/versions',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(postIdParamSchema, 'params'),
+    asyncHandler(async (req, res) => {
+        const versions = await postsService.listVersions(
+            req.params.id,
+            req.user.id,
+            req.user.role
+        );
+        return sendOk(res, { data: versions });
+    })
+);
+
+router.post(
+    '/:id/versions/:versionId/restore',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(versionParamsSchema, 'params'),
+    validate(restoreVersionSchema),
+    asyncHandler(async (req, res) => {
+        const post = await postsService.restoreVersion(
+            req.params.id,
+            req.params.versionId,
+            req.user.id,
+            req.user.role,
+            req.body.reason
+        );
+        return sendOk(res, { data: post });
+    })
+);
+
+router.post(
+    '/:id/submit-review',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    asyncHandler(async (req, res) => {
+        const post = await postsService.submitForReview(
+            req.params.id,
+            req.user.id,
+            req.user.role
+        );
+        return sendOk(res, { data: post });
+    })
+);
+
+router.post(
+    '/:id/approve',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR'),
+    asyncHandler(async (req, res) => {
+        const post = await postsService.approve(
+            req.params.id,
+            req.user.id,
+            req.user.role,
+            req.body?.status
+        );
+        return sendOk(res, { data: post });
+    })
+);
+
+router.post(
+    '/:id/reject',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR'),
+    validate(rejectPostSchema),
+    asyncHandler(async (req, res) => {
+        const post = await postsService.reject(
+            req.params.id,
+            req.body.rejectionReason,
+            req.user.role
+        );
+        return sendOk(res, { data: post });
     })
 );
 

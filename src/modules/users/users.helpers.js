@@ -32,6 +32,27 @@ const buildPaginatedUsersResponse = ({ data, total, page, limit }) => ({
     },
 });
 
+const buildPublicUsername = (user) => {
+    const fullName = `${user.firstName || ''} ${user.lastName || ''}`
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+
+    if (fullName) {
+        return fullName;
+    }
+
+    return String(user.email || '')
+        .split('@')[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+};
+
 const ensureUserCanUpdate = (targetUserId, currentUserId, currentUserRole) => {
     if (targetUserId !== currentUserId && currentUserRole !== 'ADMIN') {
         throw new ForbiddenError('You can only update your own profile');
@@ -72,4 +93,5 @@ module.exports = {
     ensureRoleCanBeChanged,
     ensureUserCanBeDeleted,
     buildUpdateUserData,
+    buildPublicUsername,
 };

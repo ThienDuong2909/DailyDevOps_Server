@@ -1,4 +1,9 @@
-const { loginSchema, registerSchema } = require('../auth.validation');
+const {
+    loginSchema,
+    registerSchema,
+    verifyMfaLoginSchema,
+    enableMfaSchema,
+} = require('../auth.validation');
 
 describe('auth validation', () => {
     describe('registerSchema', () => {
@@ -49,6 +54,52 @@ describe('auth validation', () => {
 
             expect(error).toBeDefined();
             expect(error.details.some((detail) => detail.message === 'Email is required')).toBe(true);
+        });
+    });
+
+    describe('verifyMfaLoginSchema', () => {
+        it('accepts a valid MFA verification payload', () => {
+            const { error } = verifyMfaLoginSchema.validate({
+                challengeToken: 'signed-challenge-token',
+                token: '123456',
+            });
+
+            expect(error).toBeUndefined();
+        });
+
+        it('rejects invalid MFA token format', () => {
+            const { error } = verifyMfaLoginSchema.validate({
+                challengeToken: 'signed-challenge-token',
+                token: '12ab',
+            });
+
+            expect(error).toBeDefined();
+            expect(
+                error.details.some(
+                    (detail) =>
+                        detail.message === 'Authentication code must be a 6-digit number'
+                )
+            ).toBe(true);
+        });
+    });
+
+    describe('enableMfaSchema', () => {
+        it('requires password and 6-digit token', () => {
+            const { error } = enableMfaSchema.validate(
+                {
+                    password: '',
+                    token: '123',
+                },
+                { abortEarly: false }
+            );
+
+            expect(error).toBeDefined();
+            expect(
+                error.details.some(
+                    (detail) =>
+                        detail.message === 'Authentication code must be a 6-digit number'
+                )
+            ).toBe(true);
         });
     });
 });

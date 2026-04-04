@@ -23,6 +23,10 @@ class PostsRepository {
         return prisma.post.update(params);
     }
 
+    updateMany(params) {
+        return prisma.post.updateMany(params);
+    }
+
     delete(params) {
         return prisma.post.delete(params);
     }
@@ -33,6 +37,22 @@ class PostsRepository {
 
     aggregate(params) {
         return prisma.post.aggregate(params);
+    }
+
+    findManyVersions(params) {
+        return prisma.postVersion.findMany(params);
+    }
+
+    findUniqueVersion(params) {
+        return prisma.postVersion.findUnique(params);
+    }
+
+    createVersion(params) {
+        return prisma.postVersion.create(params);
+    }
+
+    deleteManyVersions(params) {
+        return prisma.postVersion.deleteMany(params);
     }
 }
 

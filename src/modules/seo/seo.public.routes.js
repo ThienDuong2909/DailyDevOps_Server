@@ -1,6 +1,7 @@
 const express = require('express');
 const asyncHandler = require('express-async-handler');
 const sitemapService = require('./seo.sitemap.service');
+const seoService = require('./seo.service');
 
 const router = express.Router();
 
@@ -9,6 +10,20 @@ const router = express.Router();
  * @desc    Get all published posts, categories, tags for sitemap generation
  * @access  Public (no auth required — consumed by Next.js sitemap.ts)
  */
+router.get(
+    '/public-config',
+    asyncHandler(async (_req, res) => {
+        const config = await seoService.getPublicConfig();
+
+        res.set('Cache-Control', 'public, max-age=300, s-maxage=300');
+
+        return res.json({
+            success: true,
+            data: config,
+        });
+    })
+);
+
 router.get(
     '/sitemap-data',
     asyncHandler(async (_req, res) => {

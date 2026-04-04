@@ -26,6 +26,18 @@ class UsersRepository {
     delete(params) {
         return prisma.user.delete(params);
     }
+
+    findPosts(params) {
+        return prisma.post.findMany(params);
+    }
+
+    findComments(params) {
+        return prisma.comment.findMany(params);
+    }
+
+    findSubscriber(params) {
+        return prisma.subscriber.findUnique(params);
+    }
 }
 
 module.exports = new UsersRepository();

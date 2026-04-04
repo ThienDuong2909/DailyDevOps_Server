@@ -1,5 +1,23 @@
 const Joi = require('joi');
 
+const featuredImageSchema = Joi.string()
+    .custom((value, helpers) => {
+        if (value === '' || value === null || value === undefined) {
+            return value;
+        }
+
+        if (
+            /^https?:\/\//i.test(value) ||
+            value.startsWith('/api/v1/media/object?key=')
+        ) {
+            return value;
+        }
+
+        return helpers.message('"featuredImage" must be a valid uri');
+    })
+    .optional()
+    .allow('', null);
+
 const createPostSchema = Joi.object({
     title: Joi.string().required().messages({
         'any.required': 'Title is required',
@@ -10,11 +28,12 @@ const createPostSchema = Joi.object({
     content: Joi.string().optional().allow('', null),
     contentHtml: Joi.string().optional().allow('', null),
     contentJson: Joi.alternatives().try(Joi.object(), Joi.array()).optional().allow(null),
-    featuredImage: Joi.string().uri().optional().allow('', null),
-    status: Joi.string().valid('DRAFT', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED').default('DRAFT'),
+    featuredImage: featuredImageSchema,
+    status: Joi.string().valid('DRAFT', 'REVIEW', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED').default('DRAFT'),
     categoryId: Joi.string().optional().allow('', null),
     tagIds: Joi.array().items(Joi.string()).optional(),
     scheduledAt: Joi.date().optional().allow(null),
+    rejectionReason: Joi.string().max(2000).optional().allow('', null),
 }).custom((value, helpers) => {
     if (!value.content && !value.contentHtml) {
         return helpers.error('any.custom', { message: 'Content is required' });
@@ -33,18 +52,20 @@ const updatePostSchema = Joi.object({
     content: Joi.string().optional(),
     contentHtml: Joi.string().optional().allow('', null),
     contentJson: Joi.alternatives().try(Joi.object(), Joi.array()).optional().allow(null),
-    featuredImage: Joi.string().uri().optional().allow('', null),
-    status: Joi.string().valid('DRAFT', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED').optional(),
+    featuredImage: featuredImageSchema,
+    status: Joi.string().valid('DRAFT', 'REVIEW', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED').optional(),
     categoryId: Joi.string().optional().allow('', null),
     tagIds: Joi.array().items(Joi.string()).optional(),
     scheduledAt: Joi.date().optional().allow(null),
+    rejectionReason: Joi.string().max(2000).optional().allow('', null),
+    createVersion: Joi.boolean().optional(),
 });
 
 const queryPostSchema = Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
     search: Joi.string().optional(),
-    status: Joi.string().valid('DRAFT', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED').optional(),
+    status: Joi.string().valid('DRAFT', 'REVIEW', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED').optional(),
     categoryId: Joi.string().optional(),
     authorId: Joi.string().optional(),
     tagSlug: Joi.string().optional(),
@@ -52,8 +73,35 @@ const queryPostSchema = Joi.object({
     sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
 });
 
+const autocompletePostSchema = Joi.object({
+    q: Joi.string().trim().min(1).max(100).required(),
+    limit: Joi.number().integer().min(1).max(10).default(5),
+});
+
+const rejectPostSchema = Joi.object({
+    rejectionReason: Joi.string().trim().min(5).max(2000).required(),
+});
+
+const postIdParamSchema = Joi.object({
+    id: Joi.string().required(),
+});
+
+const restoreVersionSchema = Joi.object({
+    reason: Joi.string().trim().max(2000).optional().allow('', null),
+});
+
+const versionParamsSchema = Joi.object({
+    id: Joi.string().required(),
+    versionId: Joi.string().required(),
+});
+
 module.exports = {
     createPostSchema,
     updatePostSchema,
     queryPostSchema,
+    autocompletePostSchema,
+    rejectPostSchema,
+    postIdParamSchema,
+    restoreVersionSchema,
+    versionParamsSchema,
 };

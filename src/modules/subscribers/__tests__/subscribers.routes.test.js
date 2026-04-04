@@ -52,8 +52,9 @@ describe('Subscribers Routes', () => {
     describe('POST /api/v1/subscribers', () => {
         it('should subscribe with valid email', async () => {
             subscribersService.subscribe.mockResolvedValue({
-                message: 'Subscribed successfully',
-                subscriber: { id: 'sub-1', email: 'test@example.com', isActive: true },
+                message: 'Subscription created. Check your inbox to confirm.',
+                subscriber: { id: 'sub-1', email: 'test@example.com', status: 'PENDING', isActive: false },
+                confirmationToken: null,
             });
 
             const res = await request(app)
@@ -62,14 +63,16 @@ describe('Subscribers Routes', () => {
                 .expect(201);
 
             expect(res.body.success).toBe(true);
-            expect(res.body.message).toBe('Subscribed successfully');
-            expect(res.body.data.email).toBe('test@example.com');
+            expect(res.body.message).toBe('Subscription created. Check your inbox to confirm.');
+            expect(res.body.data.subscriber.email).toBe('test@example.com');
+            expect(res.body.data.confirmationToken).toBeNull();
         });
 
         it('should subscribe with email and name', async () => {
             subscribersService.subscribe.mockResolvedValue({
-                message: 'Subscribed successfully',
-                subscriber: { id: 'sub-2', email: 'john@example.com', name: 'John' },
+                message: 'Subscription created. Check your inbox to confirm.',
+                subscriber: { id: 'sub-2', email: 'john@example.com', name: 'John', status: 'PENDING' },
+                confirmationToken: null,
             });
 
             const res = await request(app)
@@ -100,6 +103,35 @@ describe('Subscribers Routes', () => {
                 .expect(400);
 
             expect(subscribersService.subscribe).not.toHaveBeenCalled();
+        });
+    });
+
+    // =============================================
+    // POST /api/v1/subscribers/confirm
+    // =============================================
+    describe('POST /api/v1/subscribers/confirm', () => {
+        it('should confirm with valid token', async () => {
+            subscribersService.confirm.mockResolvedValue({
+                message: 'Subscription confirmed successfully',
+                subscriber: { id: 'sub-1', email: 'test@example.com', status: 'CONFIRMED' },
+            });
+
+            const res = await request(app)
+                .post('/api/v1/subscribers/confirm')
+                .send({ token: 'valid-confirm-token' })
+                .expect(200);
+
+            expect(res.body.success).toBe(true);
+            expect(res.body.message).toBe('Subscription confirmed successfully');
+        });
+
+        it('should reject missing confirmation token', async () => {
+            await request(app)
+                .post('/api/v1/subscribers/confirm')
+                .send({})
+                .expect(400);
+
+            expect(subscribersService.confirm).not.toHaveBeenCalled();
         });
     });
 
@@ -179,6 +211,8 @@ describe('Subscribers Routes', () => {
                 total: 100,
                 active: 85,
                 inactive: 15,
+                pending: 8,
+                confirmed: 77,
             });
 
             const res = await request(app)

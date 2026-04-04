@@ -76,6 +76,15 @@ function buildGlobalSettings(records) {
     return settings;
 }
 
+function buildPublicSeoConfig(records) {
+    const settings = buildGlobalSettings(records);
+
+    return {
+        analyticsId: settings.analyticsId || '',
+        searchIndexing: settings.searchIndexing,
+    };
+}
+
 function buildPageEntryFromSeo(seoRecord, baseUrl) {
     return {
         pageType: seoRecord.pageType || 'home',
@@ -241,6 +250,7 @@ module.exports = {
     DEFAULT_GLOBAL_SETTINGS,
     DEFAULT_PAGE,
     SYSTEM_SETTINGS_MAP,
+    buildPublicSeoConfig,
     buildSeoResponse,
     stringifySystemValue,
 };

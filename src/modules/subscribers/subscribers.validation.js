@@ -14,7 +14,14 @@ const unsubscribeSchema = Joi.object({
     }),
 });
 
+const confirmSubscriptionSchema = Joi.object({
+    token: Joi.string().required().messages({
+        'any.required': 'Confirmation token is required',
+    }),
+});
+
 module.exports = {
     subscribeSchema,
     unsubscribeSchema,
+    confirmSubscriptionSchema,
 };

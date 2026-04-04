@@ -24,6 +24,37 @@ const DEFAULT_SETTINGS = {
     maintenance: {
         maintenanceMode: false,
     },
+    content: {
+        headerNavigation: [
+            { label: 'Articles', href: '/' },
+            { label: 'Search', href: '/search' },
+            { label: 'Newsletter', href: '/newsletter' },
+            { label: 'About', href: '/about' },
+            { label: 'Contact', href: '/contact' },
+        ],
+        footerDescription:
+            'The leading resource for DevOps professionals, SREs, and Platform Engineers. Building the future of infrastructure together.',
+        footerContentLinks: [
+            { label: 'Articles', href: '/blog' },
+            { label: 'Search', href: '/search' },
+            { label: 'Newsletter', href: '/newsletter' },
+            { label: 'RSS Feed', href: '/rss.xml' },
+        ],
+        footerCompanyLinks: [
+            { label: 'About', href: '/about' },
+            { label: 'Contact', href: '/contact' },
+            { label: 'Privacy', href: '/privacy-policy' },
+            { label: 'Terms', href: '/terms-of-service' },
+            { label: 'Cookies', href: '/cookie-policy' },
+            { label: 'DMCA', href: '/dmca-policy' },
+        ],
+        trendingTools: [
+            { name: 'Kubernetes', shortName: 'K8', description: 'Orchestration', href: '/search?q=Kubernetes' },
+            { name: 'GitLab', shortName: 'Gi', description: 'DevOps Platform', href: '/search?q=GitLab' },
+            { name: 'Terraform', shortName: 'Tf', description: 'Infrastructure as Code', href: '/search?q=Terraform' },
+            { name: 'Ansible', shortName: 'An', description: 'Automation', href: '/search?q=Ansible' },
+        ],
+    },
 };
 
 const SETTINGS_DEFINITION = {
@@ -43,6 +74,11 @@ const SETTINGS_DEFINITION = {
     notifyNewComment: { key: 'notify_new_comment', type: 'boolean', group: 'email' },
     notifyNewUser: { key: 'notify_new_user', type: 'boolean', group: 'email' },
     maintenanceMode: { key: 'maintenance_mode', type: 'boolean', group: 'maintenance' },
+    headerNavigation: { key: 'header_navigation', type: 'json', group: 'content' },
+    footerDescription: { key: 'footer_description', type: 'string', group: 'content' },
+    footerContentLinks: { key: 'footer_content_links', type: 'json', group: 'content' },
+    footerCompanyLinks: { key: 'footer_company_links', type: 'json', group: 'content' },
+    trendingTools: { key: 'trending_tools', type: 'json', group: 'content' },
 };
 
 function parseSettingValue(value, type) {

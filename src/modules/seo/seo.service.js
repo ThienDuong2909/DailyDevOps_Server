@@ -2,11 +2,27 @@ const seoRepository = require('./seo.repository');
 const {
     DEFAULT_PAGE,
     SYSTEM_SETTINGS_MAP,
+    buildPublicSeoConfig,
     buildSeoResponse,
     stringifySystemValue,
 } = require('./seo.helpers');
 
 class SeoService {
+    async getPublicConfig() {
+        const systemSettings = await seoRepository.findSystemSettings({
+            where: {
+                key: {
+                    in: [
+                        SYSTEM_SETTINGS_MAP.analyticsId.key,
+                        SYSTEM_SETTINGS_MAP.searchIndexing.key,
+                    ],
+                },
+            },
+        });
+
+        return buildPublicSeoConfig(systemSettings);
+    }
+
     async getDashboard() {
         const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://blog.thienduong.info';
 

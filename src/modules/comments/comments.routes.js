@@ -26,6 +26,20 @@ router.get(
 );
 
 router.get(
+    '/me/inbox',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(queryCommentsSchema, 'query'),
+    asyncHandler(async (req, res) => {
+        const result =
+            ['ADMIN', 'MODERATOR'].includes(req.user.role)
+                ? await commentsService.findAll(req.query)
+                : await commentsService.findForAuthor(req.user.id, req.query);
+        return sendOk(res, { ...result });
+    })
+);
+
+router.get(
     '/stats',
     authenticate,
     authorize('ADMIN', 'MODERATOR'),

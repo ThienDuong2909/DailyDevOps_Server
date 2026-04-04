@@ -1,45 +1,32 @@
-# Stage 1: Install dependencies and Build
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS deps
 WORKDIR /app
 
-# Install all dependencies (including dev)
 COPY package*.json ./
-RUN npm ci
+RUN npm ci && npm cache clean --force
 
-# Copy prisma schema and generate client
-COPY prisma ./prisma/
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY prisma ./prisma
 RUN npx prisma generate
 
-# Copy source code
 COPY . .
+RUN npm prune --omit=dev
 
-# Stage 2: Production Runner
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
 
-# Install OpenSSL for Prisma engine (Alpine 3.17+ uses OpenSSL 3.x)
-RUN apk add --no-cache openssl
+RUN apk add --no-cache openssl \
+    && addgroup --system --gid 1001 nodejs \
+    && adduser --system --uid 1001 expressjs
 
-# Install only production dependencies
-# We copy package files and run npm ci --omit=dev to get a clean node_modules
-# This prevents carrying over tools like nodemon, eslint, etc.
-COPY package*.json ./
-RUN npm ci --omit=dev && npm cache clean --force
-
-# Create non-root user
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 expressjs
-
-# Copy source code
-COPY ./src ./src
-COPY ./prisma ./prisma
-
-# Copy the generated Prisma Client from the builder stage
-# The generated client is typically stored in node_modules/.prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/package*.json ./
+COPY --from=builder --chown=expressjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=expressjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=expressjs:nodejs /app/src ./src
 
 USER expressjs
 

@@ -28,7 +28,7 @@ router.get(
 router.post(
     '/',
     authenticate,
-    authorize('ADMIN'),
+    authorize('ADMIN', 'EDITOR'),
     validate(createTagSchema),
     asyncHandler(async (req, res) => {
         const tag = await tagsService.create(req.body);
@@ -39,7 +39,7 @@ router.post(
 router.put(
     '/:id',
     authenticate,
-    authorize('ADMIN'),
+    authorize('ADMIN', 'EDITOR'),
     validate(tagIdParamSchema, 'params'),
     validate(updateTagSchema),
     asyncHandler(async (req, res) => {
@@ -51,7 +51,7 @@ router.put(
 router.delete(
     '/:id',
     authenticate,
-    authorize('ADMIN'),
+    authorize('ADMIN', 'EDITOR'),
     validate(tagIdParamSchema, 'params'),
     asyncHandler(async (req, res) => {
         const result = await tagsService.delete(req.params.id);

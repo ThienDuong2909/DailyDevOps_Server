@@ -2,7 +2,18 @@ const express = require('express');
 const authService = require('./auth.service');
 const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate } = require('../../middlewares/auth.middleware');
-const { registerSchema, loginSchema } = require('./auth.validation');
+const {
+    registerSchema,
+    loginSchema,
+    forgotPasswordSchema,
+    resetPasswordSchema,
+    verifyEmailSchema,
+    resendVerificationSchema,
+    changePasswordSchema,
+    verifyMfaLoginSchema,
+    enableMfaSchema,
+    disableMfaSchema,
+} = require('./auth.validation');
 const { refreshTokenCookieOptions } = require('../../common/http/cookies');
 const { sendCreated, sendError, sendOk } = require('../../common/http/responses');
 const asyncHandler = require('express-async-handler');
@@ -18,15 +29,12 @@ router.post(
     '/register',
     validate(registerSchema),
     asyncHandler(async (req, res) => {
-        const tokens = await authService.register(req.body);
-
-        // Set refresh token in HTTP-only cookie
-        res.cookie('refreshToken', tokens.refreshToken, refreshTokenCookieOptions);
+        const result = await authService.register(req.body);
 
         return sendCreated(res, {
+            message: result.message,
             data: {
-                accessToken: tokens.accessToken,
-                accessTokenExpires: tokens.accessTokenExpires,
+                verificationToken: result.verificationToken,
             },
         });
     })
@@ -41,9 +49,33 @@ router.post(
     '/login',
     validate(loginSchema),
     asyncHandler(async (req, res) => {
-        const tokens = await authService.login(req.body);
+        const result = await authService.login(req.body);
+
+        if (result.mfaRequired) {
+            return sendOk(res, {
+                message: 'Authentication code required to finish sign in',
+                data: result,
+            });
+        }
 
         // Set refresh token in HTTP-only cookie
+        res.cookie('refreshToken', result.refreshToken, refreshTokenCookieOptions);
+
+        return sendOk(res, {
+            data: {
+                accessToken: result.accessToken,
+                accessTokenExpires: result.accessTokenExpires,
+            },
+        });
+    })
+);
+
+router.post(
+    '/verify-mfa-login',
+    validate(verifyMfaLoginSchema),
+    asyncHandler(async (req, res) => {
+        const tokens = await authService.verifyLoginMfa(req.body.challengeToken, req.body.token);
+
         res.cookie('refreshToken', tokens.refreshToken, refreshTokenCookieOptions);
 
         return sendOk(res, {
@@ -51,6 +83,118 @@ router.post(
                 accessToken: tokens.accessToken,
                 accessTokenExpires: tokens.accessTokenExpires,
             },
+        });
+    })
+);
+
+router.post(
+    '/verify-email',
+    validate(verifyEmailSchema),
+    asyncHandler(async (req, res) => {
+        const result = await authService.verifyEmail(req.body.token);
+
+        return sendOk(res, {
+            message: result.message,
+        });
+    })
+);
+
+router.post(
+    '/resend-verification',
+    validate(resendVerificationSchema),
+    asyncHandler(async (req, res) => {
+        const result = await authService.resendVerification(req.body.email);
+
+        return sendOk(res, {
+            message: result.message,
+            data: {
+                verificationToken: result.verificationToken,
+            },
+        });
+    })
+);
+
+router.post(
+    '/forgot-password',
+    validate(forgotPasswordSchema),
+    asyncHandler(async (req, res) => {
+        const result = await authService.forgotPassword(req.body.email);
+
+        return sendOk(res, {
+            message: result.message,
+            data: {
+                resetToken: result.resetToken,
+            },
+        });
+    })
+);
+
+router.post(
+    '/reset-password',
+    validate(resetPasswordSchema),
+    asyncHandler(async (req, res) => {
+        const result = await authService.resetPassword(req.body.token, req.body.password);
+
+        return sendOk(res, {
+            message: result.message,
+        });
+    })
+);
+
+router.post(
+    '/change-password',
+    authenticate,
+    validate(changePasswordSchema),
+    asyncHandler(async (req, res) => {
+        const result = await authService.changePassword(
+            req.user.id,
+            req.body.currentPassword,
+            req.body.newPassword
+        );
+
+        res.clearCookie('refreshToken');
+        return sendOk(res, {
+            message: result.message,
+        });
+    })
+);
+
+router.post(
+    '/mfa/setup',
+    authenticate,
+    asyncHandler(async (req, res) => {
+        const result = await authService.setupMfa(req.user.id);
+
+        return sendOk(res, {
+            message: 'MFA setup initialized successfully',
+            data: result,
+        });
+    })
+);
+
+router.post(
+    '/mfa/enable',
+    authenticate,
+    validate(enableMfaSchema),
+    asyncHandler(async (req, res) => {
+        const result = await authService.enableMfa(req.user.id, req.body.password, req.body.token);
+
+        return sendOk(res, {
+            message: result.message,
+        });
+    })
+);
+
+router.post(
+    '/mfa/disable',
+    authenticate,
+    validate(disableMfaSchema),
+    asyncHandler(async (req, res) => {
+        const result = await authService.disableMfa(req.user.id, req.body.password, req.body.token);
+
+        res.clearCookie('refreshToken');
+        return sendOk(res, {
+            message: result.message,
         });
     })
 );

@@ -46,12 +46,12 @@ router.get(
 /**
  * @route   POST /api/categories
  * @desc    Create category
- * @access  Private (ADMIN)
+ * @access  Private (ADMIN, EDITOR)
  */
 router.post(
     '/',
     authenticate,
-    authorize('ADMIN'),
+    authorize('ADMIN', 'EDITOR'),
     validate(createCategorySchema),
     asyncHandler(async (req, res) => {
         const category = await categoriesService.create(req.body);
@@ -64,12 +64,12 @@ router.post(
 /**
  * @route   PUT /api/categories/:id
  * @desc    Update category
- * @access  Private (ADMIN)
+ * @access  Private (ADMIN, EDITOR)
  */
 router.put(
     '/:id',
     authenticate,
-    authorize('ADMIN'),
+    authorize('ADMIN', 'EDITOR'),
     validate(categoryIdParamSchema, 'params'),
     validate(updateCategorySchema),
     asyncHandler(async (req, res) => {
@@ -83,12 +83,12 @@ router.put(
 /**
  * @route   DELETE /api/categories/:id
  * @desc    Delete category
- * @access  Private (ADMIN)
+ * @access  Private (ADMIN, EDITOR)
  */
 router.delete(
     '/:id',
     authenticate,
-    authorize('ADMIN'),
+    authorize('ADMIN', 'EDITOR'),
     validate(categoryIdParamSchema, 'params'),
     asyncHandler(async (req, res) => {
         const result = await categoriesService.delete(req.params.id);

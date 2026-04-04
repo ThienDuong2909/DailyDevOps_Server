@@ -99,6 +99,22 @@ const adminWriteInclude = {
     tags: true,
 };
 
+const postVersionListSelect = {
+    id: true,
+    title: true,
+    slug: true,
+    status: true,
+    reason: true,
+    createdAt: true,
+    createdBy: {
+        select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+        },
+    },
+};
+
 const statsRecentPostsSelect = {
     id: true,
     title: true,
@@ -125,6 +141,7 @@ module.exports = {
     detailPostInclude,
     publicPostInclude,
     adminWriteInclude,
+    postVersionListSelect,
     statsRecentPostsSelect,
     relatedPostsInclude,
 };

@@ -1,4 +1,5 @@
 const { NotFoundError, mapRuntimeError } = require('../errors/app-error');
+const { captureException } = require('../observability/sentry');
 
 const errorHandler = (err, req, res, next) => {
     let error = mapRuntimeError(err);
@@ -7,6 +8,14 @@ const errorHandler = (err, req, res, next) => {
 
     if (process.env.NODE_ENV === 'development') {
         console.error('Error:', err);
+    }
+
+    if (error.statusCode >= 500) {
+        captureException(err, {
+            path: req.originalUrl,
+            method: req.method,
+            statusCode: error.statusCode,
+        });
     }
 
     res.status(error.statusCode).json({

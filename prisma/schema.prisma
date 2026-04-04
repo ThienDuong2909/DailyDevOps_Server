@@ -19,11 +19,13 @@ enum Role {
   ADMIN
   MODERATOR
   EDITOR
+  AUTHOR
   VIEWER
 }
 
 enum PostStatus {
   DRAFT
+  REVIEW
   PUBLISHED
   SCHEDULED
   ARCHIVED
@@ -34,6 +36,12 @@ enum CommentStatus {
   APPROVED
   SPAM
   TRASH
+}
+
+enum SubscriberStatus {
+  PENDING
+  CONFIRMED
+  UNSUBSCRIBED
 }
 
 // ============================================
@@ -51,6 +59,14 @@ model User {
   role          Role      @default(VIEWER)
   isActive      Boolean   @default(true) @map("is_active")
   refreshToken  String?   @map("refresh_token")
+  mfaEnabled    Boolean   @default(false) @map("mfa_enabled")
+  mfaSecret     String?   @map("mfa_secret")
+  mfaTempSecret String?   @map("mfa_temp_secret")
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  emailVerificationToken String? @unique @map("email_verification_token")
+  emailVerificationExpiresAt DateTime? @map("email_verification_expires_at")
+  resetPasswordToken String? @unique @map("reset_password_token")
+  resetPasswordExpiresAt DateTime? @map("reset_password_expires_at")
   lastLoginAt   DateTime? @map("last_login_at")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
@@ -59,6 +75,7 @@ model User {
   posts         Post[]
   comments      Comment[]
   seoSettings   SeoSetting[]
+  postVersions  PostVersion[]
 
   @@map("users")
 }
@@ -108,9 +125,12 @@ model Post {
   contentJson     Json?      @map("content_json")
   featuredImage   String?    @map("featured_image")
   status          PostStatus @default(DRAFT)
+  rejectionReason String?    @map("rejection_reason") @db.Text
+  reviewedAt      DateTime?  @map("reviewed_at")
   viewCount       Int        @default(0) @map("view_count")
   readingTime     Int?       @map("reading_time") // in minutes
   publishedAt     DateTime?  @map("published_at")
+  newsletterSentAt DateTime? @map("newsletter_sent_at")
   scheduledAt     DateTime?  @map("scheduled_at")
   createdAt       DateTime   @default(now()) @map("created_at")
   updatedAt       DateTime   @updatedAt @map("updated_at")
@@ -123,11 +143,39 @@ model Post {
   tags            Tag[]      @relation("PostTags")
   comments        Comment[]
   seoSetting      SeoSetting?
+  versions        PostVersion[]
 
   @@index([status, publishedAt])
   @@index([authorId])
   @@index([categoryId])
   @@map("posts")
+}
+
+model PostVersion {
+  id             String   @id @default(cuid())
+  postId         String   @map("post_id")
+  title          String
+  slug           String
+  subtitle       String?  @db.Text
+  excerpt        String?  @db.Text
+  content        String   @db.Text
+  contentHtml    String?  @map("content_html") @db.LongText
+  contentJson    Json?    @map("content_json")
+  featuredImage  String?  @map("featured_image")
+  status         PostStatus
+  scheduledAt    DateTime? @map("scheduled_at")
+  rejectionReason String?  @map("rejection_reason") @db.Text
+  categoryId     String?   @map("category_id")
+  tagIds         Json      @default("[]") @map("tag_ids")
+  createdById    String?   @map("created_by_id")
+  reason         String?   @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  post           Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdBy      User?     @relation(fields: [createdById], references: [id])
+
+  @@index([postId, createdAt])
+  @@map("post_versions")
 }
 
 model Comment {
@@ -183,7 +231,10 @@ model Subscriber {
   id          String    @id @default(cuid())
   email       String    @unique
   name        String?
-  isActive    Boolean   @default(true) @map("is_active")
+  status      SubscriberStatus @default(PENDING)
+  isActive    Boolean   @default(false) @map("is_active")
+  confirmToken String?  @unique @map("confirm_token")
+  confirmedAt DateTime? @map("confirmed_at")
   unsubscribeToken String? @unique @map("unsubscribe_token")
   subscribedAt DateTime @default(now()) @map("subscribed_at")
   unsubscribedAt DateTime? @map("unsubscribed_at")

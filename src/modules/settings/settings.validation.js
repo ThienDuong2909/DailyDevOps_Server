@@ -25,6 +25,35 @@ const settingsSchema = Joi.object({
     maintenance: Joi.object({
         maintenanceMode: Joi.boolean().required(),
     }).required(),
+    content: Joi.object({
+        headerNavigation: Joi.array().items(
+            Joi.object({
+                label: Joi.string().max(100).required(),
+                href: Joi.string().max(255).required(),
+            })
+        ).required(),
+        footerDescription: Joi.string().max(1000).allow('').required(),
+        footerContentLinks: Joi.array().items(
+            Joi.object({
+                label: Joi.string().max(100).required(),
+                href: Joi.string().max(255).required(),
+            })
+        ).required(),
+        footerCompanyLinks: Joi.array().items(
+            Joi.object({
+                label: Joi.string().max(100).required(),
+                href: Joi.string().max(255).required(),
+            })
+        ).required(),
+        trendingTools: Joi.array().items(
+            Joi.object({
+                name: Joi.string().max(100).required(),
+                shortName: Joi.string().max(10).required(),
+                description: Joi.string().max(150).allow('').required(),
+                href: Joi.string().max(255).required(),
+            })
+        ).required(),
+    }).required(),
 });
 
 module.exports = {

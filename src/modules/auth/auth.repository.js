@@ -7,6 +7,10 @@ class AuthRepository {
         return prisma.user.findUnique(params);
     }
 
+    findUserFirst(params) {
+        return prisma.user.findFirst(params);
+    }
+
     createUser(params) {
         return prisma.user.create(params);
     }

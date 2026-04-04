@@ -35,6 +35,7 @@ pipeline {
         // Per-workspace Docker config — tránh race condition khi 2 pipeline chạy song song
         // trên cùng 1 agent (mỗi pipeline có ~/.docker riêng, không ghi đè nhau)
         DOCKER_CONFIG = "${WORKSPACE}/.docker"
+        BUILD_CONTEXT = '.'
     }
 
     stages {
@@ -53,7 +54,18 @@ pipeline {
                 // - Installs exact versions from package-lock.json (deterministic)
                 // - 2-3x faster than npm install
                 // - Fails if package-lock.json is out of sync with package.json
-                sh 'npm ci --cache ${NPM_CACHE_DIR}'
+                sh '''
+                    mkdir -p "${NPM_CACHE_DIR}" "${DOCKER_CONFIG}"
+                    npm ci --cache "${NPM_CACHE_DIR}" --prefer-offline --no-audit
+                '''
+            }
+        }
+
+        stage('Lint Runtime Surface') {
+            steps {
+                echo 'Checking critical runtime modules syntax...'
+                sh 'node --check src/server.js'
+                sh 'node --check src/app.js'
             }
         }
 
@@ -119,8 +131,16 @@ pipeline {
                         sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                         
                         // Build with specific version tag, then re-tag as latest
-                        sh "docker build -t ${IMAGE_TAG}:${BUILD_NUMBER} -f Dockerfile ."
+                        sh "docker build --pull -t ${IMAGE_TAG}:${BUILD_NUMBER} -f Dockerfile ${BUILD_CONTEXT}"
                         sh "docker tag ${IMAGE_TAG}:${BUILD_NUMBER} ${IMAGE_TAG}:latest"
+
+                        echo 'Running container health smoke check...'
+                        sh """
+                            docker run -d --name server-smoke-${BUILD_NUMBER} -p 3001:3001 --env-file .env ${IMAGE_TAG}:${BUILD_NUMBER}
+                            sleep 15
+                            curl --fail http://127.0.0.1:3001/health || (docker logs server-smoke-${BUILD_NUMBER} && exit 1)
+                            docker rm -f server-smoke-${BUILD_NUMBER}
+                        """
                         
                         // Push versioned tag
                         sh "docker push ${IMAGE_TAG}:${BUILD_NUMBER}"
@@ -194,6 +214,7 @@ pipeline {
     post {
         always {
             echo 'Performing post-build cleanup...'
+            sh "docker rm -f server-smoke-${BUILD_NUMBER} || true"
             sh "docker logout || true"
             sh "rm -rf k8s-repo"
             // Remove Docker images from agent to free disk space

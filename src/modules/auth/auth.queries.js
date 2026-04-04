@@ -7,6 +7,8 @@ const authProfileSelect = {
     bio: true,
     role: true,
     isActive: true,
+    mfaEnabled: true,
+    emailVerifiedAt: true,
     lastLoginAt: true,
     createdAt: true,
 };

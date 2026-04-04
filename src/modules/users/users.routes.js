@@ -3,10 +3,47 @@ const usersService = require('./users.service');
 const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate, authorize } = require('../../middlewares/auth.middleware');
 const { sendOk } = require('../../common/http/responses');
-const { queryUsersSchema, updateUserSchema, userIdParamSchema } = require('./users.validation');
+const { queryUsersSchema, updateUserSchema, userIdParamSchema, deleteAccountRequestSchema } = require('./users.validation');
 const asyncHandler = require('express-async-handler');
 
 const router = express.Router();
+
+router.get(
+    '/me/export',
+    authenticate,
+    asyncHandler(async (req, res) => {
+        const exportPayload = await usersService.exportPersonalData(req.user.id);
+        const fileName = `devops-daily-user-export-${req.user.id}.json`;
+
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+
+        return res.status(200).send(JSON.stringify(exportPayload, null, 2));
+    })
+);
+
+router.post(
+    '/me/delete-request',
+    authenticate,
+    validate(deleteAccountRequestSchema),
+    asyncHandler(async (req, res) => {
+        const result = await usersService.requestAccountDeletion(
+            req.user.id,
+            req.body.reason
+        );
+        return sendOk(res, result);
+    })
+);
+
+router.get(
+    '/public/:username',
+    asyncHandler(async (req, res) => {
+        const author = await usersService.findPublicAuthorByUsername(
+            req.params.username
+        );
+        return sendOk(res, { data: author });
+    })
+);
 
 /**
  * @route   GET /api/users

@@ -1,11 +1,15 @@
-const { NotFoundError } = require('../../middlewares/error.middleware');
+const { BadRequestError, NotFoundError } = require('../../middlewares/error.middleware');
 const commentsRepository = require('./comments.repository');
 const {
     buildAdminCommentsListQuery,
+    buildAuthorCommentsListQuery,
     buildCreateCommentData,
     buildPaginatedCommentsResponse,
     buildPublicCommentsQuery,
+    detectCommentModeration,
     ensureDeletePermission,
+    ensureCommentReplyDepth,
+    ensureGuestIdentity,
     ensureModeratorPermission,
 } = require('./comments.helpers');
 const {
@@ -55,6 +59,28 @@ class CommentsService {
         });
     }
 
+    async findForAuthor(authorId, query = {}) {
+        const { page, limit, skip, where } = buildAuthorCommentsListQuery(authorId, query);
+
+        const [comments, total] = await Promise.all([
+            commentsRepository.findMany({
+                where,
+                skip,
+                take: limit,
+                include: adminCommentInclude,
+                orderBy: { createdAt: 'desc' },
+            }),
+            commentsRepository.count({ where }),
+        ]);
+
+        return buildPaginatedCommentsResponse({
+            data: comments,
+            total,
+            page,
+            limit,
+        });
+    }
+
     /**
      * Find comments by post ID
      */
@@ -71,8 +97,45 @@ class CommentsService {
      * Create comment
      */
     async create(dto, userId, req) {
+        ensureGuestIdentity({
+            userId,
+            authorName: dto.authorName,
+            authorEmail: dto.authorEmail,
+        });
+
+        if (dto.parentId) {
+            const parentComment = await commentsRepository.findUnique({
+                where: { id: dto.parentId },
+            });
+
+            ensureCommentReplyDepth(parentComment);
+
+            if (parentComment.postId !== dto.postId) {
+                throw new BadRequestError('Reply comment must belong to the same post');
+            }
+        }
+
+        const authorIp = req.ip;
+        const recentCommentsCount = await commentsRepository.count({
+            where: {
+                authorIp,
+                createdAt: {
+                    gte: new Date(Date.now() - 60 * 1000),
+                },
+            },
+        });
+
+        if (recentCommentsCount >= 5) {
+            throw new BadRequestError('Comment rate limit exceeded. Please wait a minute and try again.');
+        }
+
+        const moderation = detectCommentModeration({
+            content: dto.content,
+            isAuthenticated: Boolean(userId),
+        });
+
         return commentsRepository.create({
-            data: buildCreateCommentData(dto, userId, req.ip),
+            data: buildCreateCommentData(dto, userId, authorIp, moderation),
             include: createCommentInclude,
         });
     }

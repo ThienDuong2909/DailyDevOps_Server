@@ -29,6 +29,14 @@ const usersSeed = [
         bio: 'Site moderator handling comment review, editorial QA, and release hygiene.',
     },
     {
+        email: 'author@devopsblog.com',
+        password: 'Author@123',
+        firstName: 'An',
+        lastName: 'Pham',
+        role: 'AUTHOR',
+        bio: 'Technical writer drafting platform engineering and cloud operations articles.',
+    },
+    {
         email: 'linh.reader@devopsblog.com',
         password: 'Viewer@123',
         firstName: 'Linh',
@@ -165,6 +173,9 @@ async function seedUsers() {
                 role: user.role,
                 bio: user.bio,
                 isActive: true,
+                emailVerifiedAt: new Date(),
+                emailVerificationToken: null,
+                emailVerificationExpiresAt: null,
             },
             create: {
                 email: user.email,
@@ -174,6 +185,9 @@ async function seedUsers() {
                 role: user.role,
                 bio: user.bio,
                 isActive: true,
+                emailVerifiedAt: new Date(),
+                emailVerificationToken: null,
+                emailVerificationExpiresAt: null,
             },
         });
 
@@ -422,6 +436,7 @@ async function main() {
     console.log('- admin@devopsblog.com / Admin@123');
     console.log('- sarah@devopsblog.com / Editor@123');
     console.log('- minh.ops@devopsblog.com / Moderator@123');
+    console.log('- author@devopsblog.com / Author@123');
     console.log('- linh.reader@devopsblog.com / Viewer@123');
 }
 

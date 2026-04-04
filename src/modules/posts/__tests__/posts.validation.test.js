@@ -54,6 +54,20 @@ describe('posts validation', () => {
         expect(value.status).toBe('PUBLISHED');
     });
 
+    it('accepts internal media proxy paths for featuredImage', () => {
+        const { error, value } = createPostSchema.validate({
+            title: 'Internal media image test',
+            contentHtml: '<p>body</p>',
+            featuredImage:
+                '/api/v1/media/object?key=media%2F2026-04-02%2Fsample-image.png',
+        });
+
+        expect(error).toBeUndefined();
+        expect(value.featuredImage).toBe(
+            '/api/v1/media/object?key=media%2F2026-04-02%2Fsample-image.png'
+        );
+    });
+
     it('applies query defaults and rejects invalid sort values', () => {
         const validResult = queryPostSchema.validate({});
         expect(validResult.error).toBeUndefined();

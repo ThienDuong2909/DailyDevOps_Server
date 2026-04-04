@@ -2,11 +2,15 @@ const crypto = require('crypto');
 
 const { BadRequestError } = require('../../middlewares/error.middleware');
 
-const buildSubscribersListQuery = ({ page = 1, limit = 20, isActive }) => {
+const buildSubscribersListQuery = ({ page = 1, limit = 20, isActive, status }) => {
     const where = {};
 
     if (isActive !== undefined) {
         where.isActive = isActive === 'true';
+    }
+
+    if (status) {
+        where.status = status;
     }
 
     return {
@@ -30,12 +34,17 @@ const buildSubscribersResponse = ({ data, total, page, limit }) => ({
 const buildSubscriberCreateData = ({ email, name }) => ({
     email,
     name: name || null,
+    status: 'PENDING',
+    confirmToken: crypto.randomBytes(32).toString('hex'),
     unsubscribeToken: crypto.randomBytes(32).toString('hex'),
-    isActive: true,
+    isActive: false,
 });
 
 const buildSubscriberReactivateData = ({ name, existing }) => ({
-    isActive: true,
+    status: 'PENDING',
+    isActive: false,
+    confirmToken: crypto.randomBytes(32).toString('hex'),
+    confirmedAt: null,
     unsubscribedAt: null,
     name: name || existing.name,
 });
@@ -46,10 +55,21 @@ const ensureSubscriberToken = (subscriber) => {
     }
 };
 
+const ensureConfirmableSubscriber = (subscriber) => {
+    if (!subscriber) {
+        throw new BadRequestError('Invalid confirmation token');
+    }
+
+    if (subscriber.status === 'CONFIRMED' && subscriber.isActive) {
+        throw new BadRequestError('Subscription already confirmed');
+    }
+};
+
 module.exports = {
     buildSubscribersListQuery,
     buildSubscribersResponse,
     buildSubscriberCreateData,
     buildSubscriberReactivateData,
     ensureSubscriberToken,
+    ensureConfirmableSubscriber,
 };

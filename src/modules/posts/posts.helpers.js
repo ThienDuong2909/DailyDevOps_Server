@@ -69,8 +69,16 @@ const buildReadingTime = (content) => {
 };
 
 const buildPublishedAt = (status, existingPublishedAt = null) => {
+    if (!status) {
+        return existingPublishedAt;
+    }
+
     if (status === 'PUBLISHED' && !existingPublishedAt) {
         return new Date();
+    }
+
+    if (status !== 'PUBLISHED') {
+        return null;
     }
 
     return existingPublishedAt;
@@ -109,6 +117,7 @@ const normalizeEditorPayload = (dto = {}) => {
         ...dto,
         subtitle: dto.subtitle ?? dto.excerpt ?? null,
         excerpt: dto.subtitle ?? dto.excerpt ?? null,
+        rejectionReason: dto.rejectionReason ?? null,
         contentHtml: resolvedContent,
         content: resolvedContent,
         contentJson: dto.contentJson ?? null,
@@ -132,6 +141,19 @@ const serializePost = (post) => {
 
 const serializePosts = (posts = []) => posts.map(serializePost);
 
+const serializeVersion = (version) => {
+    if (!version) {
+        return version;
+    }
+
+    return {
+        ...version,
+        tagIds: Array.isArray(version.tagIds) ? version.tagIds : [],
+    };
+};
+
+const serializeVersions = (versions = []) => versions.map(serializeVersion);
+
 module.exports = {
     buildListQuery,
     buildPaginatedResponse,
@@ -143,4 +165,6 @@ module.exports = {
     normalizeEditorPayload,
     serializePost,
     serializePosts,
+    serializeVersion,
+    serializeVersions,
 };

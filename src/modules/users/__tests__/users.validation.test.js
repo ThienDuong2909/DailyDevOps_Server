@@ -39,6 +39,17 @@ describe('Users Validation', () => {
             expect(error).toBeUndefined();
         });
 
+        it('accepts internal media proxy paths for avatar', () => {
+            const { error, value } = updateUserSchema.validate({
+                avatar: '/api/v1/media/object?key=media%2F2026-04-03%2Fadmin-avatar.png',
+            });
+
+            expect(error).toBeUndefined();
+            expect(value.avatar).toBe(
+                '/api/v1/media/object?key=media%2F2026-04-03%2Fadmin-avatar.png'
+            );
+        });
+
         it('rejects invalid email', () => {
             const { error } = updateUserSchema.validate({
                 email: 'bad-email',

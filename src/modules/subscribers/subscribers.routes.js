@@ -3,7 +3,11 @@ const asyncHandler = require('express-async-handler');
 const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate, authorize } = require('../../middlewares/auth.middleware');
 const subscribersService = require('./subscribers.service');
-const { subscribeSchema, unsubscribeSchema } = require('./subscribers.validation');
+const {
+    subscribeSchema,
+    unsubscribeSchema,
+    confirmSubscriptionSchema,
+} = require('./subscribers.validation');
 const { sendCreated, sendOk } = require('../../common/http/responses');
 
 const router = express.Router();
@@ -18,6 +22,25 @@ router.post(
     asyncHandler(async (req, res) => {
         const result = await subscribersService.subscribe(req.body);
         return sendCreated(res, {
+            message: result.message,
+            data: {
+                subscriber: result.subscriber,
+                confirmationToken: result.confirmationToken || null,
+            },
+        });
+    })
+);
+
+/**
+ * POST /api/v1/subscribers/confirm
+ * @desc Confirm newsletter subscription (public)
+ */
+router.post(
+    '/confirm',
+    validate(confirmSubscriptionSchema),
+    asyncHandler(async (req, res) => {
+        const result = await subscribersService.confirm(req.body.token);
+        return sendOk(res, {
             message: result.message,
             data: result.subscriber,
         });
@@ -48,8 +71,8 @@ router.get(
     authenticate,
     authorize('ADMIN'),
     asyncHandler(async (req, res) => {
-        const { page, limit, isActive } = req.query;
-        const result = await subscribersService.findAll({ page, limit, isActive });
+        const { page, limit, isActive, status } = req.query;
+        const result = await subscribersService.findAll({ page, limit, isActive, status });
         return sendOk(res, {
             ...result,
         });

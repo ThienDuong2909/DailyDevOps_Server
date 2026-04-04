@@ -7,6 +7,10 @@ class SubscribersRepository {
         return prisma.subscriber.findUnique(params);
     }
 
+    findUniqueOrThrow(params) {
+        return prisma.subscriber.findUniqueOrThrow(params);
+    }
+
     findFirst(params) {
         return prisma.subscriber.findFirst(params);
     }

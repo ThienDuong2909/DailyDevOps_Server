@@ -2,7 +2,11 @@ const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
 
 const config = require('../../config');
-const { ConflictError, UnauthorizedError } = require('../../middlewares/error.middleware');
+const {
+    BadRequestError,
+    ConflictError,
+    UnauthorizedError,
+} = require('../../middlewares/error.middleware');
 
 const ensureEmailAvailable = (existingUser) => {
     if (existingUser) {
@@ -17,6 +21,12 @@ const ensureActiveUser = (user) => {
 
     if (!user.isActive) {
         throw new UnauthorizedError('Account is deactivated');
+    }
+};
+
+const ensureVerifiedUser = (user) => {
+    if (!user?.emailVerifiedAt) {
+        throw new UnauthorizedError('Please verify your email before signing in');
     }
 };
 
@@ -49,6 +59,41 @@ const buildAuthPayload = (user) => ({
     email: user.email,
     role: user.role,
 });
+
+const createMfaChallengeToken = (user) =>
+    jwt.sign(
+        {
+            sub: user.id,
+            email: user.email,
+            purpose: 'mfa-login',
+        },
+        config.jwt.mfaSecret,
+        {
+            expiresIn: config.jwt.mfaChallengeExpiresIn,
+        }
+    );
+
+const verifyMfaChallengeToken = (token) => {
+    const decoded = jwt.verify(token, config.jwt.mfaSecret);
+
+    if (decoded?.purpose !== 'mfa-login' || !decoded?.sub) {
+        throw new UnauthorizedError('MFA challenge is invalid or has expired');
+    }
+
+    return decoded;
+};
+
+const ensureMfaReady = (user) => {
+    if (!user?.mfaEnabled || !user?.mfaSecret) {
+        throw new BadRequestError('Multi-factor authentication is not enabled for this account');
+    }
+};
+
+const ensureMfaSetupInProgress = (user) => {
+    if (!user?.mfaTempSecret) {
+        throw new BadRequestError('No MFA setup is in progress for this account');
+    }
+};
 
 const getTokenExpiration = (expiresIn) => {
     const match = expiresIn.match(/^(\d+)([smhd])$/);
@@ -89,10 +134,16 @@ const generateTokens = (payload) => {
 module.exports = {
     ensureEmailAvailable,
     ensureActiveUser,
+    ensureVerifiedUser,
     ensureRefreshableUser,
     verifyPassword,
     verifyRefreshToken,
     hashData,
     buildAuthPayload,
     generateTokens,
+    getTokenExpiration,
+    createMfaChallengeToken,
+    verifyMfaChallengeToken,
+    ensureMfaReady,
+    ensureMfaSetupInProgress,
 };

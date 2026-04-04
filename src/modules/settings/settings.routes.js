@@ -9,6 +9,14 @@ const { settingsSchema } = require('./settings.validation');
 const router = express.Router();
 
 router.get(
+    '/public',
+    asyncHandler(async (_req, res) => {
+        const settings = await settingsService.getSettings();
+        return sendOk(res, { data: settings });
+    })
+);
+
+router.get(
     '/',
     authenticate,
     authorize('ADMIN'),

@@ -45,8 +45,13 @@ const config = {
     jwt: {
         accessSecret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret-change-in-production',
         refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-in-production',
+        mfaSecret:
+            process.env.JWT_MFA_SECRET ||
+            process.env.JWT_ACCESS_SECRET ||
+            'dev-mfa-secret-change-in-production',
         accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
         refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+        mfaChallengeExpiresIn: process.env.JWT_MFA_CHALLENGE_EXPIRES_IN || '10m',
     },
 
     // CORS — supports comma-separated origins
@@ -60,6 +65,44 @@ const config = {
 
     // Swagger
     swaggerEnabled: process.env.SWAGGER_ENABLED !== 'false',
+
+    // Background jobs
+    jobs: {
+        scheduledPublishIntervalMs: parseNumber(
+            process.env.SCHEDULED_PUBLISH_INTERVAL_MS,
+            30000
+        ),
+    },
+
+    // Public app URLs
+    appUrl: process.env.APP_URL || 'http://localhost:3000',
+
+    // Email
+    email: {
+        smtpHost: process.env.SMTP_HOST || '',
+        smtpPort: parseNumber(process.env.SMTP_PORT, 465),
+        secure: process.env.SMTP_SECURE !== 'false',
+        smtpUser: process.env.SMTP_USER || '',
+        smtpPass: process.env.SMTP_PASS || '',
+        contactInbox: process.env.CONTACT_INBOX || process.env.SMTP_USER || '',
+        from:
+            process.env.EMAIL_FROM ||
+            process.env.SMTP_USER ||
+            'no-reply@localhost',
+    },
+
+    storage: {
+        endpoint: process.env.S3_ENDPOINT || '',
+        region: process.env.S3_REGION || 'auto',
+        bucket: process.env.S3_BUCKET || '',
+        accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
+    },
+
+    sentry: {
+        dsn: process.env.SENTRY_DSN || '',
+        tracesSampleRate: Number.parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0'),
+    },
 };
 
 module.exports = config;
