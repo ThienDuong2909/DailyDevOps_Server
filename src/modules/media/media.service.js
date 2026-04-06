@@ -65,7 +65,7 @@ class MediaService {
         const safeBaseName = String(baseName)
             .toLowerCase()
             .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-|-$/g, '')
+            .replace(/(?:^-|-$)/g, '')
             .slice(0, 50) || 'image';
 
         const normalizedExtension = extension || this.resolveExtensionFromMimeType(file.mimetype);

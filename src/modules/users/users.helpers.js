@@ -39,7 +39,7 @@ const buildPublicUsername = (user) => {
         .replace(/[^a-z0-9\s-]/g, '')
         .replace(/\s+/g, '-')
         .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+        .replace(/(?:^-|-$)/g, '');
 
     if (fullName) {
         return fullName;
@@ -50,7 +50,7 @@ const buildPublicUsername = (user) => {
         .toLowerCase()
         .replace(/[^a-z0-9-]/g, '-')
         .replace(/-+/g, '-')
-        .replace(/^-|-$/g, '');
+        .replace(/(?:^-|-$)/g, '');
 };
 
 const ensureUserCanUpdate = (targetUserId, currentUserId, currentUserRole) => {
