@@ -12,6 +12,27 @@ const parseBoolean = (value, fallback) => {
     return value === 'true';
 };
 
+const parseTrustProxy = (value, fallback) => {
+    if (value === undefined || value === '') {
+        return fallback;
+    }
+
+    if (value === 'true') {
+        return true;
+    }
+
+    if (value === 'false') {
+        return false;
+    }
+
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isNaN(parsed)) {
+        return parsed;
+    }
+
+    return value;
+};
+
 const normalizeOrigin = (value) => {
     if (!value) return '';
     return value.trim().replace(/\/+$/, '');
@@ -53,7 +74,7 @@ const config = {
     nodeEnv,
     port: parseNumber(process.env.PORT, 3001),
     apiPrefix: resolveApiPrefix(process.env.API_PREFIX),
-    trustProxy: parseBoolean(process.env.TRUST_PROXY, nodeEnv === 'production'),
+    trustProxy: parseTrustProxy(process.env.TRUST_PROXY, nodeEnv === 'production' ? 1 : false),
 
     // Database
     databaseUrl: process.env.DATABASE_URL,
