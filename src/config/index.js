@@ -7,12 +7,28 @@ const parseNumber = (value, fallback) => {
     return Number.isNaN(parsed) ? fallback : parsed;
 };
 
-const parseCorsOrigin = (origin) => {
-    if (!origin) return ['http://localhost:3000'];
-    return origin
+const parseBoolean = (value, fallback) => {
+    if (value === undefined) return fallback;
+    return value === 'true';
+};
+
+const normalizeOrigin = (value) => {
+    if (!value) return '';
+    return value.trim().replace(/\/+$/, '');
+};
+
+const parseCorsOrigin = (origin, appUrl) => {
+    const origins = (origin || '')
         .split(',')
-        .map((o) => o.trim())
+        .map(normalizeOrigin)
         .filter(Boolean);
+
+    const normalizedAppUrl = normalizeOrigin(appUrl);
+    if (normalizedAppUrl && !origins.includes(normalizedAppUrl)) {
+        origins.push(normalizedAppUrl);
+    }
+
+    return origins.length > 0 ? origins : ['http://localhost:3000'];
 };
 
 const resolveApiPrefix = (value) => {
@@ -37,6 +53,7 @@ const config = {
     nodeEnv,
     port: parseNumber(process.env.PORT, 3001),
     apiPrefix: resolveApiPrefix(process.env.API_PREFIX),
+    trustProxy: parseBoolean(process.env.TRUST_PROXY, nodeEnv === 'production'),
 
     // Database
     databaseUrl: process.env.DATABASE_URL,
@@ -110,5 +127,7 @@ const config = {
         onlyApiRequests: process.env.LOG_ONLY_API !== 'false',
     },
 };
+
+config.corsOrigin = parseCorsOrigin(process.env.CORS_ORIGIN, config.appUrl);
 
 module.exports = config;

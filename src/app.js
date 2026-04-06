@@ -29,6 +29,7 @@ const seoRoutes = require('./modules/seo/seo.routes');
 const seoPublicRoutes = require('./modules/seo/seo.public.routes');
 
 const app = express();
+app.set('trust proxy', config.trustProxy);
 
 // ============================================
 // MIDDLEWARES

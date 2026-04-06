@@ -39,6 +39,7 @@ pipeline {
         SERVER_NODE_ENV = "${env.NODE_ENV ?: 'production'}"
         SERVER_PORT = "${env.PORT ?: '3001'}"
         SERVER_API_PREFIX = "${env.API_PREFIX ?: 'api/v1'}"
+        SERVER_TRUST_PROXY = "${env.TRUST_PROXY ?: 'true'}"
         SERVER_APP_URL = "${env.APP_URL ?: 'https://blog.thienduong.info'}"
         SERVER_CORS_ORIGIN = "${env.CORS_ORIGIN ?: 'https://blog.thienduong.info,https://www.blog.thienduong.info'}"
         SERVER_RATE_LIMIT_WINDOW_MS = "${env.RATE_LIMIT_WINDOW_MS ?: '60000'}"
@@ -166,6 +167,7 @@ pipeline {
 NODE_ENV=${NODE_ENV:-${SERVER_NODE_ENV}}
 PORT=${PORT:-${SERVER_PORT}}
 API_PREFIX=${API_PREFIX:-${SERVER_API_PREFIX}}
+TRUST_PROXY=${TRUST_PROXY:-${SERVER_TRUST_PROXY}}
 DATABASE_URL=${DATABASE_URL}
 JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
 JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
