@@ -52,6 +52,8 @@ pipeline {
         SERVER_SMTP_SECURE = "${env.SMTP_SECURE ?: 'true'}"
         SERVER_S3_REGION = "${env.S3_REGION ?: 'auto'}"
         SERVER_SENTRY_TRACES_SAMPLE_RATE = "${env.SENTRY_TRACES_SAMPLE_RATE ?: '0'}"
+        SERVER_LOG_FORMAT = "${env.LOG_FORMAT ?: 'pretty'}"
+        SERVER_LOG_SKIP_HEALTH = "${env.LOG_SKIP_HEALTH ?: 'true'}"
     }
 
     stages {
@@ -190,6 +192,8 @@ S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
 S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
 SENTRY_DSN=${CLEAN_SENTRY_DSN}
 SENTRY_TRACES_SAMPLE_RATE=${SENTRY_TRACES_SAMPLE_RATE:-${SERVER_SENTRY_TRACES_SAMPLE_RATE}}
+LOG_FORMAT=${LOG_FORMAT:-${SERVER_LOG_FORMAT}}
+LOG_SKIP_HEALTH=${LOG_SKIP_HEALTH:-${SERVER_LOG_SKIP_HEALTH}}
 EOF
                     '''
                     sh 'echo "Backend env file created with $(wc -l < .env) variables"'

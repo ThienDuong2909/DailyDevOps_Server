@@ -100,10 +100,21 @@ const jsonFormat = (tokens, req, res) => {
     });
 };
 
-const requestLogger = (env) => {
+const shouldSkipRequestLog = (req, options = {}) => {
+    return Boolean(options.skipHealthChecks && req.path === '/health');
+};
+
+const requestLogger = (env, options = {}) => {
+    const format = options.format || (env === 'development' ? 'pretty' : 'json');
+    const loggerOptions = {
+        skip: (req) => shouldSkipRequestLog(req, options),
+    };
+
     return [
         captureResponseBody,
-        env === 'development' ? morgan(customTextFormat) : morgan(jsonFormat),
+        format === 'pretty'
+            ? morgan(customTextFormat, loggerOptions)
+            : morgan(jsonFormat, loggerOptions),
     ];
 };
 

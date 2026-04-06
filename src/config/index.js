@@ -103,6 +103,11 @@ const config = {
         dsn: process.env.SENTRY_DSN || '',
         tracesSampleRate: Number.parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0'),
     },
+
+    log: {
+        format: process.env.LOG_FORMAT || (nodeEnv === 'development' ? 'pretty' : 'json'),
+        skipHealthChecks: process.env.LOG_SKIP_HEALTH !== 'false',
+    },
 };
 
 module.exports = config;

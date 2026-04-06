@@ -87,7 +87,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'), {
 }));
 
 // Detailed Logging
-app.use(requestLogger(config.nodeEnv));
+app.use(requestLogger(config.nodeEnv, config.log));
 
 // Rate limiting
 const limiter = rateLimit({
