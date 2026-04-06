@@ -107,6 +107,7 @@ const config = {
     log: {
         format: process.env.LOG_FORMAT || (nodeEnv === 'development' ? 'pretty' : 'json'),
         skipHealthChecks: process.env.LOG_SKIP_HEALTH !== 'false',
+        onlyApiRequests: process.env.LOG_ONLY_API !== 'false',
     },
 };
 

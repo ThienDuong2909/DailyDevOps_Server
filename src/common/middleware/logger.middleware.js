@@ -101,7 +101,15 @@ const jsonFormat = (tokens, req, res) => {
 };
 
 const shouldSkipRequestLog = (req, options = {}) => {
-    return Boolean(options.skipHealthChecks && req.path === '/health');
+    if (options.skipHealthChecks && req.path === '/health') {
+        return true;
+    }
+
+    if (options.onlyApiRequests) {
+        return !req.path.startsWith('/api/');
+    }
+
+    return false;
 };
 
 const requestLogger = (env, options = {}) => {

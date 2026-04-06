@@ -54,6 +54,7 @@ pipeline {
         SERVER_SENTRY_TRACES_SAMPLE_RATE = "${env.SENTRY_TRACES_SAMPLE_RATE ?: '0'}"
         SERVER_LOG_FORMAT = "${env.LOG_FORMAT ?: 'pretty'}"
         SERVER_LOG_SKIP_HEALTH = "${env.LOG_SKIP_HEALTH ?: 'true'}"
+        SERVER_LOG_ONLY_API = "${env.LOG_ONLY_API ?: 'true'}"
     }
 
     stages {
@@ -194,6 +195,7 @@ SENTRY_DSN=${CLEAN_SENTRY_DSN}
 SENTRY_TRACES_SAMPLE_RATE=${SENTRY_TRACES_SAMPLE_RATE:-${SERVER_SENTRY_TRACES_SAMPLE_RATE}}
 LOG_FORMAT=${LOG_FORMAT:-${SERVER_LOG_FORMAT}}
 LOG_SKIP_HEALTH=${LOG_SKIP_HEALTH:-${SERVER_LOG_SKIP_HEALTH}}
+LOG_ONLY_API=${LOG_ONLY_API:-${SERVER_LOG_ONLY_API}}
 EOF
                     '''
                     sh 'echo "Backend env file created with $(wc -l < .env) variables"'
