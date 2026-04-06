@@ -12,11 +12,15 @@ const {
 } = require('./media.validation');
 
 const router = express.Router();
+const MAX_MEDIA_UPLOAD_SIZE_BYTES = 5 * 1024 * 1024;
 
 const upload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 5 * 1024 * 1024,
+        fileSize: MAX_MEDIA_UPLOAD_SIZE_BYTES,
+        files: 1,
+        fields: 4,
+        parts: 5,
     },
 });
 

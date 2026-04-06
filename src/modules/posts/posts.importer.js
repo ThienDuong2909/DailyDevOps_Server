@@ -24,11 +24,19 @@ function normalizeText(value) {
 function normalizeTitle(value) {
     const normalized = normalizeText(path.parse(String(value || '')).name);
 
-    return normalized
-        .replace(/\s+[0-9a-f]{32}$/i, '')
-        .replace(/\s+[0-9a-f]{8}-[0-9a-f-]{27}$/i, '')
-        .replace(/\.[^.]+$/, '')
-        .trim();
+    let title = normalized.replace(/\.[^.]+$/, '').trim();
+    const segments = title.split(/\s+/);
+    const lastSegment = segments.at(-1) || '';
+
+    if (/^[0-9a-f]{32}$/i.test(lastSegment)) {
+        segments.pop();
+        title = segments.join(' ').trim();
+    } else if (/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(lastSegment)) {
+        segments.pop();
+        title = segments.join(' ').trim();
+    }
+
+    return title;
 }
 
 function normalizeHtml(value) {

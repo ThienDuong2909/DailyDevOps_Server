@@ -1,4 +1,5 @@
 const config = require('../../config');
+const { parse } = require('node-html-parser');
 const { isMailerConfigured, sendMail } = require('../../common/email/mailer');
 
 function escapeHtml(value) {
@@ -54,8 +55,8 @@ async function sendSubscriptionConfirmationEmail({ email, name, confirmationToke
 }
 
 function stripHtml(value) {
-    return String(value || '')
-        .replace(/<[^>]+>/g, ' ')
+    return parse(String(value || ''))
+        .textContent
         .replace(/\s+/g, ' ')
         .trim();
 }

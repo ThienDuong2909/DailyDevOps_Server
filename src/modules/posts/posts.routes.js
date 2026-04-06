@@ -18,10 +18,14 @@ const asyncHandler = require('express-async-handler');
 const { BadRequestError } = require('../../middlewares/error.middleware');
 
 const router = express.Router();
+const MAX_NOTION_IMPORT_SIZE_BYTES = 25 * 1024 * 1024;
 const notionImportUpload = multer({
     storage: multer.memoryStorage(),
     limits: {
-        fileSize: 25 * 1024 * 1024,
+        fileSize: MAX_NOTION_IMPORT_SIZE_BYTES,
+        files: 1,
+        fields: 2,
+        parts: 3,
     },
 });
 
