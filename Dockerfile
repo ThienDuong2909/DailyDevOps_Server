@@ -26,6 +26,7 @@ RUN apk add --no-cache openssl \
 COPY --from=builder /app/package*.json ./
 COPY --from=builder --chown=expressjs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=expressjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=expressjs:nodejs /app/public ./public
 COPY --from=builder --chown=expressjs:nodejs /app/src ./src
 
 USER expressjs
