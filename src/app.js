@@ -79,7 +79,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // Static files (uploaded images, thumbnails)
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
+app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'), {
+    setHeaders(res) {
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+        res.setHeader('Access-Control-Allow-Origin', '*');
+    },
+}));
 
 // Detailed Logging
 app.use(requestLogger(config.nodeEnv));
