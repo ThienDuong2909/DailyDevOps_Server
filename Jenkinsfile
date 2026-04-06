@@ -152,6 +152,13 @@ pipeline {
                     string(credentialsId: 'SENTRY_DSN', variable: 'SENTRY_DSN')
                 ]) {
                     sh '''
+                        CLEAN_SENTRY_DSN="${SENTRY_DSN}"
+                        case "${CLEAN_SENTRY_DSN}" in
+                            '<backend-sentry-dsn>'|'YOUR_SENTRY_DSN'|'changeme'|'CHANGE_ME')
+                                CLEAN_SENTRY_DSN=""
+                                ;;
+                        esac
+
                         cat > .env << EOF
 NODE_ENV=${NODE_ENV:-${SERVER_NODE_ENV}}
 PORT=${PORT:-${SERVER_PORT}}
@@ -181,7 +188,7 @@ S3_REGION=${S3_REGION:-${SERVER_S3_REGION}}
 S3_BUCKET=${S3_BUCKET:-}
 S3_ACCESS_KEY_ID=${S3_ACCESS_KEY_ID}
 S3_SECRET_ACCESS_KEY=${S3_SECRET_ACCESS_KEY}
-SENTRY_DSN=${SENTRY_DSN}
+SENTRY_DSN=${CLEAN_SENTRY_DSN}
 SENTRY_TRACES_SAMPLE_RATE=${SENTRY_TRACES_SAMPLE_RATE:-${SERVER_SENTRY_TRACES_SAMPLE_RATE}}
 EOF
                     '''
@@ -205,8 +212,20 @@ EOF
                         echo 'Running container health smoke check...'
                         sh """
                             docker run -d --name server-smoke-${BUILD_NUMBER} -p 3001:3001 --env-file .env ${IMAGE_TAG}:${BUILD_NUMBER}
-                            sleep 15
-                            curl --fail http://127.0.0.1:3001/health || (docker logs server-smoke-${BUILD_NUMBER} && exit 1)
+                            for i in \$(seq 1 30); do
+                                if docker exec server-smoke-${BUILD_NUMBER} node -e "fetch('http://127.0.0.1:3001/health').then((res) => { if (!res.ok) process.exit(1); }).catch(() => process.exit(1))"; then
+                                    echo "Smoke check passed on attempt \$i"
+                                    break
+                                fi
+
+                                if [ "\$i" -eq 30 ]; then
+                                    echo "Smoke check failed after 30 attempts"
+                                    docker logs server-smoke-${BUILD_NUMBER}
+                                    exit 1
+                                fi
+
+                                sleep 2
+                            done
                             docker rm -f server-smoke-${BUILD_NUMBER}
                         """
                         
