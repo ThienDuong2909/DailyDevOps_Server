@@ -40,7 +40,7 @@ pipeline {
         // Trivy Security Scanner Configuration
         // Run as Docker container — no host installation needed,
         // always up-to-date, portable across any Docker-capable agent
-        TRIVY_IMAGE = 'aquasec/trivy:latest'
+        TRIVY_IMAGE = 'ghcr.io/aquasecurity/trivy:latest'
         // Persist vulnerability DB between builds to avoid re-downloading (~40 MB)
         TRIVY_CACHE_DIR = "${WORKSPACE}/.trivy-cache"
         // Block pipeline on CRITICAL and HIGH severity vulnerabilities only
