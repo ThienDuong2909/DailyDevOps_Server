@@ -36,6 +36,16 @@ pipeline {
         // trên cùng 1 agent (mỗi pipeline có ~/.docker riêng, không ghi đè nhau)
         DOCKER_CONFIG = "${WORKSPACE}/.docker"
         BUILD_CONTEXT = '.'
+
+        // Trivy Security Scanner Configuration
+        // Run as Docker container — no host installation needed,
+        // always up-to-date, portable across any Docker-capable agent
+        TRIVY_IMAGE = 'aquasec/trivy:latest'
+        // Persist vulnerability DB between builds to avoid re-downloading (~40 MB)
+        TRIVY_CACHE_DIR = "${WORKSPACE}/.trivy-cache"
+        // Block pipeline on CRITICAL and HIGH severity vulnerabilities only
+        // (MEDIUM/LOW are reported but do not fail the build)
+        TRIVY_SEVERITY = 'CRITICAL,HIGH'
         SERVER_NODE_ENV = "${env.NODE_ENV ?: 'production'}"
         SERVER_PORT = "${env.PORT ?: '3001'}"
         SERVER_API_PREFIX = "${env.API_PREFIX ?: 'api/v1'}"
@@ -115,7 +125,7 @@ pipeline {
                             -Dsonar.projectKey=devops-blog-server \
                             -Dsonar.projectName='DevOps Blog Server' \
                             -Dsonar.sources=src \
-                            -Dsonar.exclusions=node_modules/**,.npm-cache/**,coverage/**,prisma/migrations/**,prisma/seed*.js,**/__tests__/** \
+                            -Dsonar.exclusions=node_modules/**,.npm-cache/**,.trivy-cache/**,coverage/**,prisma/migrations/**,prisma/seed*.js,**/__tests__/** \
                             -Dsonar.coverage.exclusions=src/server.js,src/app.js,src/config/**,src/database/**,src/middlewares/**,src/utils/metrics.js,src/utils/prisma.js,src/common/errors/**,src/common/http/**,src/common/observability/**,src/common/email/**,src/common/middleware/auth.middleware.js,src/common/middleware/error.middleware.js,src/common/middleware/logger.middleware.js,src/modules/**/*.service.js,src/modules/**/*.routes.js,src/modules/**/*.helpers.js,src/modules/**/*.queries.js,src/modules/**/*.repository.js,src/modules/**/*.validation.js,src/modules/**/*.mailer.js,src/modules/**/*.storage.js,src/modules/posts/posts.importer.js,src/modules/posts/posts.scheduler.js,src/modules/seo/**,src/modules/settings/**,prisma/seed*.js \
                             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
                             -Dsonar.tests=src \
@@ -139,6 +149,41 @@ pipeline {
                     }
                     echo 'Quality Gate passed successfully.'
                 }
+            }
+        }
+
+        stage('Trivy Filesystem Scan') {
+            steps {
+                echo 'Scanning project filesystem for vulnerable dependencies...'
+                sh "mkdir -p \"${TRIVY_CACHE_DIR}\""
+                // Export JSON report first — always produced for audit trail
+                sh """
+                    docker run --rm \\
+                        -v "${WORKSPACE}:/src" \\
+                        -v "${TRIVY_CACHE_DIR}:/root/.cache/" \\
+                        ${TRIVY_IMAGE} filesystem \\
+                            --severity "${TRIVY_SEVERITY}" \\
+                            --ignore-unfixed \\
+                            --skip-dirs node_modules \\
+                            --format json \\
+                            --output /src/trivy-fs-report.json \\
+                            /src
+                """
+                archiveArtifacts artifacts: 'trivy-fs-report.json', allowEmptyArchive: true
+                // Gate check — exit-code 1 fails the pipeline if CRITICAL/HIGH found
+                sh """
+                    docker run --rm \\
+                        -v "${WORKSPACE}:/src:ro" \\
+                        -v "${TRIVY_CACHE_DIR}:/root/.cache/" \\
+                        ${TRIVY_IMAGE} filesystem \\
+                            --severity "${TRIVY_SEVERITY}" \\
+                            --exit-code 1 \\
+                            --ignore-unfixed \\
+                            --skip-dirs node_modules \\
+                            --format table \\
+                            /src
+                """
+                echo 'Filesystem scan passed — no CRITICAL/HIGH vulnerabilities found.'
             }
         }
 
@@ -205,19 +250,56 @@ EOF
             }
         }
 
-        stage('Docker Build & Push') {
+        stage('Docker Build') {
             steps {
                 script {
                     echo "Building Docker image: ${IMAGE_TAG}:${BUILD_NUMBER}..."
-                    withCredentials([usernamePassword(credentialsId: DOCKER_CRED_ID, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
-                        
-                        sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
-                        
-                        // Build with specific version tag, then re-tag as latest
-                        sh "docker build --pull -t ${IMAGE_TAG}:${BUILD_NUMBER} -f Dockerfile ${BUILD_CONTEXT}"
-                        sh "docker tag ${IMAGE_TAG}:${BUILD_NUMBER} ${IMAGE_TAG}:latest"
+                    sh "docker build --pull -t ${IMAGE_TAG}:${BUILD_NUMBER} -f Dockerfile ${BUILD_CONTEXT}"
+                    sh "docker tag ${IMAGE_TAG}:${BUILD_NUMBER} ${IMAGE_TAG}:latest"
+                }
+            }
+        }
 
-                        echo 'Running container health smoke check...'
+        stage('Trivy Image Scan') {
+            steps {
+                echo 'Scanning Docker image for OS-level vulnerabilities and misconfigurations...'
+                // Export JSON report first — always produced for audit trail
+                sh """
+                    docker run --rm \\
+                        -v /var/run/docker.sock:/var/run/docker.sock \\
+                        -v "${TRIVY_CACHE_DIR}:/root/.cache/" \\
+                        -v "${WORKSPACE}:/output" \\
+                        ${TRIVY_IMAGE} image \\
+                            --severity "${TRIVY_SEVERITY}" \\
+                            --ignore-unfixed \\
+                            --scanners vuln,secret,misconfig \\
+                            --format json \\
+                            --output /output/trivy-image-report.json \\
+                            ${IMAGE_TAG}:${BUILD_NUMBER}
+                """
+                archiveArtifacts artifacts: 'trivy-image-report.json', allowEmptyArchive: true
+                // Gate check — exit-code 1 fails the pipeline if CRITICAL/HIGH found
+                sh """
+                    docker run --rm \\
+                        -v /var/run/docker.sock:/var/run/docker.sock \\
+                        -v "${TRIVY_CACHE_DIR}:/root/.cache/" \\
+                        ${TRIVY_IMAGE} image \\
+                            --severity "${TRIVY_SEVERITY}" \\
+                            --exit-code 1 \\
+                            --ignore-unfixed \\
+                            --scanners vuln,secret,misconfig \\
+                            --format table \\
+                            ${IMAGE_TAG}:${BUILD_NUMBER}
+                """
+                echo 'Image scan passed — no CRITICAL/HIGH vulnerabilities found.'
+            }
+        }
+
+        stage('Smoke Test & Push') {
+            steps {
+                script {
+                    echo 'Running container health smoke check...'
+                    withCredentials([usernamePassword(credentialsId: DOCKER_CRED_ID, passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         sh """
                             docker run -d --name server-smoke-${BUILD_NUMBER} -p 3001:3001 --env-file .env ${IMAGE_TAG}:${BUILD_NUMBER}
                             for i in \$(seq 1 30); do
@@ -236,12 +318,12 @@ EOF
                             done
                             docker rm -f server-smoke-${BUILD_NUMBER}
                         """
-                        
-                        // Push versioned tag
+
+                        echo "Pushing verified image: ${IMAGE_TAG}:${BUILD_NUMBER}..."
+                        sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                         sh "docker push ${IMAGE_TAG}:${BUILD_NUMBER}"
-                        
+
                         // Re-authenticate before pushing latest to prevent token expiry
-                        // (long push operations with retries can cause session timeout)
                         sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
                         sh "docker push ${IMAGE_TAG}:latest"
                     }
@@ -310,6 +392,7 @@ EOF
         always {
             echo 'Performing post-build cleanup...'
             sh 'rm -f .env'
+            sh 'rm -f trivy-fs-report.json trivy-image-report.json'
             sh "docker rm -f server-smoke-${BUILD_NUMBER} || true"
             sh "docker logout || true"
             sh "rm -rf k8s-repo"
@@ -329,7 +412,9 @@ EOF
             // This allows npm cache to persist for the NEXT build
             cleanWs(deleteDirs: true, patterns: [
                 // Keep npm cache between builds for faster installs
-                [pattern: '.npm-cache/**', type: 'EXCLUDE']
+                [pattern: '.npm-cache/**', type: 'EXCLUDE'],
+                // Keep Trivy vulnerability DB cache between builds (~40 MB)
+                [pattern: '.trivy-cache/**', type: 'EXCLUDE']
             ])
         }
     }
