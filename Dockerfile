@@ -19,7 +19,10 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-RUN apk add --no-cache openssl \
+RUN apk upgrade --no-cache \
+    && apk add --no-cache openssl \
+    && rm -rf /usr/local/lib/node_modules/npm \
+    && rm -rf /usr/local/bin/npm /usr/local/bin/npx \
     && addgroup --system --gid 1001 nodejs \
     && adduser --system --uid 1001 expressjs
 
@@ -33,4 +36,4 @@ USER expressjs
 
 EXPOSE 3001
 
-CMD ["npm", "start"]
+CMD ["node", "src/server.js"]
