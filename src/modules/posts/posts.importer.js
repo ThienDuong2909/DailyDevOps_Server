@@ -113,7 +113,7 @@ function normalizeNotionCodeBlocks(root) {
 }
 
 function normalizeNotionCodeBlocksInHtml(html) {
-    return html.replace(
+    return html.replaceAll(
         /<pre([^>]*)>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi,
         (_match, preAttrs, codeAttrs, content) => {
             const classMatch = CLASS_ATTR_REGEX.exec(String(codeAttrs));
