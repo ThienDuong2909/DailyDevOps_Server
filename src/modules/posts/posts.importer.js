@@ -16,9 +16,9 @@ const IMAGE_MIME_BY_EXT = {
 function normalizeText(value) {
     return String(value || '')
         .normalize('NFKC')
-        .replace(/\u00a0/g, ' ')
-        .replace(/[\u200B-\u200D\uFEFF]/g, '')
-        .replace(/\r\n/g, '\n');
+        .replaceAll(/\u00a0/g, ' ')
+        .replaceAll(/[\u200B-\u200D\uFEFF]/g, '')
+        .replaceAll(/\r\n/g, '\n');
 }
 
 function normalizeTitle(value) {
@@ -41,25 +41,25 @@ function normalizeTitle(value) {
 
 function normalizeHtml(value) {
     return normalizeText(value)
-        .replace(/<meta[^>]*>/gi, '')
-        .replace(/<link[^>]*>/gi, '')
-        .replace(/<style[\s\S]*?<\/style>/gi, '')
-        .replace(/<script[\s\S]*?<\/script>/gi, '')
+        .replaceAll(/<meta[^>]*>/gi, '')
+        .replaceAll(/<link[^>]*>/gi, '')
+        .replaceAll(/<style[\s\S]*?<\/style>/gi, '')
+        .replaceAll(/<script[\s\S]*?<\/script>/gi, '')
         .trim();
 }
 
 function normalizeCodeLanguage(value) {
     const normalized = normalizeText(value)
         .toLowerCase()
-        .replace(/^language-/, '')
-        .replace(/[^a-z0-9]+/g, ' ')
+        .replaceAll(/^language-/, '')
+        .replaceAll(/[^a-z0-9]+/g, ' ')
         .trim();
 
     if (!normalized || normalized === 'plain text' || normalized === 'text') {
         return 'plaintext';
     }
 
-    const compact = normalized.replace(/\s+/g, '');
+    const compact = normalized.replaceAll(/\s+/g, '');
     const aliases = {
         shell: 'bash',
         sh: 'bash',
@@ -86,12 +86,14 @@ function normalizeNotionCodeBlocks(root) {
         const languageFromClass = className
             .split(/\s+/)
             .find((token) => token.toLowerCase().startsWith('language-'));
+        const languageIndex = className.toLowerCase().indexOf('language-');
+        const fallbackLanguage = languageIndex >= 0
+            ? className.slice(languageIndex + 'language-'.length)
+            : codeNode.getAttribute('data-language') || codeNode.getAttribute('data-lang') || 'plaintext';
         const normalizedLanguage = normalizeCodeLanguage(
             languageFromClass
                 ? languageFromClass.slice('language-'.length)
-                : className.includes('language-')
-                  ? className.slice(className.toLowerCase().indexOf('language-') + 'language-'.length)
-                  : codeNode.getAttribute('data-language') || codeNode.getAttribute('data-lang') || 'plaintext'
+                : fallbackLanguage
         );
 
         block.setAttribute('data-language', normalizedLanguage);
@@ -111,24 +113,27 @@ function normalizeNotionCodeBlocksInHtml(html) {
         (_match, preAttrs, codeAttrs, content) => {
             const classMatch = String(codeAttrs).match(/class=(["'])([\s\S]*?)\1/i);
             const className = classMatch?.[2] || '';
+            const classLanguageIndex = className.toLowerCase().indexOf('language-');
+            const codeAttrsLanguageMatch =
+                String(codeAttrs).match(/data-language=(["'])([\s\S]*?)\1/i) ||
+                String(codeAttrs).match(/data-lang=(["'])([\s\S]*?)\1/i);
+            const fallbackLanguage = classLanguageIndex >= 0
+                ? className.slice(classLanguageIndex + 'language-'.length)
+                : codeAttrsLanguageMatch?.[2] || 'plaintext';
             const normalizedLanguage = normalizeCodeLanguage(
-                className.includes('language-')
-                    ? className.slice(className.toLowerCase().indexOf('language-') + 'language-'.length)
-                    : String(codeAttrs).match(/data-language=(["'])([\s\S]*?)\1/i)?.[2] ||
-                      String(codeAttrs).match(/data-lang=(["'])([\s\S]*?)\1/i)?.[2] ||
-                      'plaintext'
+                fallbackLanguage
             );
 
             const cleanedPreAttrs = String(preAttrs)
-                .replace(/\sdata-language=(["'])[\s\S]*?\1/gi, '')
-                .replace(/\sdata-lang=(["'])[\s\S]*?\1/gi, '')
-                .replace(/\sstyle=(["'])[\s\S]*?\1/gi, '');
+                .replaceAll(/\sdata-language=(["'])[\s\S]*?\1/gi, '')
+                .replaceAll(/\sdata-lang=(["'])[\s\S]*?\1/gi, '')
+                .replaceAll(/\sstyle=(["'])[\s\S]*?\1/gi, '');
 
             const cleanedCodeAttrs = String(codeAttrs)
-                .replace(/\sclass=(["'])[\s\S]*?\1/gi, '')
-                .replace(/\sdata-language=(["'])[\s\S]*?\1/gi, '')
-                .replace(/\sdata-lang=(["'])[\s\S]*?\1/gi, '')
-                .replace(/\sstyle=(["'])[\s\S]*?\1/gi, '');
+                .replaceAll(/\sclass=(["'])[\s\S]*?\1/gi, '')
+                .replaceAll(/\sdata-language=(["'])[\s\S]*?\1/gi, '')
+                .replaceAll(/\sdata-lang=(["'])[\s\S]*?\1/gi, '')
+                .replaceAll(/\sstyle=(["'])[\s\S]*?\1/gi, '');
 
             return `<pre${cleanedPreAttrs} data-language="${normalizedLanguage}" data-lang="${normalizedLanguage}"><code${cleanedCodeAttrs} class="language-${normalizedLanguage}" data-language="${normalizedLanguage}" data-lang="${normalizedLanguage}">${content}</code></pre>`;
         }

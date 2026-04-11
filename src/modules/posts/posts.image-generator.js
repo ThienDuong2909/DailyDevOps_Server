@@ -35,7 +35,7 @@ function stripHtml(value) {
     root.querySelectorAll('style,script').forEach((node) => node.remove());
 
     return root.text
-        .replace(/\s+/g, ' ')
+        .replaceAll(/\s+/g, ' ')
         .trim();
 }
 
