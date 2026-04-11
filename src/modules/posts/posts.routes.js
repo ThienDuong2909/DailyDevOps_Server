@@ -13,6 +13,7 @@ const {
     restoreVersionSchema,
     versionParamsSchema,
     generateFeaturedImageSchema,
+    enqueueFeaturedImageJobSchema,
 } = require('./posts.validation');
 const { sendCreated, sendOk } = require('../../common/http/responses');
 const asyncHandler = require('express-async-handler');
@@ -194,6 +195,42 @@ router.post(
     asyncHandler(async (req, res) => {
         const result = await postsService.generateFeaturedImage(req.body);
         return sendOk(res, {
+            data: result,
+        });
+    })
+);
+
+router.get(
+    '/:id/thumbnail-jobs/latest',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(postIdParamSchema, 'params'),
+    asyncHandler(async (req, res) => {
+        const result = await postsService.getLatestFeaturedImageJob(
+            req.params.id,
+            req.user.id,
+            req.user.role
+        );
+        return sendOk(res, {
+            data: result,
+        });
+    })
+);
+
+router.post(
+    '/:id/thumbnail-jobs',
+    authenticate,
+    authorize('ADMIN', 'EDITOR', 'AUTHOR'),
+    validate(postIdParamSchema, 'params'),
+    validate(enqueueFeaturedImageJobSchema),
+    asyncHandler(async (req, res) => {
+        const result = await postsService.enqueueFeaturedImageJob(
+            req.params.id,
+            req.body,
+            req.user.id,
+            req.user.role
+        );
+        return sendCreated(res, {
             data: result,
         });
     })

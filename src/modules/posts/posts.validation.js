@@ -114,6 +114,8 @@ const generateFeaturedImageSchema = Joi.object({
     'any.custom': '{{#message}}',
 });
 
+const enqueueFeaturedImageJobSchema = generateFeaturedImageSchema;
+
 module.exports = {
     createPostSchema,
     updatePostSchema,
@@ -124,4 +126,5 @@ module.exports = {
     restoreVersionSchema,
     versionParamsSchema,
     generateFeaturedImageSchema,
+    enqueueFeaturedImageJobSchema,
 };

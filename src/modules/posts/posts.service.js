@@ -25,6 +25,7 @@ const { postVersionListSelect } = require('./posts.queries');
 const subscribersService = require('../subscribers/subscribers.service');
 const { parseNotionExport } = require('./posts.importer');
 const { generateFeaturedImage } = require('./posts.image-generator');
+const thumbnailGenerationService = require('./posts.thumbnail-generation.service');
 
 class PostsService {
     /**
@@ -188,6 +189,47 @@ class PostsService {
 
     async generateFeaturedImage(dto) {
         return generateFeaturedImage(dto);
+    }
+
+    async enqueueFeaturedImageJob(id, dto, userId, userRole) {
+        const post = await this.findById(id);
+
+        if (!this.canEditPost(post, userId, userRole)) {
+            throw new ForbiddenError('You can only edit your own posts');
+        }
+
+        const input = {
+            title: dto.title || post.title || '',
+            subtitle: dto.subtitle || post.subtitle || post.excerpt || '',
+            content: dto.content || post.content || '',
+            contentHtml: dto.contentHtml || post.contentHtml || post.content || '',
+            categoryName:
+                dto.categoryName ||
+                post.category?.name ||
+                '',
+            tagNames:
+                Array.isArray(dto.tagNames) && dto.tagNames.length > 0
+                    ? dto.tagNames
+                    : Array.isArray(post.tags)
+                      ? post.tags.map((tag) => tag.name)
+                      : [],
+        };
+
+        return thumbnailGenerationService.enqueueJob({
+            postId: id,
+            requestedById: userId,
+            input,
+        });
+    }
+
+    async getLatestFeaturedImageJob(id, userId, userRole) {
+        const post = await this.findById(id);
+
+        if (!this.canEditPost(post, userId, userRole)) {
+            throw new ForbiddenError('You can only edit your own posts');
+        }
+
+        return thumbnailGenerationService.getLatestJob(id);
     }
 
     /**

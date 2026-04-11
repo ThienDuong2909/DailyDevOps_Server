@@ -110,6 +110,10 @@ const config = {
             process.env.SCHEDULED_PUBLISH_INTERVAL_MS,
             30000
         ),
+        thumbnailGenerationIntervalMs: parseNumber(
+            process.env.THUMBNAIL_GENERATION_INTERVAL_MS,
+            5000
+        ),
     },
 
     // Public app URLs
