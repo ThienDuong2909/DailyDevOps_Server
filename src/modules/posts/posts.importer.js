@@ -16,9 +16,9 @@ const IMAGE_MIME_BY_EXT = {
 function normalizeText(value) {
     return String(value || '')
         .normalize('NFKC')
-        .replaceAll(/\u00a0/g, ' ')
+        .replaceAll('\u00a0', ' ')
         .replaceAll(/[\u200B-\u200D\uFEFF]/g, '')
-        .replaceAll(/\r\n/g, '\n');
+        .replaceAll('\r\n', '\n');
 }
 
 function normalizeTitle(value) {
@@ -89,7 +89,7 @@ function normalizeNotionCodeBlocks(root) {
         const languageIndex = className.toLowerCase().indexOf('language-');
         const fallbackLanguage = languageIndex >= 0
             ? className.slice(languageIndex + 'language-'.length)
-            : codeNode.getAttribute('data-language') || codeNode.getAttribute('data-lang') || 'plaintext';
+            : codeNode.attrs['data-language'] || codeNode.attrs['data-lang'] || 'plaintext';
         const normalizedLanguage = normalizeCodeLanguage(
             languageFromClass
                 ? languageFromClass.slice('language-'.length)
@@ -312,7 +312,7 @@ async function parseNotionExport(file) {
     const title = resolveTitle(sourceEntry, htmlEntry ? sourceContent : parsed.html);
     const subtitleNode = parse(parsed.html).querySelector('p');
     const excerpt = normalizeText(subtitleNode?.text || '')
-        .replace(/\s+/g, ' ')
+        .replaceAll(/\s+/g, ' ')
         .trim()
         .slice(0, 280);
 
