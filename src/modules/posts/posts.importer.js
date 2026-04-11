@@ -42,9 +42,97 @@ function normalizeTitle(value) {
 function normalizeHtml(value) {
     return normalizeText(value)
         .replace(/<meta[^>]*>/gi, '')
+        .replace(/<link[^>]*>/gi, '')
         .replace(/<style[\s\S]*?<\/style>/gi, '')
         .replace(/<script[\s\S]*?<\/script>/gi, '')
         .trim();
+}
+
+function normalizeCodeLanguage(value) {
+    const normalized = normalizeText(value)
+        .toLowerCase()
+        .replace(/^language-/, '')
+        .replace(/[^a-z0-9]+/g, ' ')
+        .trim();
+
+    if (!normalized || normalized === 'plain text' || normalized === 'text') {
+        return 'plaintext';
+    }
+
+    const compact = normalized.replace(/\s+/g, '');
+    const aliases = {
+        shell: 'bash',
+        sh: 'bash',
+        yml: 'yaml',
+        js: 'javascript',
+        ts: 'typescript',
+        txt: 'plaintext',
+        plaintext: 'plaintext',
+    };
+
+    return aliases[compact] || compact;
+}
+
+function normalizeNotionCodeBlocks(root) {
+    const codeBlocks = root.querySelectorAll('pre');
+
+    for (const block of codeBlocks) {
+        const codeNode = block.querySelector('code');
+        if (!codeNode) {
+            continue;
+        }
+
+        const className = codeNode.getAttribute('class') || '';
+        const languageFromClass = className
+            .split(/\s+/)
+            .find((token) => token.toLowerCase().startsWith('language-'));
+        const normalizedLanguage = normalizeCodeLanguage(
+            languageFromClass
+                ? languageFromClass.slice('language-'.length)
+                : className.includes('language-')
+                  ? className.slice(className.toLowerCase().indexOf('language-') + 'language-'.length)
+                  : codeNode.getAttribute('data-language') || codeNode.getAttribute('data-lang') || 'plaintext'
+        );
+
+        block.setAttribute('data-language', normalizedLanguage);
+        block.setAttribute('data-lang', normalizedLanguage);
+        block.removeAttribute('style');
+
+        codeNode.setAttribute('data-language', normalizedLanguage);
+        codeNode.setAttribute('data-lang', normalizedLanguage);
+        codeNode.setAttribute('class', `language-${normalizedLanguage}`);
+        codeNode.removeAttribute('style');
+    }
+}
+
+function normalizeNotionCodeBlocksInHtml(html) {
+    return html.replace(
+        /<pre([^>]*)>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi,
+        (_match, preAttrs, codeAttrs, content) => {
+            const classMatch = String(codeAttrs).match(/class=(["'])([\s\S]*?)\1/i);
+            const className = classMatch?.[2] || '';
+            const normalizedLanguage = normalizeCodeLanguage(
+                className.includes('language-')
+                    ? className.slice(className.toLowerCase().indexOf('language-') + 'language-'.length)
+                    : String(codeAttrs).match(/data-language=(["'])([\s\S]*?)\1/i)?.[2] ||
+                      String(codeAttrs).match(/data-lang=(["'])([\s\S]*?)\1/i)?.[2] ||
+                      'plaintext'
+            );
+
+            const cleanedPreAttrs = String(preAttrs)
+                .replace(/\sdata-language=(["'])[\s\S]*?\1/gi, '')
+                .replace(/\sdata-lang=(["'])[\s\S]*?\1/gi, '')
+                .replace(/\sstyle=(["'])[\s\S]*?\1/gi, '');
+
+            const cleanedCodeAttrs = String(codeAttrs)
+                .replace(/\sclass=(["'])[\s\S]*?\1/gi, '')
+                .replace(/\sdata-language=(["'])[\s\S]*?\1/gi, '')
+                .replace(/\sdata-lang=(["'])[\s\S]*?\1/gi, '')
+                .replace(/\sstyle=(["'])[\s\S]*?\1/gi, '');
+
+            return `<pre${cleanedPreAttrs} data-language="${normalizedLanguage}" data-lang="${normalizedLanguage}"><code${cleanedCodeAttrs} class="language-${normalizedLanguage}" data-language="${normalizedLanguage}" data-lang="${normalizedLanguage}">${content}</code></pre>`;
+        }
+    );
 }
 
 function guessMimeType(fileName) {
@@ -114,7 +202,9 @@ async function uploadEntryAsset(entry) {
 }
 
 async function rewriteHtmlAssets(html, assetMap) {
-    const root = parse(normalizeHtml(html));
+    const normalizedHtml = normalizeNotionCodeBlocksInHtml(normalizeHtml(html));
+    const root = parse(normalizedHtml);
+    normalizeNotionCodeBlocks(root);
     const images = root.querySelectorAll('img');
     const uploadedAssets = [];
 
