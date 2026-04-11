@@ -147,6 +147,11 @@ const config = {
         skipHealthChecks: process.env.LOG_SKIP_HEALTH !== 'false',
         onlyApiRequests: process.env.LOG_ONLY_API !== 'false',
     },
+
+    gemini: {
+        apiKey: process.env.GEMINI_API_KEY || '',
+        imageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
+    },
 };
 
 config.corsOrigin = parseCorsOrigin(process.env.CORS_ORIGIN, config.appUrl);

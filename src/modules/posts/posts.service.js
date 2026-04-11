@@ -24,6 +24,7 @@ const {
 const { postVersionListSelect } = require('./posts.queries');
 const subscribersService = require('../subscribers/subscribers.service');
 const { parseNotionExport } = require('./posts.importer');
+const { generateFeaturedImage } = require('./posts.image-generator');
 
 class PostsService {
     /**
@@ -183,6 +184,10 @@ class PostsService {
     async importFromNotion(file, authorId, authorRole) {
         const { postData } = await parseNotionExport(file);
         return this.create(postData, authorId, authorRole);
+    }
+
+    async generateFeaturedImage(dto) {
+        return generateFeaturedImage(dto);
     }
 
     /**

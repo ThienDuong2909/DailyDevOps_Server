@@ -95,6 +95,23 @@ const versionParamsSchema = Joi.object({
     versionId: Joi.string().required(),
 });
 
+const generateFeaturedImageSchema = Joi.object({
+    title: Joi.string().trim().max(300).optional().allow('', null),
+    subtitle: Joi.string().trim().max(500).optional().allow('', null),
+    content: Joi.string().optional().allow('', null),
+    contentHtml: Joi.string().optional().allow('', null),
+}).custom((value, helpers) => {
+    if (!value.title && !value.content && !value.contentHtml) {
+        return helpers.error('any.custom', {
+            message: 'Title or content is required to generate a thumbnail',
+        });
+    }
+
+    return value;
+}).messages({
+    'any.custom': '{{#message}}',
+});
+
 module.exports = {
     createPostSchema,
     updatePostSchema,
@@ -104,4 +121,5 @@ module.exports = {
     postIdParamSchema,
     restoreVersionSchema,
     versionParamsSchema,
+    generateFeaturedImageSchema,
 };

@@ -12,6 +12,7 @@ const {
     postIdParamSchema,
     restoreVersionSchema,
     versionParamsSchema,
+    generateFeaturedImageSchema,
 } = require('./posts.validation');
 const { sendCreated, sendOk } = require('../../common/http/responses');
 const asyncHandler = require('express-async-handler');
@@ -181,6 +182,19 @@ router.post(
         const post = await postsService.importFromNotion(req.file, req.user.id, req.user.role);
         return sendCreated(res, {
             data: post,
+        });
+    })
+);
+
+router.post(
+    '/generate-featured-image',
+    authenticate,
+    authorize('ADMIN', 'EDITOR', 'AUTHOR'),
+    validate(generateFeaturedImageSchema),
+    asyncHandler(async (req, res) => {
+        const result = await postsService.generateFeaturedImage(req.body);
+        return sendOk(res, {
+            data: result,
         });
     })
 );
