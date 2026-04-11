@@ -19,7 +19,7 @@ const DEFAULT_PAGE = {
     metaTitle: 'DevOps Blog',
     metaDescription:
         'Expert articles on Kubernetes, CI/CD, Cloud Architecture and DevOps best practices.',
-    canonicalUrl: 'https://blog.thienduong.info/',
+    canonicalUrl: 'https://dailydevops.blog/',
     focusKeywords: ['devops', 'kubernetes', 'ci/cd'],
     ogImage: '',
     noIndex: false,

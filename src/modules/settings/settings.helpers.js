@@ -1,7 +1,7 @@
 const DEFAULT_SETTINGS = {
     general: {
         siteName: 'DevOps Blog',
-        siteUrl: 'https://blog.thienduong.info',
+        siteUrl: 'https://dailydevops.blog',
         siteDescription:
             'Expert articles on Kubernetes, CI/CD, Cloud Architecture, and DevOps best practices.',
         language: 'en',

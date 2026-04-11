@@ -24,7 +24,7 @@ class SeoService {
     }
 
     async getDashboard() {
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://blog.thienduong.info';
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://dailydevops.blog';
 
         const [homepageRecord, systemSettings, posts] = await Promise.all([
             seoRepository.findGlobalSettings({
