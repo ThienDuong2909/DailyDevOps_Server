@@ -21,9 +21,6 @@ class PostsThumbnailGenerationService {
 
     tableReadyPromise = null;
 
-    constructor() {
-    }
-
     async ensureTable() {
         if (!this.tableReadyPromise) {
             this.tableReadyPromise = prisma.$executeRawUnsafe(`
