@@ -198,21 +198,19 @@ class PostsService {
             throw new ForbiddenError('You can only edit your own posts');
         }
 
+        const fallbackTagNames = Array.isArray(post.tags)
+            ? post.tags.map((tag) => tag.name)
+            : [];
+
         const input = {
             title: dto.title || post.title || '',
             subtitle: dto.subtitle || post.subtitle || post.excerpt || '',
             content: dto.content || post.content || '',
             contentHtml: dto.contentHtml || post.contentHtml || post.content || '',
-            categoryName:
-                dto.categoryName ||
-                post.category?.name ||
-                '',
-            tagNames:
-                Array.isArray(dto.tagNames) && dto.tagNames.length > 0
-                    ? dto.tagNames
-                    : Array.isArray(post.tags)
-                      ? post.tags.map((tag) => tag.name)
-                      : [],
+            categoryName: dto.categoryName || post.category?.name || '',
+            tagNames: Array.isArray(dto.tagNames) && dto.tagNames.length > 0
+                ? dto.tagNames
+                : fallbackTagNames,
         };
 
         return thumbnailGenerationService.enqueueJob({

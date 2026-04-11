@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+const crypto = require('node:crypto');
 const config = require('../../config');
 const { getPrismaClient } = require('../../database/prisma');
 const { generateFeaturedImage } = require('./posts.image-generator');
@@ -15,10 +15,13 @@ const JOB_STATUS = {
 };
 
 class PostsThumbnailGenerationService {
+    timer = null;
+
+    isRunning = false;
+
+    tableReadyPromise = null;
+
     constructor() {
-        this.timer = null;
-        this.isRunning = false;
-        this.tableReadyPromise = null;
     }
 
     async ensureTable() {
