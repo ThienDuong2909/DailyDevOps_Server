@@ -13,6 +13,11 @@ const IMAGE_MIME_BY_EXT = {
     '.jfif': 'image/jpeg',
 };
 
+const CLASS_ATTR_REGEX = /class=(["'])([\s\S]*?)\1/i;
+const DATA_LANGUAGE_ATTR_REGEX = /data-language=(["'])([\s\S]*?)\1/i;
+const DATA_LANG_ATTR_REGEX = /data-lang=(["'])([\s\S]*?)\1/i;
+const MULTIPLE_SPACES_REGEX = /\s+/g;
+
 function normalizeText(value) {
     return String(value || '')
         .normalize('NFKC')
@@ -82,7 +87,7 @@ function normalizeNotionCodeBlocks(root) {
             continue;
         }
 
-        const className = codeNode.getAttribute('class') || '';
+        const className = codeNode.attrs.class || '';
         const languageFromClass = className
             .split(/\s+/)
             .find((token) => token.toLowerCase().startsWith('language-'));
@@ -96,13 +101,13 @@ function normalizeNotionCodeBlocks(root) {
                 : fallbackLanguage
         );
 
-        block.setAttribute('data-language', normalizedLanguage);
-        block.setAttribute('data-lang', normalizedLanguage);
+        block.attrs['data-language'] = normalizedLanguage;
+        block.attrs['data-lang'] = normalizedLanguage;
         block.removeAttribute('style');
 
-        codeNode.setAttribute('data-language', normalizedLanguage);
-        codeNode.setAttribute('data-lang', normalizedLanguage);
-        codeNode.setAttribute('class', `language-${normalizedLanguage}`);
+        codeNode.attrs['data-language'] = normalizedLanguage;
+        codeNode.attrs['data-lang'] = normalizedLanguage;
+        codeNode.attrs.class = `language-${normalizedLanguage}`;
         codeNode.removeAttribute('style');
     }
 }
@@ -111,12 +116,12 @@ function normalizeNotionCodeBlocksInHtml(html) {
     return html.replace(
         /<pre([^>]*)>\s*<code([^>]*)>([\s\S]*?)<\/code>\s*<\/pre>/gi,
         (_match, preAttrs, codeAttrs, content) => {
-            const classMatch = String(codeAttrs).match(/class=(["'])([\s\S]*?)\1/i);
+            const classMatch = CLASS_ATTR_REGEX.exec(String(codeAttrs));
             const className = classMatch?.[2] || '';
             const classLanguageIndex = className.toLowerCase().indexOf('language-');
             const codeAttrsLanguageMatch =
-                String(codeAttrs).match(/data-language=(["'])([\s\S]*?)\1/i) ||
-                String(codeAttrs).match(/data-lang=(["'])([\s\S]*?)\1/i);
+                DATA_LANGUAGE_ATTR_REGEX.exec(String(codeAttrs)) ||
+                DATA_LANG_ATTR_REGEX.exec(String(codeAttrs));
             const fallbackLanguage = classLanguageIndex >= 0
                 ? className.slice(classLanguageIndex + 'language-'.length)
                 : codeAttrsLanguageMatch?.[2] || 'plaintext';
@@ -214,7 +219,7 @@ async function rewriteHtmlAssets(html, assetMap) {
     const uploadedAssets = [];
 
     for (const image of images) {
-        const source = image.getAttribute('src');
+        const source = image.attrs.src;
         if (!source || /^https?:\/\//i.test(source) || source.startsWith('/api/v1/media/object?key=')) {
             continue;
         }
@@ -232,12 +237,12 @@ async function rewriteHtmlAssets(html, assetMap) {
         }
 
         uploadedAssets.push(uploaded);
-        image.setAttribute('src', uploaded.url);
+        image.attrs.src = uploaded.url;
     }
 
     const links = root.querySelectorAll('a');
     for (const link of links) {
-        const href = link.getAttribute('href');
+        const href = link.attrs.href;
         if (!href) {
             continue;
         }
@@ -245,7 +250,7 @@ async function rewriteHtmlAssets(html, assetMap) {
         const fileName = decodeURIComponent(path.basename(href)).toLowerCase();
         const uploaded = uploadedAssets.find((item) => path.basename(decodeURIComponent(item.url)).toLowerCase() === fileName);
         if (uploaded) {
-            link.setAttribute('href', uploaded.url);
+            link.attrs.href = uploaded.url;
         }
     }
 
@@ -312,7 +317,7 @@ async function parseNotionExport(file) {
     const title = resolveTitle(sourceEntry, htmlEntry ? sourceContent : parsed.html);
     const subtitleNode = parse(parsed.html).querySelector('p');
     const excerpt = normalizeText(subtitleNode?.text || '')
-        .replaceAll(/\s+/g, ' ')
+        .replaceAll(MULTIPLE_SPACES_REGEX, ' ')
         .trim()
         .slice(0, 280);
 
