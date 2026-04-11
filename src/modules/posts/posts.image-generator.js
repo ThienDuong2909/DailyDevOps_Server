@@ -1,6 +1,7 @@
 const config = require('../../config');
 const mediaService = require('../media/media.service');
 const { BadRequestError } = require('../../middlewares/error.middleware');
+const { parse } = require('node-html-parser');
 
 const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_IMAGE_NAME = 'ai-thumbnail.webp';
@@ -29,10 +30,11 @@ const CATEGORY_STYLE_HINTS = [
 ];
 
 function stripHtml(value) {
-    return String(value || '')
-        .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-        .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-        .replace(/<[^>]+>/g, ' ')
+    const root = parse(String(value || ''));
+
+    root.querySelectorAll('style,script').forEach((node) => node.remove());
+
+    return root.text
         .replace(/\s+/g, ' ')
         .trim();
 }
@@ -183,4 +185,12 @@ async function generateFeaturedImage(input) {
 
 module.exports = {
     generateFeaturedImage,
+    __testables: {
+        stripHtml,
+        truncate,
+        dedupe,
+        resolveStyleHints,
+        buildImagePrompt,
+        extractImagePart,
+    },
 };
