@@ -100,6 +100,8 @@ const generateFeaturedImageSchema = Joi.object({
     subtitle: Joi.string().trim().max(500).optional().allow('', null),
     content: Joi.string().optional().allow('', null),
     contentHtml: Joi.string().optional().allow('', null),
+    categoryName: Joi.string().trim().max(120).optional().allow('', null),
+    tagNames: Joi.array().items(Joi.string().trim().max(120)).optional(),
 }).custom((value, helpers) => {
     if (!value.title && !value.content && !value.contentHtml) {
         return helpers.error('any.custom', {

@@ -5,6 +5,28 @@ const { BadRequestError } = require('../../middlewares/error.middleware');
 const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_IMAGE_NAME = 'ai-thumbnail.webp';
 const MAX_PROMPT_CONTENT_LENGTH = 6000;
+const CATEGORY_STYLE_HINTS = [
+    {
+        keywords: ['ansible', 'automation', 'ci/cd', 'cicd', 'pipeline', 'jenkins', 'github actions'],
+        hint: 'Favor terminal scenes, deployment pipelines, automation flows, server topology maps, and glowing console UI motifs.',
+    },
+    {
+        keywords: ['kubernetes', 'k8s', 'container', 'docker', 'orchestration'],
+        hint: 'Favor container clusters, node graphs, pods, control planes, cloud-native dashboards, and orchestrated infrastructure.',
+    },
+    {
+        keywords: ['aws', 'azure', 'gcp', 'cloud', 'terraform', 'infrastructure'],
+        hint: 'Favor cloud architecture diagrams, layered infrastructure, network links, regions, and infrastructure-as-code visuals.',
+    },
+    {
+        keywords: ['security', 'devsecops', 'vulnerability', 'compliance', 'sonarqube', 'trivy'],
+        hint: 'Favor security operations visuals, threat scanning, shields, secure pipelines, alert surfaces, and high-contrast monitoring scenes.',
+    },
+    {
+        keywords: ['linux', 'server', 'nginx', 'apache', 'network', 'monitoring', 'prometheus', 'grafana'],
+        hint: 'Favor Linux servers, rack systems, network routes, observability charts, terminal dashboards, and realistic ops environments.',
+    },
+];
 
 function stripHtml(value) {
     return String(value || '')
@@ -23,17 +45,45 @@ function truncate(value, maxLength) {
     return `${value.slice(0, maxLength).trim()}...`;
 }
 
-function buildImagePrompt({ title, subtitle, content, contentHtml }) {
+function dedupe(values) {
+    return Array.from(new Set(values.filter(Boolean)));
+}
+
+function resolveStyleHints(topic) {
+    const normalizedTopic = String(topic || '').toLowerCase();
+
+    return dedupe(
+        CATEGORY_STYLE_HINTS.flatMap((entry) =>
+            entry.keywords.some((keyword) => normalizedTopic.includes(keyword)) ? [entry.hint] : []
+        )
+    );
+}
+
+function buildImagePrompt({ title, subtitle, content, contentHtml, categoryName, tagNames }) {
     const normalizedTitle = String(title || '').trim();
     const normalizedSubtitle = String(subtitle || '').trim();
     const normalizedContent = stripHtml(contentHtml || content);
+    const normalizedCategory = String(categoryName || '').trim();
+    const normalizedTags = Array.isArray(tagNames)
+        ? tagNames.map((tag) => String(tag || '').trim()).filter(Boolean)
+        : [];
 
     if (!normalizedTitle && !normalizedContent) {
         throw new BadRequestError('Title or content is required to generate a thumbnail');
     }
 
+    const topicSummary = dedupe([normalizedCategory, ...normalizedTags, normalizedTitle]).join(' | ');
+    const styleHints = resolveStyleHints(`${topicSummary}\n${normalizedSubtitle}\n${normalizedContent}`);
     const articleContext = truncate(
-        [normalizedTitle, normalizedSubtitle, normalizedContent].filter(Boolean).join('\n\n'),
+        [
+            normalizedTitle,
+            normalizedSubtitle,
+            normalizedCategory ? `Category: ${normalizedCategory}` : '',
+            normalizedTags.length > 0 ? `Tags: ${normalizedTags.join(', ')}` : '',
+            normalizedContent,
+        ]
+            .filter(Boolean)
+            .join('\n\n'),
         MAX_PROMPT_CONTENT_LENGTH
     );
 
@@ -43,6 +93,8 @@ function buildImagePrompt({ title, subtitle, content, contentHtml }) {
         'Include visual cues that match the article topic, infrastructure, cloud, automation, terminals, code, servers, or diagrams when relevant.',
         'Do not add any text, captions, letters, logos, watermarks, UI chrome, browser frames, or collage layout inside the image.',
         'The composition should be clean, bold, and suitable as a featured image on a professional blog homepage.',
+        'Prefer one strong central concept with depth, atmosphere, and visually readable focal hierarchy.',
+        ...(styleHints.length > 0 ? ['', 'Topic-specific visual guidance:', ...styleHints] : []),
         '',
         'Article context:',
         articleContext,
