@@ -6,6 +6,7 @@ const { validate } = require('../../middlewares/validation.middleware');
 const { sendCreated, sendSuccess } = require('../../common/http/responses');
 const mediaService = require('./media.service');
 const {
+    mediaListQuerySchema,
     mediaObjectQuerySchema,
     mediaDeleteSchema,
     mediaUploadPurposeSchema,
@@ -28,8 +29,9 @@ router.get(
     '/',
     authenticate,
     authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
-    asyncHandler(async (_req, res) => {
-        const items = await mediaService.listMediaLibrary();
+    validate(mediaListQuerySchema, 'query'),
+    asyncHandler(async (req, res) => {
+        const items = await mediaService.listMediaLibrary(req.query.folder);
         return res.status(200).json({
             success: true,
             data: items,

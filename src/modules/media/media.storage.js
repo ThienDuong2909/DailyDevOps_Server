@@ -52,14 +52,24 @@ async function getObject(key) {
 
 async function listObjects(prefix) {
     const client = getS3Client();
+    const contents = [];
+    let continuationToken;
 
-    return client.send(
-        new ListObjectsV2Command({
-            Bucket: config.storage.bucket,
-            Prefix: prefix,
-            MaxKeys: 60,
-        })
-    );
+    do {
+        const response = await client.send(
+            new ListObjectsV2Command({
+                Bucket: config.storage.bucket,
+                Prefix: prefix,
+                MaxKeys: 200,
+                ContinuationToken: continuationToken,
+            })
+        );
+
+        contents.push(...(response.Contents || []));
+        continuationToken = response.IsTruncated ? response.NextContinuationToken : undefined;
+    } while (continuationToken);
+
+    return { Contents: contents };
 }
 
 async function deleteObject(key) {

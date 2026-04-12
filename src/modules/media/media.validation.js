@@ -8,11 +8,18 @@ const mediaObjectQuerySchema = Joi.object({
     key: Joi.string().required(),
 });
 
+const mediaListQuerySchema = Joi.object({
+    folder: Joi.string()
+        .valid('all', 'post-media', 'featured-images', 'avatars', 'seo', 'newsletter')
+        .default('all'),
+});
+
 const mediaDeleteSchema = Joi.object({
     key: Joi.string().required(),
 });
 
 module.exports = {
+    mediaListQuerySchema,
     mediaUploadPurposeSchema,
     mediaObjectQuerySchema,
     mediaDeleteSchema,

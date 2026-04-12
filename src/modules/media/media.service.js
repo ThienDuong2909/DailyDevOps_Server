@@ -13,6 +13,42 @@ const ALLOWED_MIME_TYPES = new Set([
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 class MediaService {
+    resolveFolderConfig(folder = 'all') {
+        switch (folder) {
+            case 'post-media':
+                return {
+                    prefixes: ['media/posts/'],
+                    exactDirectory: 'media/posts/',
+                };
+            case 'featured-images':
+                return {
+                    prefixes: ['media/featured-images/'],
+                    exactDirectory: 'media/featured-images/',
+                };
+            case 'avatars':
+                return {
+                    prefixes: ['avatars/users/'],
+                    exactDirectory: 'avatars/users/',
+                };
+            case 'seo':
+                return {
+                    prefixes: ['media/seo/'],
+                    exactDirectory: 'media/seo/',
+                };
+            case 'newsletter':
+                return {
+                    prefixes: ['media/newsletter/'],
+                    exactDirectory: 'media/newsletter/',
+                };
+            case 'all':
+            default:
+                return {
+                    prefixes: ['media/', 'avatars/'],
+                    exactDirectory: null,
+                };
+        }
+    }
+
     ensureFileIsValid(file) {
         if (!file) {
             throw new Error('Image file is required');
@@ -30,9 +66,11 @@ class MediaService {
     resolveUploadDirectory(purpose) {
         switch (purpose) {
             case 'post-media':
-            case 'featured-image':
-            case 'media':
                 return 'media/posts';
+            case 'featured-image':
+                return 'media/featured-images';
+            case 'media':
+                return 'media/misc';
             case 'avatar':
                 return 'avatars/users';
             case 'seo':
@@ -114,16 +152,44 @@ class MediaService {
         }
     }
 
-    async listMediaLibrary() {
-        const result = await listObjects('media/');
-        const items = (result.Contents || [])
+    detectFolder(key) {
+        if (key.startsWith('media/featured-images/')) {
+            return 'featured-images';
+        }
+
+        if (key.startsWith('media/posts/')) {
+            return 'post-media';
+        }
+
+        if (key.startsWith('avatars/users/')) {
+            return 'avatars';
+        }
+
+        if (key.startsWith('media/seo/')) {
+            return 'seo';
+        }
+
+        if (key.startsWith('media/newsletter/')) {
+            return 'newsletter';
+        }
+
+        return 'all';
+    }
+
+    async listMediaLibrary(folder = 'all') {
+        const { prefixes, exactDirectory } = this.resolveFolderConfig(folder);
+        const results = await Promise.all(prefixes.map((prefix) => listObjects(prefix)));
+        const items = results
+            .flatMap((result) => result.Contents || [])
             .filter((item) => item.Key)
+            .filter((item) => (exactDirectory ? item.Key.startsWith(exactDirectory) : true))
             .sort((a, b) => new Date(b.LastModified || 0).getTime() - new Date(a.LastModified || 0).getTime())
             .map((item) => ({
                 key: item.Key,
                 size: item.Size || 0,
                 lastModified: item.LastModified ? new Date(item.LastModified).toISOString() : null,
                 url: `/api/v1/media/object?key=${encodeURIComponent(item.Key)}`,
+                folder: this.detectFolder(item.Key),
             }));
 
         return items;
