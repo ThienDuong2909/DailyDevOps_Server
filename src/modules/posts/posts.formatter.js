@@ -11,9 +11,13 @@ const formatContentByGemini = async (rawContent) => {
         throw new BadRequestError('Content must be provided as a string.');
     }
 
-    // Using the OpenRouter key and model provided by the user
-    // In production, this should be moved to .env
-    const apiKey = "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";
+    // Using the OpenRouter key from config. If missing, throw error
+    const apiKey = config.openrouter.apiKey;
+    if (!apiKey) {
+        throw new BadRequestError('OpenRouter API key is not configured.');
+    }
+    
+    // Model requested by user
     const defaultModel = "google/gemma-4-26b-a4b-it:free";
 
     const prompt = `

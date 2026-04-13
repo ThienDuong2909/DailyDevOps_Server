@@ -152,9 +152,8 @@ const config = {
         onlyApiRequests: process.env.LOG_ONLY_API !== 'false',
     },
 
-    gemini: {
-        apiKey: process.env.GEMINI_API_KEY || '',
-        imageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
+    openrouter: {
+        apiKey: process.env.OPENROUTER_API_KEY || '',
     },
 };
 

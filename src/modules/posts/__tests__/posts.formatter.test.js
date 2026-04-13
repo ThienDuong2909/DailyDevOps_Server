@@ -5,6 +5,12 @@ const { BadRequestError } = require('../../../middlewares/error.middleware');
 describe('formatContentByGemini (OpenRouter)', () => {
     let originalFetch;
 
+    jest.mock('../../../config', () => ({
+        openrouter: {
+            apiKey: 'test-api-key',
+        },
+    }));
+
     beforeEach(() => {
         originalFetch = global.fetch;
         global.fetch = jest.fn();
@@ -18,6 +24,16 @@ describe('formatContentByGemini (OpenRouter)', () => {
     it('should throw BadRequestError if content is not a string', async () => {
         await expect(formatContentByGemini(null)).rejects.toThrow(BadRequestError);
         await expect(formatContentByGemini(null)).rejects.toThrow('Content must be provided as a string.');
+    });
+
+    it('should throw BadRequestError if API key is not configured', async () => {
+        const originalApiKey = config.openrouter.apiKey;
+        config.openrouter.apiKey = '';
+
+        await expect(formatContentByGemini('some content')).rejects.toThrow(BadRequestError);
+        await expect(formatContentByGemini('some content')).rejects.toThrow('OpenRouter API key is not configured.');
+
+        config.openrouter.apiKey = originalApiKey;
     });
 
     it('should return successfully formatted content', async () => {
