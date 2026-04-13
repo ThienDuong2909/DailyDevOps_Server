@@ -31,20 +31,38 @@ ${content}
 ---
 `;
 
-    try {
-        const result = await model.generateContent(prompt);
-        let finalContent = result.response.text() || '';
+    let attempt = 0;
+    const maxRetries = 3;
 
-        // Remove wrap code around markdown if AI returned it
-        if (finalContent.startsWith('```markdown')) {
-            finalContent = finalContent.replace(/^```markdown\n?/, '');
-            finalContent = finalContent.replace(/\n?```$/, '');
+    while (attempt < maxRetries) {
+        try {
+            const result = await model.generateContent(prompt);
+            let finalContent = result.response.text() || '';
+
+            // Remove wrap code around markdown if AI returned it
+            if (finalContent.startsWith('```markdown')) {
+                finalContent = finalContent.replace(/^```markdown\n?/, '');
+                finalContent = finalContent.replace(/\n?```$/, '');
+            }
+
+            return finalContent;
+        } catch (error) {
+            attempt++;
+            const isOverloaded = error.status === 503 || error.message?.includes('503') || error.status === 429 || error.message?.includes('429') || error.message?.includes('high demand');
+            
+            if (isOverloaded && attempt < maxRetries) {
+                console.warn(`Gemini API overloaded (503/429). Retrying attempt ${attempt}...`);
+                // Exponential backoff
+                await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+            } else {
+                console.error('Gemini format error:', error);
+                throw new BadRequestError(
+                    isOverloaded 
+                        ? 'Hệ thống AI đang quá tải cục bộ. Vui lòng thử lại sau ít phút.' 
+                        : 'Failed to format content via Gemini API. ' + error.message
+                );
+            }
         }
-
-        return finalContent;
-    } catch (error) {
-        console.error('Gemini format error:', error);
-        throw new BadRequestError('Failed to format content via Gemini API. ' + error.message);
     }
 };
 
