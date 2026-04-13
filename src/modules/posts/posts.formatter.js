@@ -14,7 +14,6 @@ const formatContentByGemini = async (rawContent) => {
     // Using the OpenRouter key and model provided by the user
     // In production, this should be moved to .env
     const apiKey = "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";
-    const modelOptions = ["google/gemma-4-26b-a4b-it:free", "google/gemma-2-9b-it:free", "google/gemini-pro-1.5"]; // Added some fallback models just in case the provided one has typo
     const defaultModel = "google/gemma-4-26b-a4b-it:free";
 
     const prompt = `
@@ -61,7 +60,7 @@ ${rawContent}
 
         const data = await response.json();
         
-        let finalContent = data.choices && data.choices[0] && data.choices[0].message.content;
+        let finalContent = data?.choices?.[0]?.message?.content;
 
         if (!finalContent) {
              throw new Error("Không có dữ liệu trả về từ OpenRouter.");
