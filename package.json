@@ -67,6 +67,7 @@
     ],
     "collectCoverageFrom": [
       "src/modules/posts/posts.image-generator.js",
+      "src/modules/posts/posts.formatter.js",
       "src/modules/**/*.validation.js",
       "src/common/middleware/validation.middleware.js",
       "!src/modules/**/*.service.js",

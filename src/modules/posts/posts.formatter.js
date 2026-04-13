@@ -36,9 +36,9 @@ ${content}
         let finalContent = result.response.text() || '';
 
         // Remove wrap code around markdown if AI returned it
-        if (finalContent.startsWith('\`\`\`markdown')) {
-            finalContent = finalContent.replace(/^\`\`\`markdown\n?/, '');
-            finalContent = finalContent.replace(/\n?\`\`\`$/, '');
+        if (finalContent.startsWith('```markdown')) {
+            finalContent = finalContent.replace(/^```markdown\n?/, '');
+            finalContent = finalContent.replace(/\n?```$/, '');
         }
 
         return finalContent;

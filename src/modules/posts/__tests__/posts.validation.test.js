@@ -83,4 +83,22 @@ describe('posts validation', () => {
 
         expect(invalidResult.error).toBeDefined();
     });
+
+    it('accepts valid format content payload', () => {
+        const { formatContentSchema } = require('../posts.validation');
+        const { error, value } = formatContentSchema.validate({
+            content: 'some valid content'
+        });
+        expect(error).toBeUndefined();
+        expect(value.content).toBe('some valid content');
+    });
+
+    it('rejects missing or empty format content payload', () => {
+        const { formatContentSchema } = require('../posts.validation');
+        const { error: missingError } = formatContentSchema.validate({});
+        expect(missingError).toBeDefined();
+
+        const { error: emptyError } = formatContentSchema.validate({ content: '' });
+        expect(emptyError).toBeDefined();
+    });
 });
