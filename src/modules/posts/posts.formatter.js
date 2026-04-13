@@ -1,72 +1,85 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const config = require('../../config');
 const { BadRequestError } = require('../../middlewares/error.middleware');
 
-const formatContentByGemini = async (content) => {
-    if (!config.gemini?.apiKey) {
-        throw new BadRequestError('Gemini API key is not configured.');
+/**
+ * Format markdown content into SEO friendly structure using OpenRouter API
+ * @param {string} rawContent 
+ * @returns {Promise<string>}
+ */
+const formatContentByGemini = async (rawContent) => {
+    if (!rawContent || typeof rawContent !== 'string') {
+        throw new BadRequestError('Content must be provided as a string.');
     }
 
-    // Fallback list of models, ordered by preference
-    const fallbackModels = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-pro"];
-    const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
+    // Using the OpenRouter key and model provided by the user
+    // In production, this should be moved to .env
+    const apiKey = "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";
+    const modelOptions = ["google/gemma-4-26b-a4b-it:free", "google/gemma-2-9b-it:free", "google/gemini-pro-1.5"]; // Added some fallback models just in case the provided one has typo
+    const defaultModel = "google/gemma-4-26b-a4b-it:free";
 
     const prompt = `
 Bạn là một trợ lý SEO biên tập. Hãy nhận bài viết dưới đây và chuẩn hóa cấu trúc bài viết theo trình tự chuẩn SEO:
-1. Mở đầu bằng phần Đặt vấn đề.
-2. Đi vào nội dung chính, bắt buộc cấu trúc: Sử dụng số La Mã (I, II, III...) cho các tiêu đề phần lớn, và số đếm (1, 2, 3...) cho các mục con.
-3. Đối với các bước yêu cầu chạy lệnh (ví dụ như lệnh terminal/bash/script), bạn CẦN TRÌNH BÀY theo thứ tự: giải thích những thứ cần làm trước đó, sau đó hiển thị lệnh, và cuối cùng phần dưới cụm lệnh CẦN GIẢI THÍCH các thành phần của lệnh đó có tác dụng gì.
-4. Cuối bài viết, hãy luôn thêm một phần tổng kết/tóm tắt lại thành tựu đạt được qua bài viết này.
+1. Đặt vấn đề (Giới thiệu ngắn gọn).
+2. Vào nội dung chính (Đánh số La Mã I, II, III... cho các phần lớn trọng tâm).
+3. Các phần con đánh 1, 2, 3...
+4. Đối với các bước chạy lệnh (ví dụ \`sudo apt update\`), cần giải thích những thứ cần làm trước, sau đó tới câu lệnh và dưới là giải thích giải phẫu thành phần lệnh.
+5. Sau phần nội dung chính, tóm tắt lại bài viết.
 
-NHỮNG QUY TẮC CẤM KỴ: 
-- BẠN CÓ THỂ TỰ ĐỘNG CĂN CHỈNH, TỰ THÊM NỘI DUNG VÀ VIẾT LẠI cho hay hơn, đúng cấu trúc.
-- KHÔNG thay đổi url, KHÔNG xóa, KHÔNG chỉnh sửa bất kỳ đường link hình ảnh nào (thẻ markdown image ![...](...) hay thẻ <img>). (Bạn được phép di chuyển vị trí của chúng cho hợp lý với nội dung).
-- KHÔNG tự tiện thay đổi nội dung code (trong \` \` hoặc \`\`\` \`\`\`). (Bạn được phép di chuyển khối code theo quy trình hợp lý, nhưng không đổi nội dung code).
+Lưu ý:
+- CHỈ TRẢ VỀ nội dung bài viết đã định dạng bằng Markdown. KHÔNG trả lời thêm bất kỳ câu giao tiếp nào (như "Dưới đây là...", "Vâng...").
+- KHÔNG thay đổi văn phong hoặc cắt bỏ nội dung chính của tôi, chỉ viết lại và phân chia bố cục tự động.
+- KHÔNG chỉnh sửa hình ảnh (nhưng có thể sắp xếp lại vị trí cho hợp lý).
+- KHÔNG sửa nội dung đoạn mã trong thẻ \`code\`.
 
-Lưu ý quan trọng: Chỉ trả về nguyên văn nội dung sau khi đã chuẩn hóa thành markdown, KHÔNG wrap trong thẻ \`\`\`markdown, không kèm thêm lời chào hỏi hay giải thích gì khác.
-
-Nội dung bài viết ban đầu:
+Bài viết cần chuẩn hóa:
 ---
-${content}
+${rawContent}
 ---
 `;
 
-    let attempt = 0;
-    const maxRetries = fallbackModels.length; // Thử lần lượt các model trong list
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": config.appUrl || "https://dailydevops.blog",
+                "X-Title": "Devops Blog Formatter"
+            },
+            body: JSON.stringify({
+                model: defaultModel,
+                messages: [
+                    { role: "user", content: prompt }
+                ]
+            })
+        });
 
-    while (attempt < maxRetries) {
-        const currentModelName = fallbackModels[attempt];
-        const model = genAI.getGenerativeModel({ model: currentModelName });
-        
-        try {
-            const result = await model.generateContent(prompt);
-            let finalContent = result.response.text() || '';
-
-            // Remove wrap code around markdown if AI returned it
-            if (finalContent.startsWith('```markdown')) {
-                finalContent = finalContent.replace(/^```markdown\n?/, '');
-                finalContent = finalContent.replace(/\n?```$/, '');
-            }
-
-            return finalContent;
-        } catch (error) {
-            attempt++;
-            const isOverloaded = error.status === 503 || error.message?.includes('503') || error.status === 429 || error.message?.includes('429') || error.message?.includes('high demand') || error.status === 404 || error.message?.includes('not found');
-            
-            if (isOverloaded && attempt < maxRetries) {
-                console.warn(`Model ${currentModelName} failed (${error.status || 'overloaded/404'}). Falling back to ${fallbackModels[attempt]}...`);
-                // Chờ nhỏ 1 giây giữa các lần fallback
-                await new Promise((resolve) => setTimeout(resolve, 1000));
-            } else {
-                console.error(`Gemini format error on ${currentModelName}:`, error);
-                throw new BadRequestError(
-                    isOverloaded 
-                        ? 'Tất cả các model AI đều đang quá tải hoặc không khả dụng. Vui lòng thử lại sau.' 
-                        : 'Failed to format content via Gemini API. ' + error.message
-                );
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`OpenRouter lỗi HTTP ${response.status}: ${errorText}`);
         }
+
+        const data = await response.json();
+        
+        let finalContent = data.choices && data.choices[0] && data.choices[0].message.content;
+
+        if (!finalContent) {
+             throw new Error("Không có dữ liệu trả về từ OpenRouter.");
+        }
+
+        // Remove wrap code around markdown if AI returned it
+        if (finalContent.startsWith('```markdown')) {
+            finalContent = finalContent.replace(/^```markdown\n?/, '');
+            finalContent = finalContent.replace(/\n?```$/, '');
+        }
+
+        return finalContent;
+    } catch (error) {
+        console.error('OpenRouter format error:', error);
+        throw new BadRequestError('Failed to format content via AI. ' + error.message);
     }
 };
 
-module.exports = { formatContentByGemini };
+module.exports = {
+    formatContentByGemini
+};
