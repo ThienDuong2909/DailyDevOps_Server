@@ -7,9 +7,9 @@ const formatContentByGemini = async (content) => {
         throw new BadRequestError('Gemini API key is not configured.');
     }
 
-    // Choose the generative model
+    // Fallback list of models, ordered by preference
+    const fallbackModels = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-pro"];
     const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); // Fast and efficient for text tasks
 
     const prompt = `
 Bạn là một trợ lý SEO biên tập. Hãy nhận bài viết dưới đây và chuẩn hóa cấu trúc bài viết theo trình tự chuẩn SEO:
@@ -32,9 +32,12 @@ ${content}
 `;
 
     let attempt = 0;
-    const maxRetries = 3;
+    const maxRetries = fallbackModels.length; // Thử lần lượt các model trong list
 
     while (attempt < maxRetries) {
+        const currentModelName = fallbackModels[attempt];
+        const model = genAI.getGenerativeModel({ model: currentModelName });
+        
         try {
             const result = await model.generateContent(prompt);
             let finalContent = result.response.text() || '';
@@ -48,17 +51,17 @@ ${content}
             return finalContent;
         } catch (error) {
             attempt++;
-            const isOverloaded = error.status === 503 || error.message?.includes('503') || error.status === 429 || error.message?.includes('429') || error.message?.includes('high demand');
+            const isOverloaded = error.status === 503 || error.message?.includes('503') || error.status === 429 || error.message?.includes('429') || error.message?.includes('high demand') || error.status === 404 || error.message?.includes('not found');
             
             if (isOverloaded && attempt < maxRetries) {
-                console.warn(`Gemini API overloaded (503/429). Retrying attempt ${attempt}...`);
-                // Exponential backoff
-                await new Promise((resolve) => setTimeout(resolve, 1000 * Math.pow(2, attempt)));
+                console.warn(`Model ${currentModelName} failed (${error.status || 'overloaded/404'}). Falling back to ${fallbackModels[attempt]}...`);
+                // Chờ nhỏ 1 giây giữa các lần fallback
+                await new Promise((resolve) => setTimeout(resolve, 1000));
             } else {
-                console.error('Gemini format error:', error);
+                console.error(`Gemini format error on ${currentModelName}:`, error);
                 throw new BadRequestError(
                     isOverloaded 
-                        ? 'Hệ thống AI đang quá tải cục bộ. Vui lòng thử lại sau ít phút.' 
+                        ? 'Tất cả các model AI đều đang quá tải hoặc không khả dụng. Vui lòng thử lại sau.' 
                         : 'Failed to format content via Gemini API. ' + error.message
                 );
             }
