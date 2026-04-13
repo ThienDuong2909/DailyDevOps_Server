@@ -9,7 +9,7 @@ const formatContentByGemini = async (content) => {
 
     // Choose the generative model
     const genAI = new GoogleGenerativeAI(config.gemini.apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Fast and efficient for text tasks
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" }); // Fast and efficient for text tasks
 
     const prompt = `
 Bạn là một trợ lý SEO biên tập. Hãy nhận bài viết dưới đây và chuẩn hóa cấu trúc bài viết theo trình tự chuẩn SEO:
