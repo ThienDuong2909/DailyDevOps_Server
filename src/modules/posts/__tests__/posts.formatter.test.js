@@ -5,15 +5,15 @@ const { BadRequestError } = require('../../../middlewares/error.middleware');
 describe('formatContentByGemini (OpenRouter)', () => {
     let originalFetch;
 
-    jest.mock('../../../config', () => ({
-        openrouter: {
-            apiKey: 'test-api-key',
-        },
-    }));
+
 
     beforeEach(() => {
         originalFetch = global.fetch;
         global.fetch = jest.fn();
+        
+        // Setup config since CI might not have this env loaded
+        config.openrouter = config.openrouter || {};
+        config.openrouter.apiKey = 'test-api-key';
     });
 
     afterEach(() => {
