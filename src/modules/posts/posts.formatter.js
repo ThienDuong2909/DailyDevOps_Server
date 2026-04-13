@@ -17,8 +17,13 @@ const formatContentByGemini = async (rawContent) => {
         throw new BadRequestError('OpenRouter API key is not configured.');
     }
     
-    // Model requested by user
-    const defaultModel = "google/gemma-4-26b-a4b-it:free";
+    // Fallback list of free OpenRouter models to try gracefully
+    const fallbackModels = [
+        "google/gemma-4-26b-a4b-it:free", 
+        "google/gemini-2.0-flash-lite-preview-02-05:free",
+        "google/gemini-2.5-flash:free",
+        "meta-llama/llama-3.1-8b-instruct:free"
+    ];
 
     const prompt = `
 Bạn là một trợ lý SEO biên tập. Hãy nhận bài viết dưới đây và chuẩn hóa cấu trúc bài viết theo trình tự chuẩn SEO:
@@ -40,46 +45,69 @@ ${rawContent}
 ---
 `;
 
-    try {
-        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-                "HTTP-Referer": config.appUrl || "https://dailydevops.blog",
-                "X-Title": "Devops Blog Formatter"
-            },
-            body: JSON.stringify({
-                model: defaultModel,
-                messages: [
-                    { role: "user", content: prompt }
-                ]
-            })
-        });
+    let attempt = 0;
+    const maxRetries = fallbackModels.length;
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`OpenRouter lỗi HTTP ${response.status}: ${errorText}`);
-        }
-
-        const data = await response.json();
+    while (attempt < maxRetries) {
+        const currentModel = fallbackModels[attempt];
         
-        let finalContent = data?.choices?.[0]?.message?.content;
+        try {
+            const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${apiKey}`,
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": config.appUrl || "https://dailydevops.blog",
+                    "X-Title": "Devops Blog Formatter"
+                },
+                body: JSON.stringify({
+                    model: currentModel,
+                    messages: [
+                        { role: "user", content: prompt }
+                    ]
+                })
+            });
 
-        if (!finalContent) {
-             throw new Error("Không có dữ liệu trả về từ OpenRouter.");
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`OpenRouter lỗi HTTP ${response.status}: ${errorText}`);
+            }
+
+            const data = await response.json();
+            
+            let finalContent = data?.choices?.[0]?.message?.content;
+
+            if (!finalContent) {
+                 throw new Error("Không có dữ liệu trả về từ OpenRouter.");
+            }
+
+            // Remove wrap code around markdown if AI returned it
+            if (finalContent.startsWith('```markdown')) {
+                finalContent = finalContent.replace(/^```markdown\n?/, '');
+                finalContent = finalContent.replace(/\n?```$/, '');
+            }
+
+            return finalContent;
+        } catch (error) {
+            attempt++;
+            
+            // Check if it's a rate-limit or overload error
+            const isOverloaded = error.message?.includes('429') || error.message?.includes('503') || error.message?.includes('rate-limited') || error.message?.includes('temporarily');
+            
+            if (isOverloaded && attempt < maxRetries) {
+                console.warn(`[OpenRouter] Model ${currentModel} overloaded/rate-limited. Falling back to next model...`);
+                // Sleep for 1 second before trying fallback
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            } else {
+                console.error(`[OpenRouter] format error on ${currentModel}:`, error);
+                // Define error message
+                const errMessage = isOverloaded 
+                    ? 'Tất cả các model AI miễn phí đều đang quá tải hoặc hết lượt (Rate Limited). Vui lòng thử lại sau vài phút.' 
+                    : `Failed to format content via AI. ${error.message}`;
+                    
+                throw new BadRequestError(errMessage);
+            }
         }
-
-        // Remove wrap code around markdown if AI returned it
-        if (finalContent.startsWith('```markdown')) {
-            finalContent = finalContent.replace(/^```markdown\n?/, '');
-            finalContent = finalContent.replace(/\n?```$/, '');
-        }
-
-        return finalContent;
-    } catch (error) {
-        console.error('OpenRouter format error:', error);
-        throw new BadRequestError('Failed to format content via AI. ' + error.message);
     }
 };
 
