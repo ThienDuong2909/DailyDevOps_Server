@@ -18,6 +18,7 @@ const {
 const { sendCreated, sendOk } = require('../../common/http/responses');
 const asyncHandler = require('express-async-handler');
 const { BadRequestError } = require('../../middlewares/error.middleware');
+const { formatContentByGemini } = require('./posts.formatter');
 
 const router = express.Router();
 const MAX_NOTION_IMPORT_SIZE_BYTES = 25 * 1024 * 1024;
@@ -184,6 +185,18 @@ router.post(
         return sendCreated(res, {
             data: post,
         });
+    })
+);
+
+router.post(
+    '/format-content',
+    authenticate,
+    authorize('ADMIN', 'EDITOR', 'AUTHOR'),
+    validate(require('./posts.validation').formatContentSchema),
+    asyncHandler(async (req, res) => {
+        const { content } = req.body;
+        const formattedContent = await formatContentByGemini(content);
+        return sendOk(res, { data: { content: formattedContent } });
     })
 );
 

@@ -44,6 +44,13 @@ const createPostSchema = Joi.object({
     'any.custom': '{{#message}}',
 });
 
+const formatContentSchema = Joi.object({
+    content: Joi.string().required().messages({
+        'any.required': 'Content is required to format',
+        'string.empty': 'Content cannot be empty',
+    }),
+});
+
 const updatePostSchema = Joi.object({
     title: Joi.string().optional(),
     slug: Joi.string().optional(),
@@ -127,4 +134,5 @@ module.exports = {
     versionParamsSchema,
     generateFeaturedImageSchema,
     enqueueFeaturedImageJobSchema,
+    formatContentSchema,
 };
