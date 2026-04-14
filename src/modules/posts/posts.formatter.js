@@ -57,10 +57,7 @@ const formatContentByGemini = async (rawContent) => {
     }
     
     const fallbackModels = [
-        "google/gemma-4-26b-a4b-it:free", 
-        "google/gemini-2.0-flash-lite-preview-02-05:free",
-        "google/gemini-2.5-flash:free",
-        "meta-llama/llama-3.1-8b-instruct:free"
+        "nvidia/nemotron-3-super-120b-a12b:free"
     ];
 
     const prompt = `
