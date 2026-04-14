@@ -26,7 +26,7 @@ const executeFormattingRequest = async (model, prompt, apiKey) => {
 
     if (!finalContent) {
         console.error(`[OpenRouter Debug] Data Dump:`, JSON.stringify(data));
-        throw new Error("Không có dữ liệu trả về từ OpenRouter. Format bị từ chối hoặc hết tài nguyên.");
+        throw new BadRequestError("Không có dữ liệu trả về từ AI. Bài viết có thể quá dài hoặc chứa nội dung nhạy cảm bị từ chối.");
     }
 
     return finalContent;
@@ -58,10 +58,8 @@ const formatContentByGemini = async (rawContent) => {
     }
     
     const fallbackModels = [
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "google/gemma-3-27b-it:free",
-        "nousresearch/hermes-3-llama-3.1-405b:free",
-        "nvidia/nemotron-3-super-120b-a12b:free"
+        "openrouter/free",
+        "google/gemma-3-27b-it:free"
     ];
 
     const prompt = `
