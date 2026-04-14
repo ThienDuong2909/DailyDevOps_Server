@@ -23,6 +23,11 @@ const server = app.listen(port, () => {
   `);
 });
 
+// Configure long timeouts for AI formatting (6 minutes)
+server.setTimeout(360000);
+server.keepAliveTimeout = 360000;
+server.headersTimeout = 361000;
+
 postsScheduler.start();
 thumbnailGenerationService.start();
 

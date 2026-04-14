@@ -59,7 +59,8 @@ const formatContentByGemini = async (rawContent) => {
     
     const fallbackModels = [
         "openrouter/free",
-        "google/gemma-3-27b-it:free"
+        "google/gemma-3-27b-it:free",
+        "nvidia/nemotron-3-super-120b-a12b:free"
     ];
 
     const prompt = `
