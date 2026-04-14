@@ -26,7 +26,7 @@ const executeFormattingRequest = async (model, prompt, apiKey) => {
 
     if (!finalContent) {
         console.error(`[OpenRouter Debug] Data Dump:`, JSON.stringify(data));
-        throw new BadRequestError("Không có dữ liệu trả về từ AI. Bài viết có thể quá dài hoặc chứa nội dung nhạy cảm bị từ chối.");
+        throw new Error("PROVIDER_FAILED: Không có dữ liệu trả về từ AI. Bài viết có thể quá dài hoặc chứa nội dung nhạy cảm bị từ chối.");
     }
 
     return finalContent;
@@ -58,9 +58,9 @@ const formatContentByGemini = async (rawContent) => {
     }
     
     const fallbackModels = [
-        "openrouter/free",
         "google/gemma-3-27b-it:free",
-        "nvidia/nemotron-3-super-120b-a12b:free"
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "nousresearch/hermes-3-llama-3.1-405b:free"
     ];
 
     const prompt = `
@@ -95,7 +95,7 @@ ${rawContent}
         } catch (error) {
             attempt++;
             
-            const isOverloaded = error.message?.includes('429') || error.message?.includes('503') || error.message?.includes('rate-limited') || error.message?.includes('temporarily');
+            const isOverloaded = error.message?.includes('429') || error.message?.includes('503') || error.message?.includes('rate-limited') || error.message?.includes('temporarily') || error.message?.includes('PROVIDER_FAILED');
             
             if (isOverloaded && attempt < maxRetries) {
                 console.warn(`[OpenRouter] Model ${currentModel} overloaded. Falling back to next model...`);
