@@ -113,7 +113,7 @@ const shouldSkipRequestLog = (req, options = {}) => {
 };
 
 const requestLogger = (env, options = {}) => {
-    const format = options.format || (env === 'development' ? 'pretty' : 'json');
+    const format = options.format || 'pretty';
     const loggerOptions = {
         skip: (req) => shouldSkipRequestLog(req, options),
     };
