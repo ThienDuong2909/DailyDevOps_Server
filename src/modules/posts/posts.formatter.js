@@ -25,7 +25,8 @@ const executeFormattingRequest = async (model, prompt, apiKey) => {
     const finalContent = data?.choices?.[0]?.message?.content;
 
     if (!finalContent) {
-         throw new Error("Không có dữ liệu trả về từ OpenRouter.");
+        console.error(`[OpenRouter Debug] Data Dump:`, JSON.stringify(data));
+        throw new Error("Không có dữ liệu trả về từ OpenRouter. Format bị từ chối hoặc hết tài nguyên.");
     }
 
     return finalContent;
