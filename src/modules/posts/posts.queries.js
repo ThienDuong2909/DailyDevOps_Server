@@ -25,6 +25,18 @@ const listPostInclude = {
     _count: {
         select: { comments: true },
     },
+    translations: {
+        select: {
+            id: true,
+            locale: true,
+            slug: true,
+            title: true,
+            status: true,
+            publishedAt: true,
+            featuredImage: true,
+            updatedAt: true,
+        },
+    },
 };
 
 const detailPostInclude = {
@@ -43,6 +55,7 @@ const detailPostInclude = {
     _count: {
         select: { comments: true },
     },
+    translations: true,
 };
 
 const publicPostInclude = {
@@ -85,6 +98,7 @@ const publicPostInclude = {
         },
         orderBy: { createdAt: 'desc' },
     },
+    translations: true,
 };
 
 const adminWriteInclude = {
@@ -97,6 +111,7 @@ const adminWriteInclude = {
     },
     category: true,
     tags: true,
+    translations: true,
 };
 
 const postVersionListSelect = {
@@ -133,6 +148,18 @@ const relatedPostsInclude = {
     },
     category: {
         select: { name: true, slug: true, color: true },
+    },
+    translations: {
+        select: {
+            id: true,
+            locale: true,
+            slug: true,
+            title: true,
+            status: true,
+            publishedAt: true,
+            featuredImage: true,
+            updatedAt: true,
+        },
     },
 };
 

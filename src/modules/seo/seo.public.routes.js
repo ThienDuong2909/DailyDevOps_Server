@@ -26,9 +26,10 @@ router.get(
 
 router.get(
     '/sitemap-data',
-    asyncHandler(async (_req, res) => {
+    asyncHandler(async (req, res) => {
+        const locale = req.query.locale;
         const [posts, categories, tags] = await Promise.all([
-            sitemapService.getPublishedPostsForSitemap(),
+            sitemapService.getPublishedPostsForSitemap(locale),
             sitemapService.getCategoriesForSitemap(),
             sitemapService.getTagsForSitemap(),
         ]);
@@ -51,7 +52,7 @@ router.get(
 router.get(
     '/post-meta/:slug',
     asyncHandler(async (req, res) => {
-        const post = await sitemapService.getPostSeoBySlug(req.params.slug);
+        const post = await sitemapService.getPostSeoBySlug(req.params.slug, req.query.locale);
 
         if (!post) {
             return res.status(404).json({

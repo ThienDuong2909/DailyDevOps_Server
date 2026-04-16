@@ -3,6 +3,10 @@ const { getPrismaClient } = require('../../database/prisma');
 const prisma = getPrismaClient();
 
 class PostsRepository {
+    get prisma() {
+        return prisma;
+    }
+
     findMany(params) {
         return prisma.post.findMany(params);
     }
@@ -13,6 +17,10 @@ class PostsRepository {
 
     findUnique(params) {
         return prisma.post.findUnique(params);
+    }
+
+    findFirst(params) {
+        return prisma.post.findFirst(params);
     }
 
     create(params) {
@@ -53,6 +61,34 @@ class PostsRepository {
 
     deleteManyVersions(params) {
         return prisma.postVersion.deleteMany(params);
+    }
+
+    findManyTranslations(params) {
+        return prisma.postTranslation.findMany(params);
+    }
+
+    findUniqueTranslation(params) {
+        return prisma.postTranslation.findUnique(params);
+    }
+
+    findFirstTranslation(params) {
+        return prisma.postTranslation.findFirst(params);
+    }
+
+    createTranslation(params) {
+        return prisma.postTranslation.create(params);
+    }
+
+    upsertTranslation(params) {
+        return prisma.postTranslation.upsert(params);
+    }
+
+    updateTranslation(params) {
+        return prisma.postTranslation.update(params);
+    }
+
+    deleteTranslation(params) {
+        return prisma.postTranslation.delete(params);
     }
 }
 

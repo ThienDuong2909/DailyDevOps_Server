@@ -144,11 +144,46 @@ model Post {
   comments        Comment[]
   seoSetting      SeoSetting?
   versions        PostVersion[]
+  translations    PostTranslation[]
 
   @@index([status, publishedAt])
   @@index([authorId])
   @@index([categoryId])
   @@map("posts")
+}
+
+model PostTranslation {
+  id               String     @id @default(cuid())
+  locale           String
+  title            String
+  slug             String
+  subtitle         String?    @db.Text
+  excerpt          String?    @db.Text
+  content          String     @db.Text
+  contentHtml      String?    @map("content_html") @db.LongText
+  contentJson      Json?      @map("content_json")
+  featuredImage    String?    @map("featured_image")
+  metaTitle        String?    @map("meta_title")
+  metaDescription  String?    @map("meta_description") @db.Text
+  canonicalUrl     String?    @map("canonical_url")
+  ogImage          String?    @map("og_image")
+  noIndex          Boolean    @default(false) @map("no_index")
+  noFollow         Boolean    @default(false) @map("no_follow")
+  focusKeywords    Json?      @map("focus_keywords") @default("[]")
+  status           PostStatus @default(DRAFT)
+  publishedAt      DateTime?  @map("published_at")
+  scheduledAt      DateTime?  @map("scheduled_at")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  post             Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId           String     @map("post_id")
+
+  @@unique([postId, locale])
+  @@unique([locale, slug])
+  @@index([locale, status, publishedAt])
+  @@index([postId])
+  @@map("post_translations")
 }
 
 model PostVersion {

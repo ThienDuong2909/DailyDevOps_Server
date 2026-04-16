@@ -14,6 +14,8 @@ const {
     versionParamsSchema,
     generateFeaturedImageSchema,
     enqueueFeaturedImageJobSchema,
+    translationSchema,
+    translationParamsSchema,
 } = require('./posts.validation');
 const { sendCreated, sendOk } = require('../../common/http/responses');
 const asyncHandler = require('express-async-handler');
@@ -59,8 +61,9 @@ router.get(
  */
 router.get(
     '/slug/:slug',
+    validate(queryPostSchema, 'query'),
     asyncHandler(async (req, res) => {
-        const post = await postsService.findBySlug(req.params.slug);
+        const post = await postsService.findBySlug(req.params.slug, req.query.locale);
         return sendOk(res, {
             data: post,
         });
@@ -74,9 +77,10 @@ router.get(
  */
 router.get(
     '/:id/related',
+    validate(queryPostSchema, 'query'),
     asyncHandler(async (req, res) => {
         const limit = req.query.limit ? parseInt(req.query.limit, 10) : 3;
-        const posts = await postsService.getRelated(req.params.id, limit);
+        const posts = await postsService.getRelated(req.params.id, limit, req.query.locale);
         return sendOk(res, {
             data: posts,
         });
@@ -184,6 +188,63 @@ router.post(
         const post = await postsService.importFromNotion(req.file, req.user.id, req.user.role);
         return sendCreated(res, {
             data: post,
+        });
+    })
+);
+
+/**
+ * @route   POST /api/posts/batch-translate
+ * @desc    Batch auto-translate published posts without English translations
+ * @access  Private (ADMIN, EDITOR, MODERATOR)
+ */
+router.post(
+    '/batch-translate',
+    authenticate,
+    authorize('ADMIN', 'EDITOR', 'MODERATOR'),
+    asyncHandler(async (req, res) => {
+        const limit = req.body?.limit ? parseInt(req.body.limit, 10) : 5;
+        const result = await postsService.batchAutoTranslate(
+            req.user.id,
+            req.user.role,
+            { limit }
+        );
+        return sendOk(res, { data: result });
+    })
+);
+
+router.post(
+    '/:id/translations',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(postIdParamSchema, 'params'),
+    validate(translationSchema),
+    asyncHandler(async (req, res) => {
+        const translation = await postsService.upsertTranslation(
+            req.params.id,
+            req.body,
+            req.user.id,
+            req.user.role
+        );
+        return sendCreated(res, {
+            data: translation,
+        });
+    })
+);
+
+router.get(
+    '/:id/translations/:locale',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(translationParamsSchema, 'params'),
+    asyncHandler(async (req, res) => {
+        const translation = await postsService.getTranslation(
+            req.params.id,
+            req.params.locale,
+            req.user.id,
+            req.user.role
+        );
+        return sendOk(res, {
+            data: translation,
         });
     })
 );
@@ -318,6 +379,26 @@ router.get(
             req.user.role
         );
         return sendOk(res, { data: versions });
+    })
+);
+
+/**
+ * @route   POST /api/posts/:id/auto-translate
+ * @desc    Auto-translate a single post from Vietnamese to English using AI
+ * @access  Private (ADMIN, MODERATOR, EDITOR, AUTHOR)
+ */
+router.post(
+    '/:id/auto-translate',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(postIdParamSchema, 'params'),
+    asyncHandler(async (req, res) => {
+        const translation = await postsService.autoTranslate(
+            req.params.id,
+            req.user.id,
+            req.user.role
+        );
+        return sendOk(res, { data: translation });
     })
 );
 

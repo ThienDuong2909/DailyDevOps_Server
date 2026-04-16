@@ -1,4 +1,5 @@
 const Joi = require('joi');
+const PUBLIC_LOCALES = ['vi', 'en'];
 
 const featuredImageSchema = Joi.string()
     .custom((value, helpers) => {
@@ -68,14 +69,51 @@ const updatePostSchema = Joi.object({
     createVersion: Joi.boolean().optional(),
 });
 
+const translationSchema = Joi.object({
+    locale: Joi.string().valid(...PUBLIC_LOCALES).required(),
+    title: Joi.string().required().messages({
+        'any.required': 'Translation title is required',
+    }),
+    slug: Joi.string().optional().allow('', null),
+    subtitle: Joi.string().optional().allow('', null),
+    excerpt: Joi.string().optional().allow('', null),
+    content: Joi.string().optional().allow('', null),
+    contentHtml: Joi.string().optional().allow('', null),
+    contentJson: Joi.alternatives().try(Joi.object(), Joi.array()).optional().allow(null),
+    featuredImage: featuredImageSchema,
+    metaTitle: Joi.string().optional().allow('', null),
+    metaDescription: Joi.string().optional().allow('', null),
+    canonicalUrl: Joi.string().uri().optional().allow('', null),
+    ogImage: featuredImageSchema,
+    focusKeywords: Joi.array().items(Joi.string()).optional(),
+    noIndex: Joi.boolean().optional(),
+    noFollow: Joi.boolean().optional(),
+    status: Joi.string().valid('DRAFT', 'REVIEW', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED').default('DRAFT'),
+    scheduledAt: Joi.date().optional().allow(null),
+}).custom((value, helpers) => {
+    if (!value.content && !value.contentHtml) {
+        return helpers.error('any.custom', { message: 'Translation content is required' });
+    }
+
+    if (value.locale === 'vi') {
+        return helpers.error('any.custom', { message: 'Vietnamese content is edited on the primary post' });
+    }
+
+    return value;
+}).messages({
+    'any.custom': '{{#message}}',
+});
+
 const queryPostSchema = Joi.object({
     page: Joi.number().integer().min(1).default(1),
     limit: Joi.number().integer().min(1).max(100).default(10),
     search: Joi.string().optional(),
     status: Joi.string().valid('DRAFT', 'REVIEW', 'PUBLISHED', 'SCHEDULED', 'ARCHIVED').optional(),
     categoryId: Joi.string().optional(),
+    categorySlug: Joi.string().optional(),
     authorId: Joi.string().optional(),
     tagSlug: Joi.string().optional(),
+    locale: Joi.string().valid(...PUBLIC_LOCALES).default('vi'),
     sortBy: Joi.string().valid('createdAt', 'updatedAt', 'publishedAt', 'viewCount', 'title').default('createdAt'),
     sortOrder: Joi.string().valid('asc', 'desc').default('desc'),
 });
@@ -83,6 +121,7 @@ const queryPostSchema = Joi.object({
 const autocompletePostSchema = Joi.object({
     q: Joi.string().trim().min(1).max(100).required(),
     limit: Joi.number().integer().min(1).max(10).default(5),
+    locale: Joi.string().valid(...PUBLIC_LOCALES).default('vi'),
 });
 
 const rejectPostSchema = Joi.object({
@@ -91,6 +130,11 @@ const rejectPostSchema = Joi.object({
 
 const postIdParamSchema = Joi.object({
     id: Joi.string().required(),
+});
+
+const translationParamsSchema = Joi.object({
+    id: Joi.string().required(),
+    locale: Joi.string().valid(...PUBLIC_LOCALES).required(),
 });
 
 const restoreVersionSchema = Joi.object({
@@ -135,4 +179,6 @@ module.exports = {
     generateFeaturedImageSchema,
     enqueueFeaturedImageJobSchema,
     formatContentSchema,
+    translationSchema,
+    translationParamsSchema,
 };

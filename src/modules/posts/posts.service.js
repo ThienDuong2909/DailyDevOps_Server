@@ -15,8 +15,12 @@ const {
     buildReadingTime,
     buildTagConnect,
     buildTagReplace,
+    DEFAULT_LOCALE,
     generateSlug,
+    isDefaultLocale,
+    normalizeLocale,
     normalizeEditorPayload,
+    normalizeTranslationPayload,
     serializePost,
     serializePosts,
     serializeVersions,
@@ -25,6 +29,7 @@ const { postVersionListSelect } = require('./posts.queries');
 const subscribersService = require('../subscribers/subscribers.service');
 const { parseNotionExport } = require('./posts.importer');
 const { generateFeaturedImage } = require('./posts.image-generator');
+const { translatePost } = require('./posts.translator');
 const thumbnailGenerationService = require('./posts.thumbnail-generation.service');
 
 class PostsService {
@@ -32,7 +37,7 @@ class PostsService {
      * Find all posts with filtering and pagination
      */
     async findAll(query) {
-        const { page, limit, skip, where, orderBy } = buildListQuery(query);
+        const { page, limit, skip, where, orderBy, locale } = buildListQuery(query);
 
         const [posts, total] = await Promise.all([
             postsRepository.findMany({
@@ -45,7 +50,7 @@ class PostsService {
             postsRepository.count({ where }),
         ]);
 
-        return buildPaginatedResponse({ data: serializePosts(posts), total, page, limit });
+        return buildPaginatedResponse({ data: serializePosts(posts, locale), total, page, limit });
     }
 
     /**
@@ -61,6 +66,7 @@ class PostsService {
     async autocomplete(query) {
         const search = String(query.q || '').trim();
         const limit = Number(query.limit || 5);
+        const locale = normalizeLocale(query.locale);
 
         if (!search) {
             return [];
@@ -69,24 +75,48 @@ class PostsService {
         const posts = await postsRepository.findMany({
             where: {
                 status: 'PUBLISHED',
-                OR: [
-                    { title: { contains: search } },
-                    { excerpt: { contains: search } },
-                    { slug: { contains: search } },
-                ],
+                OR: isDefaultLocale(locale)
+                    ? [
+                        { title: { contains: search } },
+                        { excerpt: { contains: search } },
+                        { slug: { contains: search } },
+                    ]
+                    : [
+                        {
+                            translations: {
+                                some: {
+                                    locale,
+                                    status: 'PUBLISHED',
+                                    title: { contains: search },
+                                },
+                            },
+                        },
+                        {
+                            translations: {
+                                some: {
+                                    locale,
+                                    status: 'PUBLISHED',
+                                    excerpt: { contains: search },
+                                },
+                            },
+                        },
+                        {
+                            translations: {
+                                some: {
+                                    locale,
+                                    status: 'PUBLISHED',
+                                    slug: { contains: search },
+                                },
+                            },
+                        },
+                    ],
             },
             take: limit,
             orderBy: [
                 { publishedAt: 'desc' },
                 { createdAt: 'desc' },
             ],
-            select: {
-                id: true,
-                title: true,
-                slug: true,
-                excerpt: true,
-                featuredImage: true,
-                publishedAt: true,
+            include: {
                 category: {
                     select: {
                         id: true,
@@ -94,10 +124,14 @@ class PostsService {
                         slug: true,
                     },
                 },
+                translations: {
+                    where: { locale },
+                    take: 1,
+                },
             },
         });
 
-        return posts.map((post) => ({
+        return serializePosts(posts, locale).map((post) => ({
             id: post.id,
             title: post.title,
             slug: post.slug,
@@ -124,26 +158,94 @@ class PostsService {
         return serializePost(post);
     }
 
-    /**
-     * Find post by slug (for public view)
-     */
-    async findBySlug(slug) {
+    async getTranslation(id, locale, userId, userRole) {
         const post = await postsRepository.findUnique({
-            where: { slug },
-            include: publicPostInclude,
+            where: { id },
+            include: detailPostInclude,
         });
 
         if (!post) {
             throw new NotFoundError('Post not found');
         }
 
-        // Increment view count
+        if (!this.canEditPost(post, userId, userRole)) {
+            throw new ForbiddenError('You can only edit your own posts');
+        }
+
+        const resolvedLocale = normalizeLocale(locale);
+
+        if (isDefaultLocale(resolvedLocale)) {
+            return serializePost(post);
+        }
+
+        return Array.isArray(post.translations)
+            ? post.translations.find((item) => item.locale === resolvedLocale) || null
+            : null;
+    }
+
+    /**
+     * Find post by slug (for public view)
+     */
+    async findBySlug(slug, locale = DEFAULT_LOCALE) {
+        const resolvedLocale = normalizeLocale(locale);
+        let post = null;
+
+        if (isDefaultLocale(resolvedLocale)) {
+            post = await postsRepository.findUnique({
+                where: { slug },
+                include: publicPostInclude,
+            });
+        } else {
+            const translation = await postsRepository.findFirstTranslation({
+                where: {
+                    locale: resolvedLocale,
+                    slug,
+                    status: 'PUBLISHED',
+                    post: {
+                        status: 'PUBLISHED',
+                    },
+                },
+                include: {
+                    post: {
+                        include: publicPostInclude,
+                    },
+                },
+            });
+
+            post = translation?.post || null;
+        }
+
+        if (!post) {
+            if (!isDefaultLocale(resolvedLocale)) {
+                const sourcePost = await postsRepository.findFirst({
+                    where: {
+                        slug,
+                        status: 'PUBLISHED',
+                    },
+                    include: publicPostInclude,
+                });
+
+                if (sourcePost) {
+                    const error = new NotFoundError('Translation not found');
+                    error.details = {
+                        code: 'TRANSLATION_NOT_FOUND',
+                        locale: resolvedLocale,
+                        sourceLocale: DEFAULT_LOCALE,
+                        sourceSlug: sourcePost.slug,
+                    };
+                    throw error;
+                }
+            }
+
+            throw new NotFoundError('Post not found');
+        }
+
         await postsRepository.update({
             where: { id: post.id },
             data: { viewCount: { increment: 1 } },
         });
 
-        return serializePost(post);
+        return serializePosts([post], resolvedLocale)[0];
     }
 
     /**
@@ -178,6 +280,11 @@ class PostsService {
         await this.dispatchNewsletterIfNeeded(serializePost(post), {
             hasJustPublished: targetStatus === 'PUBLISHED',
         });
+
+        // Auto-translate to English when published
+        if (targetStatus === 'PUBLISHED') {
+            this.triggerAutoTranslation(post.id, authorId, authorRole);
+        }
 
         return serializePost(post);
     }
@@ -228,6 +335,191 @@ class PostsService {
         }
 
         return thumbnailGenerationService.getLatestJob(id);
+    }
+
+    async upsertTranslation(id, dto, userId, userRole) {
+        const post = await this.findById(id);
+
+        if (!this.canEditPost(post, userId, userRole)) {
+            throw new ForbiddenError('You can only edit your own posts');
+        }
+
+        const normalizedDto = normalizeTranslationPayload(dto);
+        const { locale } = normalizedDto;
+
+        if (isDefaultLocale(locale)) {
+            throw new ForbiddenError('Vietnamese content is edited on the base post');
+        }
+
+        const existingTranslation = await postsRepository.findUniqueTranslation({
+            where: {
+                postId_locale: {
+                    postId: id,
+                    locale,
+                },
+            },
+        });
+
+        const baseSlug = normalizedDto.slug?.trim() || generateSlug(normalizedDto.title);
+        const slug = await this.ensureUniqueTranslationSlug(baseSlug, locale, existingTranslation?.id);
+        const targetStatus = this.resolveEditableStatus(normalizedDto.status, userRole) || 'DRAFT';
+
+        const translation = await postsRepository.upsertTranslation({
+            where: {
+                postId_locale: {
+                    postId: id,
+                    locale,
+                },
+            },
+            update: {
+                ...normalizedDto,
+                slug,
+                locale,
+                status: targetStatus,
+                publishedAt: buildPublishedAt(targetStatus, existingTranslation?.publishedAt || null),
+            },
+            create: {
+                postId: id,
+                ...normalizedDto,
+                slug,
+                locale,
+                status: targetStatus,
+                publishedAt: buildPublishedAt(targetStatus, null),
+            },
+        });
+
+        return translation;
+    }
+
+    /**
+     * Auto-translate a post from Vietnamese to English using AI
+     */
+    async autoTranslate(id, userId, userRole) {
+        const post = await this.findById(id);
+
+        if (!this.canEditPost(post, userId, userRole)) {
+            throw new ForbiddenError('You can only translate your own posts');
+        }
+
+        const sourceContent = {
+            title: post.title,
+            subtitle: post.subtitle || post.excerpt || '',
+            excerpt: post.subtitle || post.excerpt || '',
+            content: post.content || '',
+            contentHtml: post.contentHtml || post.content || '',
+        };
+
+        const translated = await translatePost(sourceContent);
+
+        const translation = await this.upsertTranslation(
+            id,
+            {
+                locale: 'en',
+                title: translated.title,
+                slug: translated.slug,
+                subtitle: translated.subtitle,
+                excerpt: translated.excerpt,
+                content: translated.content,
+                contentHtml: translated.contentHtml,
+                status: post.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
+            },
+            userId,
+            userRole
+        );
+
+        return translation;
+    }
+
+    /**
+     * Batch auto-translate all published posts that don't have an English translation yet
+     */
+    async batchAutoTranslate(userId, userRole, { limit = 5 } = {}) {
+        if (!['ADMIN', 'EDITOR', 'MODERATOR'].includes(userRole)) {
+            throw new ForbiddenError('Only editorial roles can batch-translate posts');
+        }
+
+        const postsWithoutEnglish = await postsRepository.findMany({
+            where: {
+                status: 'PUBLISHED',
+                NOT: {
+                    translations: {
+                        some: {
+                            locale: 'en',
+                            status: 'PUBLISHED',
+                        },
+                    },
+                },
+            },
+            take: limit,
+            orderBy: { publishedAt: 'desc' },
+            include: {
+                translations: {
+                    where: { locale: 'en' },
+                    take: 1,
+                },
+            },
+        });
+
+        const results = [];
+
+        for (const post of postsWithoutEnglish) {
+            const hasAnyEnTranslation = post.translations?.length > 0;
+
+            if (hasAnyEnTranslation) {
+                results.push({ id: post.id, slug: post.slug, status: 'skipped', reason: 'EN translation exists (not published)' });
+                continue;
+            }
+
+            try {
+                console.log(`[BatchTranslate] Translating post: ${post.slug} (${post.id})`);
+                await this.autoTranslate(post.id, userId, userRole);
+                results.push({ id: post.id, slug: post.slug, status: 'success' });
+                console.log(`[BatchTranslate] Done: ${post.slug}`);
+
+                // Rate-limiting guard between posts
+                await new Promise((r) => setTimeout(r, 3000));
+            } catch (error) {
+                console.error(`[BatchTranslate] Failed: ${post.slug}`, error.message);
+                results.push({ id: post.id, slug: post.slug, status: 'failed', error: error.message });
+            }
+        }
+
+        return {
+            total: postsWithoutEnglish.length,
+            results,
+        };
+    }
+
+    /**
+     * Fire-and-forget: auto-translate a post to English in the background.
+     * Called automatically when a post transitions to PUBLISHED status.
+     * Does NOT block the calling method — errors are logged silently.
+     */
+    triggerAutoTranslation(postId, userId, userRole) {
+        // Do not await — fire and forget
+        setImmediate(async () => {
+            try {
+                // Check if EN translation already exists and is published
+                const existing = await postsRepository.findFirstTranslation({
+                    where: {
+                        postId,
+                        locale: 'en',
+                        status: 'PUBLISHED',
+                    },
+                });
+
+                if (existing) {
+                    console.log(`[AutoTranslate] Skipped ${postId}: EN translation already published`);
+                    return;
+                }
+
+                console.log(`[AutoTranslate] Starting background translation for post ${postId}`);
+                await this.autoTranslate(postId, userId, userRole);
+                console.log(`[AutoTranslate] Completed translation for post ${postId}`);
+            } catch (error) {
+                console.error(`[AutoTranslate] Background translation failed for post ${postId}:`, error.message);
+            }
+        });
     }
 
     /**
@@ -291,6 +583,11 @@ class PostsService {
         const serializedUpdatedPost = serializePost(updatedPost);
         await this.dispatchNewsletterIfNeeded(serializedUpdatedPost, { hasJustPublished });
 
+        // Auto-translate to English when post just got published
+        if (hasJustPublished) {
+            this.triggerAutoTranslation(id, userId, userRole);
+        }
+
         return serializedUpdatedPost;
     }
 
@@ -344,7 +641,7 @@ class PostsService {
     /**
      * Get related posts based on category and tags
      */
-    async getRelated(postId, limit = 3) {
+    async getRelated(postId, limit = 3, locale = DEFAULT_LOCALE) {
         const post = await postsRepository.findUnique({
             where: { id: postId },
             include: { tags: true },
@@ -366,13 +663,21 @@ class PostsService {
                         },
                     },
                 ],
+                ...(!isDefaultLocale(locale) && {
+                    translations: {
+                        some: {
+                            locale,
+                            status: 'PUBLISHED',
+                        },
+                    },
+                }),
             },
             take: limit,
             orderBy: { viewCount: 'desc' },
             include: relatedPostsInclude,
         });
 
-        return serializePosts(posts);
+        return serializePosts(posts, locale);
     }
 
     async submitForReview(id, userId, userRole) {
@@ -397,7 +702,7 @@ class PostsService {
 
         const serializedUpdatedPost = serializePost(updatedPost);
         await this.dispatchNewsletterIfNeeded(serializedUpdatedPost, {
-            hasJustPublished: targetStatus === 'PUBLISHED' && post.status !== 'PUBLISHED',
+            hasJustPublished: false,
         });
 
         return serializedUpdatedPost;
@@ -422,6 +727,11 @@ class PostsService {
             },
             include: adminWriteInclude,
         });
+
+        // Auto-translate to English when approved as PUBLISHED
+        if (targetStatus === 'PUBLISHED') {
+            this.triggerAutoTranslation(id, userId, userRole);
+        }
 
         return serializePost(updatedPost);
     }
@@ -484,6 +794,9 @@ class PostsService {
             await this.dispatchNewsletterIfNeeded(serializePost(updatedPost), {
                 hasJustPublished: true,
             });
+
+            // Auto-translate scheduled posts when they go live
+            this.triggerAutoTranslation(duePost.id, duePost.authorId, 'ADMIN');
         }
 
         return {
@@ -684,6 +997,29 @@ class PostsService {
 
             uniqueSlug = `${slug}-${counter}`;
             counter++;
+        }
+
+        return uniqueSlug;
+    }
+
+    async ensureUniqueTranslationSlug(slug, locale, excludeTranslationId) {
+        let uniqueSlug = slug;
+        let counter = 1;
+
+        while (true) {
+            const existing = await postsRepository.findFirstTranslation({
+                where: {
+                    locale,
+                    slug: uniqueSlug,
+                },
+            });
+
+            if (!existing || existing.id === excludeTranslationId) {
+                break;
+            }
+
+            uniqueSlug = `${slug}-${counter}`;
+            counter += 1;
         }
 
         return uniqueSlug;
