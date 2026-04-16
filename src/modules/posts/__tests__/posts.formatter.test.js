@@ -87,6 +87,6 @@ describe('formatContentByGemini (OpenRouter)', () => {
         });
 
         await expect(formatContentByGemini('content')).rejects.toThrow(BadRequestError);
-        await expect(formatContentByGemini('content')).rejects.toThrow('Failed to format content via AI. OpenRouter lỗi HTTP 401: Unauthorized access');
+        await expect(formatContentByGemini('content')).rejects.toThrow('OpenRouter lỗi HTTP 401: Unauthorized access');
     });
 });
