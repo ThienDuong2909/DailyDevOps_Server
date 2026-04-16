@@ -79,7 +79,7 @@ router.get(
     '/:id/related',
     validate(queryPostSchema, 'query'),
     asyncHandler(async (req, res) => {
-        const limit = req.query.limit ? parseInt(req.query.limit, 10) : 3;
+        const limit = req.query.limit ? Number.parseInt(req.query.limit, 10) : 3;
         const posts = await postsService.getRelated(req.params.id, limit, req.query.locale);
         return sendOk(res, {
             data: posts,
@@ -202,7 +202,7 @@ router.post(
     authenticate,
     authorize('ADMIN', 'EDITOR', 'MODERATOR'),
     asyncHandler(async (req, res) => {
-        const limit = req.body?.limit ? parseInt(req.body.limit, 10) : 5;
+        const limit = req.body?.limit ? Number.parseInt(req.body.limit, 10) : 5;
         const result = await postsService.batchAutoTranslate(
             req.user.id,
             req.user.role,

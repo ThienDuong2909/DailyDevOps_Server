@@ -259,11 +259,11 @@ const applyTranslationToPost = (post, locale = DEFAULT_LOCALE) => {
         translationId: translation.id,
         translationStatus: translation.status,
         seoSetting: {
-            ...(basePost.seoSetting || {}),
-            ...(translation.metaTitle ? { metaTitle: translation.metaTitle } : {}),
-            ...(translation.metaDescription ? { metaDescription: translation.metaDescription } : {}),
-            ...(translation.canonicalUrl ? { canonicalUrl: translation.canonicalUrl } : {}),
-            ...(translation.ogImage ? { ogImage: translation.ogImage } : {}),
+            ...(basePost.seoSetting ?? undefined),
+            ...(translation.metaTitle && { metaTitle: translation.metaTitle }),
+            ...(translation.metaDescription && { metaDescription: translation.metaDescription }),
+            ...(translation.canonicalUrl && { canonicalUrl: translation.canonicalUrl }),
+            ...(translation.ogImage && { ogImage: translation.ogImage }),
             noIndex: translation.noIndex,
             noFollow: translation.noFollow,
             focusKeywords: Array.isArray(translation.focusKeywords)

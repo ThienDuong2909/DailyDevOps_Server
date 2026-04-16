@@ -39,17 +39,21 @@ const executeTranslationRequest = async (model, prompt, apiKey) => {
     return content;
 };
 
+const stripCodeFence = (text, lang) => {
+    const openPattern = new RegExp(`^\`\`\`${lang}\\n?`);
+    const closePattern = /\n?```$/;
+    return text.replace(openPattern, '').replace(closePattern, '');
+};
+
 const cleanTranslatedContent = (content) => {
     let cleaned = content;
 
     // Remove markdown wrappers if AI returned them
     if (cleaned.startsWith('```html')) {
-        cleaned = cleaned.replace(/^```html\n?/, '');
-        cleaned = cleaned.replace(/\n?```$/, '');
+        cleaned = stripCodeFence(cleaned, 'html');
     }
     if (cleaned.startsWith('```markdown')) {
-        cleaned = cleaned.replace(/^```markdown\n?/, '');
-        cleaned = cleaned.replace(/\n?```$/, '');
+        cleaned = stripCodeFence(cleaned, 'markdown');
     }
     // Remove any leading explanation text before actual HTML
     const htmlStart = cleaned.indexOf('<');
@@ -163,6 +167,88 @@ const processWithFallback = async (prompt, apiKey, label = 'content') => {
 };
 
 /**
+ * Remove surrounding quotes that AI may have added to a translated string
+ */
+const stripSurroundingQuotes = (text) => {
+    return text.replaceAll(/^["']|["']$/g, '').trim();
+};
+
+/**
+ * Translate the title field of a post
+ */
+const translateTitle = async (title, apiKey) => {
+    if (!title?.trim()) {
+        return title || '';
+    }
+
+    const translated = await processWithFallback(
+        buildTitleTranslationPrompt(title),
+        apiKey,
+        'title'
+    );
+    return stripSurroundingQuotes(translated);
+};
+
+/**
+ * Translate the excerpt field of a post
+ */
+const translateExcerpt = async (excerpt, apiKey) => {
+    if (!excerpt?.trim()) {
+        return '';
+    }
+
+    const translated = await processWithFallback(
+        buildExcerptTranslationPrompt(excerpt),
+        apiKey,
+        'excerpt'
+    );
+    return stripSurroundingQuotes(translated);
+};
+
+/**
+ * Translate the HTML content of a post, with chunking for large content
+ */
+const translateContent = async (rawContent, apiKey) => {
+    if (!rawContent?.trim()) {
+        return '';
+    }
+
+    if (rawContent.length <= MAX_CHUNK_SIZE) {
+        return processWithFallback(
+            buildTranslationPrompt(rawContent),
+            apiKey,
+            'content'
+        );
+    }
+
+    console.log(`[Translator] Content is large (${rawContent.length} chars). Splitting into chunks...`);
+    const chunks = chunkHTML(rawContent, MAX_CHUNK_SIZE);
+    const translatedChunks = [];
+
+    for (let i = 0; i < chunks.length; i++) {
+        const chunkPrompt = buildTranslationPrompt(chunks[i], {
+            current: i + 1,
+            total: chunks.length,
+        });
+
+        const chunkResult = await processWithFallback(
+            chunkPrompt,
+            apiKey,
+            `chunk ${i + 1}/${chunks.length}`
+        );
+
+        translatedChunks.push(chunkResult);
+
+        // Rate-limiting guard between chunks
+        if (i < chunks.length - 1) {
+            await new Promise((r) => setTimeout(r, 1500));
+        }
+    }
+
+    return translatedChunks.join('\n\n').trim();
+};
+
+/**
  * Translate a full post from Vietnamese to English
  * @param {object} post - The post object with title, subtitle/excerpt, content/contentHtml
  * @returns {Promise<{title: string, subtitle: string, excerpt: string, content: string, contentHtml: string, slug: string}>}
@@ -175,75 +261,16 @@ const translatePost = async (post) => {
     }
 
     const rawContent = post.contentHtml || post.content || '';
+    const originalExcerpt = post.subtitle || post.excerpt || '';
 
     if (!rawContent.trim() && !post.title?.trim()) {
         throw new BadRequestError('Post must have title or content to translate.');
     }
 
-    // 1. Translate title
-    let translatedTitle = post.title || '';
-    if (post.title?.trim()) {
-        translatedTitle = await processWithFallback(
-            buildTitleTranslationPrompt(post.title),
-            apiKey,
-            'title'
-        );
-        // Clean up any quotes the AI may have added
-        translatedTitle = translatedTitle.replace(/^["']|["']$/g, '').trim();
-    }
+    const translatedTitle = await translateTitle(post.title, apiKey);
+    const translatedExcerpt = await translateExcerpt(originalExcerpt, apiKey);
+    const translatedContent = await translateContent(rawContent, apiKey);
 
-    // 2. Translate subtitle/excerpt
-    let translatedExcerpt = '';
-    const originalExcerpt = post.subtitle || post.excerpt || '';
-    if (originalExcerpt.trim()) {
-        translatedExcerpt = await processWithFallback(
-            buildExcerptTranslationPrompt(originalExcerpt),
-            apiKey,
-            'excerpt'
-        );
-        translatedExcerpt = translatedExcerpt.replace(/^["']|["']$/g, '').trim();
-    }
-
-    // 3. Translate content with chunking for large posts
-    let translatedContent = '';
-    if (rawContent.trim()) {
-        if (rawContent.length <= MAX_CHUNK_SIZE) {
-            translatedContent = await processWithFallback(
-                buildTranslationPrompt(rawContent),
-                apiKey,
-                'content'
-            );
-        } else {
-            console.log(
-                `[Translator] Content is large (${rawContent.length} chars). Splitting into chunks...`
-            );
-            const chunks = chunkHTML(rawContent, MAX_CHUNK_SIZE);
-
-            for (let i = 0; i < chunks.length; i++) {
-                const chunkPrompt = buildTranslationPrompt(chunks[i], {
-                    current: i + 1,
-                    total: chunks.length,
-                });
-
-                const chunkResult = await processWithFallback(
-                    chunkPrompt,
-                    apiKey,
-                    `chunk ${i + 1}/${chunks.length}`
-                );
-
-                translatedContent += chunkResult + '\n\n';
-
-                // Rate-limiting guard between chunks
-                if (i < chunks.length - 1) {
-                    await new Promise((r) => setTimeout(r, 1500));
-                }
-            }
-
-            translatedContent = translatedContent.trim();
-        }
-    }
-
-    // 4. Generate English slug from translated title
     const { generateSlug } = require('./posts.helpers');
     const translatedSlug = generateSlug(translatedTitle);
 
@@ -259,4 +286,11 @@ const translatePost = async (post) => {
 
 module.exports = {
     translatePost,
+    // Exported for testing
+    cleanTranslatedContent,
+    chunkHTML,
+    buildTranslationPrompt,
+    buildTitleTranslationPrompt,
+    buildExcerptTranslationPrompt,
+    stripSurroundingQuotes,
 };
