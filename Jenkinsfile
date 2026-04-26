@@ -116,22 +116,25 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 echo 'Starting static code analysis...'
-                script {
-                    def scannerHome = tool 'sonar-scanner'
-                    
-                    withSonarQubeEnv('sonar-server') {
-                        sh """
-                            "${scannerHome}/bin/sonar-scanner" \
-                            -Dsonar.projectKey=devops-blog-server \
-                            -Dsonar.projectName='DevOps Blog Server' \
-                            -Dsonar.sources=src \
-                            -Dsonar.exclusions=node_modules/**,.npm-cache/**,.trivy-cache/**,coverage/**,prisma/migrations/**,prisma/seed*.js,**/__tests__/** \
-                            -Dsonar.coverage.exclusions=src/server.js,src/app.js,src/config/**,src/database/**,src/middlewares/**,src/utils/metrics.js,src/utils/prisma.js,src/common/errors/**,src/common/http/**,src/common/observability/**,src/common/email/**,src/common/middleware/auth.middleware.js,src/common/middleware/error.middleware.js,src/common/middleware/logger.middleware.js,src/modules/**/*.service.js,src/modules/**/*.routes.js,src/modules/**/*.helpers.js,src/modules/**/*.queries.js,src/modules/**/*.repository.js,src/modules/**/*.validation.js,src/modules/**/*.mailer.js,src/modules/**/*.storage.js,src/modules/posts/posts.importer.js,src/modules/posts/posts.scheduler.js,src/modules/seo/**,src/modules/settings/**,prisma/seed*.js \
-                            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                            -Dsonar.tests=src \
-                            -Dsonar.test.inclusions=**/__tests__/**/*.test.js,**/*.test.js \
-                            -Dsonar.sourceEncoding=UTF-8
-                        """
+                // Wrapped in catchError to prevent pipeline failure when SonarQube server is down
+                catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+                    script {
+                        def scannerHome = tool 'sonar-scanner'
+                        
+                        withSonarQubeEnv('sonar-server') {
+                            sh """
+                                "${scannerHome}/bin/sonar-scanner" \\
+                                -Dsonar.projectKey=devops-blog-server \\
+                                -Dsonar.projectName='DevOps Blog Server' \\
+                                -Dsonar.sources=src \\
+                                -Dsonar.exclusions=node_modules/**,.npm-cache/**,.trivy-cache/**,coverage/**,prisma/migrations/**,prisma/seed*.js,**/__tests__/** \\
+                                -Dsonar.coverage.exclusions=src/server.js,src/app.js,src/config/**,src/database/**,src/middlewares/**,src/utils/metrics.js,src/utils/prisma.js,src/common/errors/**,src/common/http/**,src/common/observability/**,src/common/email/**,src/common/middleware/auth.middleware.js,src/common/middleware/error.middleware.js,src/common/middleware/logger.middleware.js,src/modules/**/*.service.js,src/modules/**/*.routes.js,src/modules/**/*.helpers.js,src/modules/**/*.queries.js,src/modules/**/*.repository.js,src/modules/**/*.validation.js,src/modules/**/*.mailer.js,src/modules/**/*.storage.js,src/modules/posts/posts.importer.js,src/modules/posts/posts.scheduler.js,src/modules/seo/**,src/modules/settings/**,prisma/seed*.js \\
+                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \\
+                                -Dsonar.tests=src \\
+                                -Dsonar.test.inclusions=**/__tests__/**/*.test.js,**/*.test.js \\
+                                -Dsonar.sourceEncoding=UTF-8
+                            """
+                        }
                     }
                 }
             }
