@@ -193,7 +193,7 @@ describe('posts.translator', () => {
             expect(global.fetch).toHaveBeenCalledTimes(1); // content only
         });
 
-        it('should throw when API returns error', async () => {
+        it('should throw when API returns error and exhaust fallbacks', async () => {
             global.fetch.mockResolvedValue({
                 ok: false,
                 status: 500,
@@ -203,6 +203,38 @@ describe('posts.translator', () => {
             await expect(
                 translatePost({ title: 'Test', contentHtml: '<p>Test</p>' })
             ).rejects.toThrow(BadRequestError);
+            expect(global.fetch).toHaveBeenCalledTimes(1); // Fails immediately on 500
+        });
+
+        it('should retry on 429 error and succeed', async () => {
+            global.fetch
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 429,
+                    text: async () => 'Rate limited',
+                })
+                .mockResolvedValue({
+                    ok: true,
+                    json: async () => ({
+                        choices: [{ message: { content: 'Fallback Success' } }],
+                    }),
+                });
+
+            const result = await translatePost({ title: 'Test', content: '' });
+            expect(result.title).toBe('Fallback Success');
+        });
+
+        it('should throw PROVIDER_FAILED if no content returned', async () => {
+            global.fetch.mockResolvedValue({
+                ok: true,
+                json: async () => ({
+                    choices: [],
+                }),
+            });
+
+            await expect(
+                translatePost({ title: 'Test', content: '' })
+            ).rejects.toThrow('All free AI models are overloaded or rate-limited. Please try again in a few minutes.');
         });
 
         it('should strip quotes from translated title', async () => {

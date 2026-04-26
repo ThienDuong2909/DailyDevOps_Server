@@ -89,4 +89,57 @@ describe('formatContentByGemini (OpenRouter)', () => {
         await expect(formatContentByGemini('content')).rejects.toThrow(BadRequestError);
         await expect(formatContentByGemini('content')).rejects.toThrow('OpenRouter lỗi HTTP 401: Unauthorized access');
     });
+
+    it('should throw PROVIDER_FAILED error if no content returned', async () => {
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                choices: [] // empty choices
+            })
+        });
+
+        // Because PROVIDER_FAILED is treated as an overloaded error, it exhausts retries and throws the generic overloaded message
+        await expect(formatContentByGemini('content')).rejects.toThrow('Tất cả các model AI miễn phí đều đang quá tải hoặc hết lượt (Rate Limited). Vui lòng thử lại sau vài phút.');
+    });
+
+    it('should retry with fallback model if 429 Rate Limit occurs', async () => {
+        // First call fails with 429
+        global.fetch.mockResolvedValueOnce({
+            ok: false,
+            status: 429,
+            text: async () => 'Rate limited'
+        });
+        
+        // Second call succeeds
+        global.fetch.mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({
+                choices: [{ message: { content: 'fallback success' } }]
+            })
+        });
+
+        const result = await formatContentByGemini('content');
+        expect(result).toBe('fallback success');
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should split and process large content chunks', async () => {
+        // Create content > 3500 chars with multiple headings
+        const largeChunk1 = 'A'.repeat(2000);
+        const largeChunk2 = 'B'.repeat(2000);
+        const largeContent = `<h2>Heading 1</h2>${largeChunk1}<h2>Heading 2</h2>${largeChunk2}`;
+
+        global.fetch.mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                choices: [{ message: { content: 'chunk processed' } }]
+            })
+        });
+
+        const result = await formatContentByGemini(largeContent);
+        // It should have split it into 2 chunks because each chunk would be ~2000 chars.
+        expect(result).toBe('chunk processed\n\nchunk processed');
+        // Fetch called twice
+        expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
 });

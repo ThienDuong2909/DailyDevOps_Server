@@ -170,7 +170,7 @@ const processWithFallback = async (prompt, apiKey, label = 'content') => {
  * Remove surrounding quotes that AI may have added to a translated string
  */
 const stripSurroundingQuotes = (text) => {
-    return text.replaceAll(/^["']|["']$/g, '').trim();
+    return text.replaceAll(/(^["'])|(["']$)/g, '').trim();
 };
 
 /**

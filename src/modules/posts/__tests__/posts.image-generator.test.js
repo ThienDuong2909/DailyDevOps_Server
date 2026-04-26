@@ -154,4 +154,20 @@ describe('posts.image-generator', () => {
             })
         ).rejects.toThrow('Gemini did not return an image');
     });
+
+    it('throws when gemini api returns error status', async () => {
+        global.fetch.mockResolvedValue({
+            ok: false,
+            json: async () => ({
+                error: { message: 'Quota exceeded' },
+            }),
+        });
+
+        await expect(
+            generateFeaturedImage({
+                title: 'Error response case',
+                content: '<p>Error image</p>',
+            })
+        ).rejects.toThrow('Quota exceeded');
+    });
 });
