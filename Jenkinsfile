@@ -106,6 +106,20 @@ pipeline {
             }
         }
 
+        stage('Run DB Migrations') {
+            steps {
+                echo 'Applying pending database schema migrations...'
+                withCredentials([
+                    string(credentialsId: 'DATABASE_URL', variable: 'DATABASE_URL')
+                ]) {
+                    sh '''
+                        export DATABASE_URL="${DATABASE_URL}"
+                        node prisma/migrate-post-translations.js
+                    '''
+                }
+            }
+        }
+
         stage('Run Tests') {
             steps {
                 echo 'Running unit tests with coverage...'
