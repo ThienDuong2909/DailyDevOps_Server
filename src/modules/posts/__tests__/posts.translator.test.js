@@ -243,6 +243,46 @@ describe('posts.translator', () => {
             expect(body.generationConfig.thinkingConfig.thinkingBudget).toBe(0);
         });
 
+        it('omits thinkingConfig when falling back to a pre-thinking model (gemini-2.0-flash)', async () => {
+            // First two models fail with retryable errors; third (gemini-2.0-flash)
+            // is the one we care about. Verify that body sent to it has NO
+            // thinkingConfig (sending it would 400 and break the chain).
+            global.fetch
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 503,
+                    json: async () => ({ error: { message: 'overloaded' } }),
+                })
+                .mockResolvedValueOnce({
+                    ok: false,
+                    status: 503,
+                    json: async () => ({ error: { message: 'overloaded' } }),
+                })
+                .mockResolvedValue({
+                    ok: true,
+                    json: async () => ({
+                        candidates: [
+                            { content: { parts: [{ text: 'ok' }] }, finishReason: 'STOP' },
+                        ],
+                    }),
+                });
+
+            await translatePost({ title: 'Tiêu đề', content: '' });
+
+            // Last call (3rd attempt) used gemini-2.0-flash
+            const lastCall = global.fetch.mock.calls[global.fetch.mock.calls.length - 1];
+            const [lastUrl, lastInit] = lastCall;
+            expect(lastUrl).toContain('gemini-2.0-flash:generateContent');
+            const lastBody = JSON.parse(lastInit.body);
+            expect(lastBody.generationConfig.thinkingConfig).toBeUndefined();
+            expect(lastBody.generationConfig.temperature).toBe(0.2);
+            expect(lastBody.generationConfig.maxOutputTokens).toBe(8192);
+
+            // First call (gemini-3-flash-preview) still includes it
+            const firstBody = JSON.parse(global.fetch.mock.calls[0][1].body);
+            expect(firstBody.generationConfig.thinkingConfig.thinkingBudget).toBe(0);
+        }, 15000);
+
         it('should translate a post with title only (no content)', async () => {
             mockGeminiSuccess('English Title');
 

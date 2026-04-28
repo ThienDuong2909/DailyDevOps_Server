@@ -20,6 +20,25 @@ const getTranslationModels = () => {
 
 const MAX_CHUNK_SIZE = 3500;
 
+// Only Gemini 2.5 and Gemini 3 models accept `thinkingConfig`. Older
+// pre-thinking-era models (e.g. gemini-2.0-flash, gemini-1.5-*) reject it
+// with HTTP 400, which would break the fallback chain.
+const supportsThinkingConfig = (model) => /(?:^|[^\d])(2\.5|3)(?:[^\d]|$)/.test(model);
+
+const buildGenerationConfig = (model) => {
+    const base = {
+        temperature: 0.2,
+        maxOutputTokens: 8192,
+    };
+    if (supportsThinkingConfig(model)) {
+        // Translation is mechanical work; reasoning tokens just burn budget
+        // without improving output. Gemini 2.5/3 models default to thinking
+        // on, so we explicitly opt out for thinking-capable models.
+        base.thinkingConfig = { thinkingBudget: 0 };
+    }
+    return base;
+};
+
 const executeTranslationRequest = async (model, prompt, apiKey) => {
     const response = await fetch(
         `${GEMINI_API_BASE_URL}/${encodeURIComponent(model)}:generateContent`,
@@ -35,14 +54,7 @@ const executeTranslationRequest = async (model, prompt, apiKey) => {
                         parts: [{ text: prompt }],
                     },
                 ],
-                generationConfig: {
-                    temperature: 0.2,
-                    maxOutputTokens: 8192,
-                    // Translation is mechanical work; reasoning tokens just
-                    // burn budget without improving output. Gemini 3 models
-                    // default to thinking on, so we explicitly opt out.
-                    thinkingConfig: { thinkingBudget: 0 },
-                },
+                generationConfig: buildGenerationConfig(model),
             }),
         }
     );
