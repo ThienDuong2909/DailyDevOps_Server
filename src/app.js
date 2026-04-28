@@ -27,6 +27,7 @@ const opsRoutes = require('./modules/ops/ops.routes');
 const settingsRoutes = require('./modules/settings/settings.routes');
 const seoRoutes = require('./modules/seo/seo.routes');
 const seoPublicRoutes = require('./modules/seo/seo.public.routes');
+const { localeMiddleware } = require('./middlewares/locale.middleware');
 
 const app = express();
 app.set('trust proxy', config.trustProxy);
@@ -71,13 +72,17 @@ app.use(cors({
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Locale'],
 }));
 
 // Body parsers
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+// Resolve request locale from query param > x-locale header > cookie > default.
+// Injects req.locale so all route handlers are locale-agnostic.
+app.use(localeMiddleware);
+
 
 // Static files (uploaded images, thumbnails)
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'), {
