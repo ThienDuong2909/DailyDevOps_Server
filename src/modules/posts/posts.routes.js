@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const postsService = require('./posts.service');
+const translationJobsService = require('./translation-jobs.service');
 const { validate } = require('../../middlewares/validation.middleware');
 const { authenticate, optionalAuth, authorize } = require('../../middlewares/auth.middleware');
 const {
@@ -384,7 +385,10 @@ router.get(
 
 /**
  * @route   POST /api/posts/:id/auto-translate
- * @desc    Auto-translate a single post from Vietnamese to English using AI
+ * @desc    Enqueue a background auto-translate job (VI -> locale, default en).
+ *          Returns the job row immediately so the client can poll for status.
+ *          Replaces the old synchronous endpoint to avoid request timeouts on
+ *          long articles.
  * @access  Private (ADMIN, MODERATOR, EDITOR, AUTHOR)
  */
 router.post(
@@ -393,12 +397,55 @@ router.post(
     authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
     validate(postIdParamSchema, 'params'),
     asyncHandler(async (req, res) => {
-        const translation = await postsService.autoTranslate(
+        const locale = typeof req.body?.locale === 'string' ? req.body.locale : 'en';
+        const force = Boolean(req.body?.force);
+        const job = await translationJobsService.enqueueJob({
+            postId: req.params.id,
+            userId: req.user.id,
+            userRole: req.user.role,
+            locale,
+            force,
+        });
+        return sendCreated(res, { data: job });
+    })
+);
+
+/**
+ * @route   GET /api/posts/:id/translation-job
+ * @desc    Get the most recent translation job for a post (any locale defaults
+ *          to "en"). Returns null if no job has ever been enqueued.
+ * @access  Private (ADMIN, MODERATOR, EDITOR, AUTHOR)
+ */
+router.get(
+    '/:id/translation-job',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(postIdParamSchema, 'params'),
+    asyncHandler(async (req, res) => {
+        const locale =
+            typeof req.query?.locale === 'string' ? req.query.locale : 'en';
+        const job = await translationJobsService.getLatestJobForPost(
             req.params.id,
-            req.user.id,
-            req.user.role
+            locale
         );
-        return sendOk(res, { data: translation });
+        return sendOk(res, { data: job });
+    })
+);
+
+/**
+ * @route   GET /api/posts/:id/translation-jobs/:jobId
+ * @desc    Fetch a specific translation job by id. Useful when the client
+ *          has a job id from the enqueue response.
+ * @access  Private (ADMIN, MODERATOR, EDITOR, AUTHOR)
+ */
+router.get(
+    '/:id/translation-jobs/:jobId',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(postIdParamSchema, 'params'),
+    asyncHandler(async (req, res) => {
+        const job = await translationJobsService.getJobById(req.params.jobId);
+        return sendOk(res, { data: job });
     })
 );
 

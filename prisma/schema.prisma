@@ -38,6 +38,13 @@ enum CommentStatus {
   TRASH
 }
 
+enum TranslationJobStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 enum SubscriberStatus {
   PENDING
   CONFIRMED
@@ -145,6 +152,7 @@ model Post {
   seoSetting      SeoSetting?
   versions        PostVersion[]
   translations    PostTranslation[]
+  translationJobs TranslationJob[]
 
   @@index([status, publishedAt])
   @@index([authorId])
@@ -304,4 +312,28 @@ model ActivityLog {
   @@index([userId, createdAt])
   @@index([entity, entityId])
   @@map("activity_logs")
+}
+
+model TranslationJob {
+  id            String               @id @default(cuid())
+  post          Post                 @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId        String               @map("post_id")
+  locale        String               @default("en")
+  status        TranslationJobStatus @default(PENDING)
+  progress      Int                  @default(0)
+  currentStep   String?              @map("current_step")
+  resultTitle   String?              @map("result_title") @db.Text
+  resultSlug    String?              @map("result_slug")
+  resultExcerpt String?              @map("result_excerpt") @db.Text
+  resultContent String?              @map("result_content") @db.LongText
+  error         String?              @db.Text
+  startedById   String?              @map("started_by_id")
+  startedAt     DateTime?            @map("started_at")
+  completedAt   DateTime?            @map("completed_at")
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  @@index([postId, status, createdAt])
+  @@index([status])
+  @@map("translation_jobs")
 }

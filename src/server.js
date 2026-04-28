@@ -3,6 +3,7 @@ const config = require('./config');
 const { disconnectPrisma } = require('./database/prisma');
 const postsScheduler = require('./modules/posts/posts.scheduler');
 const thumbnailGenerationService = require('./modules/posts/posts.thumbnail-generation.service');
+const translationJobsService = require('./modules/posts/translation-jobs.service');
 const { initSentry, captureException } = require('./common/observability/sentry');
 
 initSentry();
@@ -30,6 +31,10 @@ server.headersTimeout = 361000;
 
 postsScheduler.start();
 thumbnailGenerationService.start();
+
+// Clean up translation jobs that were left RUNNING/PENDING when the previous
+// process exited — the in-process worker can't resume them.
+void translationJobsService.recoverOrphanedJobs();
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
