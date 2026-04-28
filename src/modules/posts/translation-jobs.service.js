@@ -152,7 +152,7 @@ class TranslationJobsService {
         Promise.resolve()
             .then(() => this.processJob(jobId))
             .catch((error) => {
-                const message = error && error.message ? error.message : String(error);
+                const message = error?.message ? error.message : String(error);
                 console.error(
                     `[TranslationJobs] Uncaught error while processing job ${jobId}:`,
                     message
@@ -168,7 +168,7 @@ class TranslationJobsService {
                     .catch((writeError) => {
                         console.error(
                             `[TranslationJobs] Also failed to persist FAILED state for ${jobId}:`,
-                            writeError && writeError.message
+                            writeError?.message
                         );
                     });
             });
@@ -209,6 +209,34 @@ class TranslationJobsService {
         }
         await this.assertCanAccessPost(job.postId, userId, userRole);
         return toJobDTO(job);
+    }
+
+    /**
+     * Translate the `onProgress` info coming from the translator into a
+     * progress percentage + step label, and persist it to the job row.
+     */
+    async updateJobProgress(jobId, info, estimatedChunks) {
+        let progress;
+        let step;
+        if (info.phase === 'title') {
+            progress = 10;
+            step = 'title done';
+        } else if (info.phase === 'excerpt') {
+            progress = 20;
+            step = 'excerpt done';
+        } else if (info.phase === 'content') {
+            const current = info.current || 1;
+            const total = info.total || estimatedChunks;
+            progress = 20 + Math.floor((75 * current) / total);
+            step = `content chunk ${current}/${total}`;
+        } else {
+            progress = 10;
+            step = 'translating';
+        }
+        await translationJobsRepository.update(jobId, {
+            progress: Math.min(95, progress),
+            currentStep: step,
+        });
     }
 
     /**
@@ -254,33 +282,17 @@ class TranslationJobsService {
             const estimatedChunks = Math.max(1, Math.ceil(contentSize / 3500));
 
             const translated = await translatePost(sourceContent, {
-                onProgress: async (info) => {
-                    try {
-                        let progress = 10;
-                        let step = 'translating';
-                        if (info.phase === 'title') {
-                            progress = 10;
-                            step = 'title done';
-                        } else if (info.phase === 'excerpt') {
-                            progress = 20;
-                            step = 'excerpt done';
-                        } else if (info.phase === 'content') {
-                            const current = info.current || 1;
-                            const total = info.total || estimatedChunks;
-                            progress = 20 + Math.floor((75 * current) / total);
-                            step = `content chunk ${current}/${total}`;
+                onProgress: (info) => {
+                    // Fire-and-forget: the translator shouldn't block on
+                    // progress writes, and any failure here must not escape.
+                    this.updateJobProgress(jobId, info, estimatedChunks).catch(
+                        (progressError) => {
+                            console.warn(
+                                `[TranslationJobs] Failed to update progress for ${jobId}:`,
+                                progressError?.message
+                            );
                         }
-                        await translationJobsRepository.update(jobId, {
-                            progress: Math.min(95, progress),
-                            currentStep: step,
-                        });
-                    } catch (progressError) {
-                        // Don't let progress update failures break the job
-                        console.warn(
-                            `[TranslationJobs] Failed to update progress for ${jobId}:`,
-                            progressError.message
-                        );
-                    }
+                    );
                 },
             });
 
@@ -339,7 +351,7 @@ class TranslationJobsService {
             status: post.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
         });
 
-        const baseSlug = (normalized.slug && normalized.slug.trim()) || generateSlug(normalized.title);
+        const baseSlug = normalized.slug?.trim() || generateSlug(normalized.title);
         const uniqueSlug = await this.ensureUniqueSlug(baseSlug, locale, post.id);
         const targetStatus = normalized.status || 'DRAFT';
 
