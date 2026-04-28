@@ -144,6 +144,15 @@ describe('posts.translator', () => {
             expect(looksUntranslated(longEnglish)).toBe(false);
         });
 
+        it('returns false for English text that preserves Vietnamese proper nouns', () => {
+            // Real-world translation output may keep author names, place names,
+            // or quoted Vietnamese terms. These should not be flagged as
+            // untranslated.
+            const englishWithNouns =
+                'The tutorial was originally published by Nguyễn Văn on the FPT Software blog and covers deploying applications to cloud infrastructure on Đà Nẵng data centers.';
+            expect(looksUntranslated(englishWithNouns)).toBe(false);
+        });
+
         it('returns true when long output is dense with Vietnamese diacritics', () => {
             const stillVietnamese =
                 'Bài viết này hướng dẫn cách triển khai ứng dụng lên Kubernetes bằng Ansible và các công cụ DevOps hiện đại trên máy chủ Ubuntu.';

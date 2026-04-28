@@ -165,9 +165,15 @@ Text: ${excerpt}`;
 // A chunk that comes back with too many Vietnamese-only diacritics is almost
 // certainly the model echoing the source text instead of translating it.
 // Anything above the threshold gets retried with the next model.
+//
+// Pure Vietnamese text typically has a diacritic ratio of 15–17%. English
+// translations that legitimately preserve Vietnamese proper nouns (e.g.
+// "Nguyễn", "Hồ Chí Minh", "Đà Nẵng") sit well below 3%. A 5% threshold
+// cleanly separates the two without flagging correctly-translated text that
+// happens to keep a few Vietnamese names.
 const VIETNAMESE_DIACRITIC_REGEX = /[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴĐ]/g;
 const MIN_LENGTH_FOR_DIACRITIC_CHECK = 80;
-const MAX_DIACRITIC_RATIO = 0.005;
+const MAX_DIACRITIC_RATIO = 0.05;
 
 const looksUntranslated = (text) => {
     if (!text || text.length < MIN_LENGTH_FOR_DIACRITIC_CHECK) {
