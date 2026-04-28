@@ -146,6 +146,11 @@ const versionParamsSchema = Joi.object({
     versionId: Joi.string().required(),
 });
 
+const translationJobParamsSchema = Joi.object({
+    id: Joi.string().required(),
+    jobId: Joi.string().required(),
+});
+
 const generateFeaturedImageSchema = Joi.object({
     title: Joi.string().trim().max(300).optional().allow('', null),
     subtitle: Joi.string().trim().max(500).optional().allow('', null),
@@ -176,6 +181,7 @@ module.exports = {
     postIdParamSchema,
     restoreVersionSchema,
     versionParamsSchema,
+    translationJobParamsSchema,
     generateFeaturedImageSchema,
     enqueueFeaturedImageJobSchema,
     formatContentSchema,

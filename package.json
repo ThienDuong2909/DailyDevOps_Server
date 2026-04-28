@@ -16,6 +16,7 @@
     "prisma:seed": "node prisma/seed.js",
     "prisma:migrate:post-editor": "node prisma/migrate-post-editor-structure.js",
     "prisma:migrate:post-translations": "node prisma/migrate-post-translations.js",
+    "prisma:migrate:translation-jobs": "node prisma/migrate-translation-jobs.js",
     "prisma:backfill:post-editor": "node prisma/backfill-post-editor-content.js",
     "prisma:reset": "prisma migrate reset",
     "seed:posts": "node prisma/seed-posts.js",

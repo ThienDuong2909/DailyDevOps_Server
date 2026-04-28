@@ -205,20 +205,34 @@ const translateExcerpt = async (excerpt, apiKey) => {
     return stripSurroundingQuotes(translated);
 };
 
+const noopProgress = () => {};
+
 /**
- * Translate the HTML content of a post, with chunking for large content
+ * Translate the HTML content of a post, with chunking for large content.
+ *
+ * @param {string} rawContent - Source HTML
+ * @param {string} apiKey - OpenRouter API key
+ * @param {object} [options]
+ * @param {(info: { current: number, total: number }) => void} [options.onChunk]
+ *   Called after each chunk is translated so callers can update a progress
+ *   counter. Not called for small (single-prompt) content — callers should
+ *   infer 1/1 in that case.
  */
-const translateContent = async (rawContent, apiKey) => {
+const translateContent = async (rawContent, apiKey, options = {}) => {
+    const onChunk = options.onChunk || noopProgress;
+
     if (!rawContent?.trim()) {
         return '';
     }
 
     if (rawContent.length <= MAX_CHUNK_SIZE) {
-        return processWithFallback(
+        const result = await processWithFallback(
             buildTranslationPrompt(rawContent),
             apiKey,
             'content'
         );
+        onChunk({ current: 1, total: 1 });
+        return result;
     }
 
     console.log(`[Translator] Content is large (${rawContent.length} chars). Splitting into chunks...`);
@@ -238,6 +252,7 @@ const translateContent = async (rawContent, apiKey) => {
         );
 
         translatedChunks.push(chunkResult);
+        onChunk({ current: i + 1, total: chunks.length });
 
         // Rate-limiting guard between chunks
         if (i < chunks.length - 1) {
@@ -251,10 +266,15 @@ const translateContent = async (rawContent, apiKey) => {
 /**
  * Translate a full post from Vietnamese to English
  * @param {object} post - The post object with title, subtitle/excerpt, content/contentHtml
+ * @param {object} [options]
+ * @param {(info: { phase: 'title'|'excerpt'|'content', current?: number, total?: number }) => void} [options.onProgress]
+ *   Fired as each phase/chunk completes so long-running callers (the job
+ *   worker) can surface progress without needing to introspect internals.
  * @returns {Promise<{title: string, subtitle: string, excerpt: string, content: string, contentHtml: string, slug: string}>}
  */
-const translatePost = async (post) => {
+const translatePost = async (post, options = {}) => {
     const apiKey = config.openrouter.apiKey;
+    const onProgress = options.onProgress || noopProgress;
 
     if (!apiKey) {
         throw new BadRequestError('OpenRouter API key is not configured.');
@@ -268,8 +288,15 @@ const translatePost = async (post) => {
     }
 
     const translatedTitle = await translateTitle(post.title, apiKey);
+    onProgress({ phase: 'title' });
+
     const translatedExcerpt = await translateExcerpt(originalExcerpt, apiKey);
-    const translatedContent = await translateContent(rawContent, apiKey);
+    onProgress({ phase: 'excerpt' });
+
+    const translatedContent = await translateContent(rawContent, apiKey, {
+        onChunk: ({ current, total }) =>
+            onProgress({ phase: 'content', current, total }),
+    });
 
     const { generateSlug } = require('./posts.helpers');
     const translatedSlug = generateSlug(translatedTitle);

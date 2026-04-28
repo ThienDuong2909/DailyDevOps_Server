@@ -29,7 +29,7 @@ const { postVersionListSelect } = require('./posts.queries');
 const subscribersService = require('../subscribers/subscribers.service');
 const { parseNotionExport } = require('./posts.importer');
 const { generateFeaturedImage } = require('./posts.image-generator');
-const { translatePost } = require('./posts.translator');
+const translationJobsService = require('./translation-jobs.service');
 const thumbnailGenerationService = require('./posts.thumbnail-generation.service');
 
 class PostsService {
@@ -392,46 +392,10 @@ class PostsService {
     }
 
     /**
-     * Auto-translate a post from Vietnamese to English using AI
-     */
-    async autoTranslate(id, userId, userRole) {
-        const post = await this.findById(id);
-
-        if (!this.canEditPost(post, userId, userRole)) {
-            throw new ForbiddenError('You can only translate your own posts');
-        }
-
-        const sourceContent = {
-            title: post.title,
-            subtitle: post.subtitle || post.excerpt || '',
-            excerpt: post.subtitle || post.excerpt || '',
-            content: post.content || '',
-            contentHtml: post.contentHtml || post.content || '',
-        };
-
-        const translated = await translatePost(sourceContent);
-
-        const translation = await this.upsertTranslation(
-            id,
-            {
-                locale: 'en',
-                title: translated.title,
-                slug: translated.slug,
-                subtitle: translated.subtitle,
-                excerpt: translated.excerpt,
-                content: translated.content,
-                contentHtml: translated.contentHtml,
-                status: post.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
-            },
-            userId,
-            userRole
-        );
-
-        return translation;
-    }
-
-    /**
-     * Batch auto-translate all published posts that don't have an English translation yet
+     * Batch auto-translate: enqueue a translation job for each published post
+     * that has no EN translation yet. Jobs run in the background in parallel
+     * (bounded by the in-process worker); this call returns immediately with
+     * the list of enqueued job ids so the UI can poll each one.
      */
     async batchAutoTranslate(userId, userRole, { limit = 5 } = {}) {
         if (!['ADMIN', 'EDITOR', 'MODERATOR'].includes(userRole)) {
@@ -443,10 +407,7 @@ class PostsService {
                 status: 'PUBLISHED',
                 NOT: {
                     translations: {
-                        some: {
-                            locale: 'en',
-                            status: 'PUBLISHED',
-                        },
+                        some: { locale: 'en' },
                     },
                 },
             },
@@ -466,21 +427,35 @@ class PostsService {
             const hasAnyEnTranslation = post.translations?.length > 0;
 
             if (hasAnyEnTranslation) {
-                results.push({ id: post.id, slug: post.slug, status: 'skipped', reason: 'EN translation exists (not published)' });
+                results.push({
+                    id: post.id,
+                    slug: post.slug,
+                    status: 'skipped',
+                    reason: 'EN translation already exists',
+                });
                 continue;
             }
 
             try {
-                console.log(`[BatchTranslate] Translating post: ${post.slug} (${post.id})`);
-                await this.autoTranslate(post.id, userId, userRole);
-                results.push({ id: post.id, slug: post.slug, status: 'success' });
-                console.log(`[BatchTranslate] Done: ${post.slug}`);
-
-                // Rate-limiting guard between posts
-                await new Promise((r) => setTimeout(r, 3000));
+                const job = await translationJobsService.enqueueJob({
+                    postId: post.id,
+                    userId,
+                    userRole,
+                    locale: 'en',
+                });
+                results.push({
+                    id: post.id,
+                    slug: post.slug,
+                    status: 'queued',
+                    jobId: job.id,
+                });
             } catch (error) {
-                console.error(`[BatchTranslate] Failed: ${post.slug}`, error.message);
-                results.push({ id: post.id, slug: post.slug, status: 'failed', error: error.message });
+                results.push({
+                    id: post.id,
+                    slug: post.slug,
+                    status: 'failed',
+                    error: error.message,
+                });
             }
         }
 
@@ -493,31 +468,37 @@ class PostsService {
     /**
      * Fire-and-forget: auto-translate a post to English in the background.
      * Called automatically when a post transitions to PUBLISHED status.
-     * Does NOT block the calling method — errors are logged silently.
+     * Delegates to the translation-jobs service so progress is persisted and
+     * visible in the admin UI instead of being silently lost on process restart.
      */
     triggerAutoTranslation(postId, userId, userRole) {
-        // Do not await — fire and forget
         setImmediate(async () => {
             try {
-                // Check if EN translation already exists and is published
                 const existing = await postsRepository.findFirstTranslation({
-                    where: {
-                        postId,
-                        locale: 'en',
-                        status: 'PUBLISHED',
-                    },
+                    where: { postId, locale: 'en' },
                 });
 
                 if (existing) {
-                    console.log(`[AutoTranslate] Skipped ${postId}: EN translation already published`);
+                    console.log(
+                        `[AutoTranslate] Skipped ${postId}: EN translation already exists`
+                    );
                     return;
                 }
 
-                console.log(`[AutoTranslate] Starting background translation for post ${postId}`);
-                await this.autoTranslate(postId, userId, userRole);
-                console.log(`[AutoTranslate] Completed translation for post ${postId}`);
+                console.log(
+                    `[AutoTranslate] Enqueuing background translation job for post ${postId}`
+                );
+                await translationJobsService.enqueueJob({
+                    postId,
+                    userId,
+                    userRole,
+                    locale: 'en',
+                });
             } catch (error) {
-                console.error(`[AutoTranslate] Background translation failed for post ${postId}:`, error.message);
+                console.error(
+                    `[AutoTranslate] Failed to enqueue background translation for ${postId}:`,
+                    error.message
+                );
             }
         });
     }
