@@ -2,7 +2,11 @@ const { BadRequestError, ForbiddenError, NotFoundError } = require('../../middle
 const translationJobsRepository = require('./translation-jobs.repository');
 const postsRepository = require('./posts.repository');
 const { translatePost } = require('./posts.translator');
-const { generateSlug, normalizeTranslationPayload } = require('./posts.helpers');
+const {
+    buildPublishedAt,
+    generateSlug,
+    normalizeTranslationPayload,
+} = require('./posts.helpers');
 
 const ACTIVE_STATUSES = ['PENDING', 'RUNNING'];
 const EDITORIAL_ROLES = new Set(['ADMIN', 'EDITOR', 'MODERATOR', 'AUTHOR']);
@@ -130,24 +134,80 @@ class TranslationJobsService {
 
         // Fire-and-forget: run the job in the background. We do not await —
         // the caller's HTTP response should return immediately with the job
-        // row so the client can start polling.
+        // row so the client can start polling. The top-level wrapper swallows
+        // every rejection to avoid tripping the server's unhandledRejection
+        // handler (which calls process.exit).
         setImmediate(() => {
-            void this.processJob(job.id);
+            this.safelyProcessJob(job.id);
         });
 
         return toJobDTO(job);
     }
 
-    async getLatestJobForPost(postId, locale = 'en') {
+    /**
+     * Non-throwing wrapper around processJob used by the background worker
+     * dispatcher. Any error here must NEVER escape as an unhandled rejection.
+     */
+    safelyProcessJob(jobId) {
+        Promise.resolve()
+            .then(() => this.processJob(jobId))
+            .catch((error) => {
+                const message = error && error.message ? error.message : String(error);
+                console.error(
+                    `[TranslationJobs] Uncaught error while processing job ${jobId}:`,
+                    message
+                );
+                // Last-resort status write; swallow any failure from this too.
+                return translationJobsRepository
+                    .update(jobId, {
+                        status: 'FAILED',
+                        currentStep: 'failed',
+                        error: `Unhandled worker error: ${message}`.slice(0, 2000),
+                        completedAt: new Date(),
+                    })
+                    .catch((writeError) => {
+                        console.error(
+                            `[TranslationJobs] Also failed to persist FAILED state for ${jobId}:`,
+                            writeError && writeError.message
+                        );
+                    });
+            });
+    }
+
+    /**
+     * Load the post that owns the job (if any) and assert the caller may
+     * access it. Used by the GET endpoints to prevent one author from
+     * peeking at another author's translation jobs.
+     */
+    async assertCanAccessPost(postId, userId, userRole) {
+        if (!isEditorialRole(userRole)) {
+            throw new ForbiddenError('Only editorial roles can view translation jobs');
+        }
+        const post = await postsRepository.findUnique({ where: { id: postId } });
+        if (!post) {
+            throw new NotFoundError('Post not found');
+        }
+        if (!canEditPost(post, userId, userRole)) {
+            throw new ForbiddenError('You can only view translation jobs for posts you can edit');
+        }
+        return post;
+    }
+
+    async getLatestJobForPost({ postId, userId, userRole, locale = 'en' }) {
+        await this.assertCanAccessPost(postId, userId, userRole);
         const job = await translationJobsRepository.findLatestForPost(postId, locale);
         return toJobDTO(job);
     }
 
-    async getJobById(id) {
-        const job = await translationJobsRepository.findById(id);
+    async getJobById({ jobId, postId, userId, userRole }) {
+        const job = await translationJobsRepository.findById(jobId);
         if (!job) {
             throw new NotFoundError('Translation job not found');
         }
+        if (postId && job.postId !== postId) {
+            throw new NotFoundError('Translation job not found');
+        }
+        await this.assertCanAccessPost(job.postId, userId, userRole);
         return toJobDTO(job);
     }
 
@@ -282,10 +342,13 @@ class TranslationJobsService {
         const baseSlug = (normalized.slug && normalized.slug.trim()) || generateSlug(normalized.title);
         const uniqueSlug = await this.ensureUniqueSlug(baseSlug, locale, post.id);
         const targetStatus = normalized.status || 'DRAFT';
-        const publishedAt =
-            targetStatus === 'PUBLISHED' || targetStatus === 'SCHEDULED'
-                ? new Date()
-                : null;
+
+        // Preserve the original publishedAt when updating an already-published
+        // translation so force-retranslating doesn't reset the public
+        // publication date.
+        const existingTranslation = await postsRepository.findFirstTranslation({
+            where: { postId: post.id, locale },
+        });
 
         return postsRepository.upsertTranslation({
             where: {
@@ -296,7 +359,10 @@ class TranslationJobsService {
                 slug: uniqueSlug,
                 locale,
                 status: targetStatus,
-                publishedAt,
+                publishedAt: buildPublishedAt(
+                    targetStatus,
+                    existingTranslation?.publishedAt || null
+                ),
             },
             create: {
                 postId: post.id,
@@ -304,7 +370,7 @@ class TranslationJobsService {
                 slug: uniqueSlug,
                 locale,
                 status: targetStatus,
-                publishedAt,
+                publishedAt: buildPublishedAt(targetStatus, null),
             },
         });
     }
@@ -327,7 +393,7 @@ class TranslationJobsService {
                 return candidate;
             }
 
-            candidate = `${baseSlug}-${attempt + 1}`;
+            candidate = `${baseSlug}-${attempt}`;
             attempt += 1;
         }
 

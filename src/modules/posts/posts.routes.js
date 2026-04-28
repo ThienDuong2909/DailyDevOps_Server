@@ -13,6 +13,7 @@ const {
     postIdParamSchema,
     restoreVersionSchema,
     versionParamsSchema,
+    translationJobParamsSchema,
     generateFeaturedImageSchema,
     enqueueFeaturedImageJobSchema,
     translationSchema,
@@ -424,10 +425,12 @@ router.get(
     asyncHandler(async (req, res) => {
         const locale =
             typeof req.query?.locale === 'string' ? req.query.locale : 'en';
-        const job = await translationJobsService.getLatestJobForPost(
-            req.params.id,
-            locale
-        );
+        const job = await translationJobsService.getLatestJobForPost({
+            postId: req.params.id,
+            userId: req.user.id,
+            userRole: req.user.role,
+            locale,
+        });
         return sendOk(res, { data: job });
     })
 );
@@ -435,16 +438,22 @@ router.get(
 /**
  * @route   GET /api/posts/:id/translation-jobs/:jobId
  * @desc    Fetch a specific translation job by id. Useful when the client
- *          has a job id from the enqueue response.
+ *          has a job id from the enqueue response. The job must belong to the
+ *          post in the URL, and the user must be able to edit that post.
  * @access  Private (ADMIN, MODERATOR, EDITOR, AUTHOR)
  */
 router.get(
     '/:id/translation-jobs/:jobId',
     authenticate,
     authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
-    validate(postIdParamSchema, 'params'),
+    validate(translationJobParamsSchema, 'params'),
     asyncHandler(async (req, res) => {
-        const job = await translationJobsService.getJobById(req.params.jobId);
+        const job = await translationJobsService.getJobById({
+            jobId: req.params.jobId,
+            postId: req.params.id,
+            userId: req.user.id,
+            userRole: req.user.role,
+        });
         return sendOk(res, { data: job });
     })
 );
