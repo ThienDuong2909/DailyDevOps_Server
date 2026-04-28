@@ -155,6 +155,12 @@ const config = {
     openrouter: {
         apiKey: process.env.OPENROUTER_API_KEY || '',
     },
+
+    gemini: {
+        apiKey: process.env.GEMINI_API_KEY || '',
+        textModel: process.env.GEMINI_TEXT_MODEL || 'gemini-3-flash-preview',
+        imageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
+    },
 };
 
 config.corsOrigin = parseCorsOrigin(process.env.CORS_ORIGIN, config.appUrl);

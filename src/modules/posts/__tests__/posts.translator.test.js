@@ -8,6 +8,8 @@ const {
     buildTitleTranslationPrompt,
     buildExcerptTranslationPrompt,
     stripSurroundingQuotes,
+    looksUntranslated,
+    getTranslationModels,
 } = require('../posts.translator');
 
 describe('posts.translator', () => {
@@ -16,8 +18,9 @@ describe('posts.translator', () => {
     beforeEach(() => {
         originalFetch = global.fetch;
         global.fetch = jest.fn();
-        config.openrouter = config.openrouter || {};
-        config.openrouter.apiKey = 'test-api-key';
+        config.gemini = config.gemini || {};
+        config.gemini.apiKey = 'test-api-key';
+        config.gemini.textModel = 'gemini-3-flash-preview';
     });
 
     afterEach(() => {
@@ -128,29 +131,79 @@ describe('posts.translator', () => {
 
     // ──────────────────────────── translatePost ────────────────────────────
 
+    // ───────────────────────────── looksUntranslated ─────────────────────────────
+
+    describe('looksUntranslated', () => {
+        it('returns false for short strings (under threshold)', () => {
+            expect(looksUntranslated('Tiêu đề')).toBe(false);
+        });
+
+        it('returns false for English-only long output', () => {
+            const longEnglish =
+                'This is a long paragraph in English explaining how to deploy a Kubernetes cluster on a fresh server using Ansible playbooks and modern DevOps tooling.';
+            expect(looksUntranslated(longEnglish)).toBe(false);
+        });
+
+        it('returns true when long output is dense with Vietnamese diacritics', () => {
+            const stillVietnamese =
+                'Bài viết này hướng dẫn cách triển khai ứng dụng lên Kubernetes bằng Ansible và các công cụ DevOps hiện đại trên máy chủ Ubuntu.';
+            expect(looksUntranslated(stillVietnamese)).toBe(true);
+        });
+    });
+
+    // ───────────────────────────── getTranslationModels ───────────────────────────
+
+    describe('getTranslationModels', () => {
+        it('puts the configured primary model first', () => {
+            config.gemini.textModel = 'gemini-3-flash-preview';
+            const models = getTranslationModels();
+            expect(models[0]).toBe('gemini-3-flash-preview');
+            expect(models).toContain('gemini-2.5-flash');
+            expect(models).toContain('gemini-2.0-flash');
+        });
+
+        it('does not duplicate when primary already present in fallbacks', () => {
+            config.gemini.textModel = 'gemini-2.0-flash';
+            const models = getTranslationModels();
+            expect(models.filter((m) => m === 'gemini-2.0-flash')).toHaveLength(1);
+            expect(models[0]).toBe('gemini-2.0-flash');
+        });
+    });
+
+    // ───────────────────────────── translatePost ──────────────────────────────
+
     describe('translatePost', () => {
-        const mockFetchSuccess = (content) => {
+        const mockGeminiSuccess = (text) => {
             global.fetch.mockResolvedValue({
                 ok: true,
                 json: async () => ({
-                    choices: [{ message: { content } }],
+                    candidates: [
+                        {
+                            content: { parts: [{ text }] },
+                            finishReason: 'STOP',
+                        },
+                    ],
                 }),
             });
         };
 
         it('should throw BadRequestError if API key is missing', async () => {
-            config.openrouter.apiKey = '';
+            config.gemini.apiKey = '';
             await expect(translatePost({ title: 'Test' })).rejects.toThrow(BadRequestError);
-            await expect(translatePost({ title: 'Test' })).rejects.toThrow('OpenRouter API key is not configured.');
+            await expect(translatePost({ title: 'Test' })).rejects.toThrow(
+                'GEMINI_API_KEY is not configured on the server.'
+            );
         });
 
         it('should throw BadRequestError if post has no title or content', async () => {
             await expect(translatePost({ title: '', content: '' })).rejects.toThrow(BadRequestError);
-            await expect(translatePost({ title: '', content: '' })).rejects.toThrow('Post must have title or content to translate.');
+            await expect(translatePost({ title: '', content: '' })).rejects.toThrow(
+                'Post must have title or content to translate.'
+            );
         });
 
         it('should translate a post with title and short content', async () => {
-            mockFetchSuccess('Translated output');
+            mockGeminiSuccess('Translated output');
 
             const result = await translatePost({
                 title: 'Tiêu đề bài viết',
@@ -167,8 +220,22 @@ describe('posts.translator', () => {
             expect(global.fetch).toHaveBeenCalledTimes(3); // title + excerpt + content
         });
 
+        it('calls the Gemini generateContent endpoint with the configured model', async () => {
+            mockGeminiSuccess('English Title');
+
+            await translatePost({ title: 'Tiêu đề', content: '' });
+
+            const [url, init] = global.fetch.mock.calls[0];
+            expect(url).toContain('generativelanguage.googleapis.com');
+            expect(url).toContain('gemini-3-flash-preview:generateContent');
+            expect(init.headers['x-goog-api-key']).toBe('test-api-key');
+            const body = JSON.parse(init.body);
+            expect(body.contents[0].parts[0].text).toContain('Title: Tiêu đề');
+            expect(body.generationConfig.thinkingConfig.thinkingBudget).toBe(0);
+        });
+
         it('should translate a post with title only (no content)', async () => {
-            mockFetchSuccess('English Title');
+            mockGeminiSuccess('English Title');
 
             const result = await translatePost({
                 title: 'Tiêu đề',
@@ -181,7 +248,7 @@ describe('posts.translator', () => {
         });
 
         it('should translate a post with content only (no title)', async () => {
-            mockFetchSuccess('Translated content');
+            mockGeminiSuccess('Translated content');
 
             const result = await translatePost({
                 title: '',
@@ -193,57 +260,93 @@ describe('posts.translator', () => {
             expect(global.fetch).toHaveBeenCalledTimes(1); // content only
         });
 
-        it('should throw when API returns error and exhaust fallbacks', async () => {
-            global.fetch.mockResolvedValue({
-                ok: false,
-                status: 500,
-                text: async () => 'Internal Server Error',
-            });
-
-            await expect(
-                translatePost({ title: 'Test', contentHtml: '<p>Test</p>' })
-            ).rejects.toThrow(BadRequestError);
-            expect(global.fetch).toHaveBeenCalledTimes(1); // Fails immediately on 500
-        });
-
-        it('should retry on 429 error and succeed', async () => {
+        it('should retry on 429 error and succeed via fallback model', async () => {
             global.fetch
                 .mockResolvedValueOnce({
                     ok: false,
                     status: 429,
-                    text: async () => 'Rate limited',
+                    json: async () => ({ error: { message: 'Rate limited' } }),
                 })
                 .mockResolvedValue({
                     ok: true,
                     json: async () => ({
-                        choices: [{ message: { content: 'Fallback Success' } }],
+                        candidates: [
+                            {
+                                content: { parts: [{ text: 'Fallback Success' }] },
+                                finishReason: 'STOP',
+                            },
+                        ],
                     }),
                 });
 
             const result = await translatePost({ title: 'Test', content: '' });
             expect(result.title).toBe('Fallback Success');
+            expect(global.fetch).toHaveBeenCalledTimes(2);
         });
 
-        it('should throw PROVIDER_FAILED if no content returned', async () => {
+        it('should fall back when first model returns untranslated Vietnamese', async () => {
+            const stillVietnamese =
+                'Bài viết này hướng dẫn cách triển khai ứng dụng lên Kubernetes bằng Ansible và các công cụ DevOps hiện đại trên máy chủ Ubuntu.';
+
+            global.fetch
+                .mockResolvedValueOnce({
+                    ok: true,
+                    json: async () => ({
+                        candidates: [
+                            {
+                                content: { parts: [{ text: stillVietnamese }] },
+                                finishReason: 'STOP',
+                            },
+                        ],
+                    }),
+                })
+                .mockResolvedValue({
+                    ok: true,
+                    json: async () => ({
+                        candidates: [
+                            {
+                                content: { parts: [{ text: 'Properly translated paragraph in English about Kubernetes deployment and DevOps tooling.' }] },
+                                finishReason: 'STOP',
+                            },
+                        ],
+                    }),
+                });
+
+            const result = await translatePost({ title: 'Test', content: '' });
+            expect(result.title).toContain('Properly translated');
+            expect(global.fetch).toHaveBeenCalledTimes(2);
+        });
+
+        it('should throw PROVIDER_FAILED if no candidate text returned', async () => {
+            global.fetch.mockResolvedValue({
+                ok: true,
+                json: async () => ({ candidates: [] }),
+            });
+
+            await expect(
+                translatePost({ title: 'Test', content: '' })
+            ).rejects.toThrow(
+                'All Gemini text models are overloaded or rate-limited. Please try again in a few minutes.'
+            );
+        });
+
+        it('should surface SAFETY block as PROVIDER_FAILED and exhaust fallbacks', async () => {
             global.fetch.mockResolvedValue({
                 ok: true,
                 json: async () => ({
-                    choices: [],
+                    candidates: [{ finishReason: 'SAFETY', content: { parts: [{ text: '' }] } }],
                 }),
             });
 
             await expect(
                 translatePost({ title: 'Test', content: '' })
-            ).rejects.toThrow('All free AI models are overloaded or rate-limited. Please try again in a few minutes.');
+            ).rejects.toThrow(
+                'All Gemini text models are overloaded or rate-limited. Please try again in a few minutes.'
+            );
         });
 
         it('should strip quotes from translated title', async () => {
-            global.fetch.mockResolvedValue({
-                ok: true,
-                json: async () => ({
-                    choices: [{ message: { content: '"Quoted Title"' } }],
-                }),
-            });
+            mockGeminiSuccess('"Quoted Title"');
 
             const result = await translatePost({
                 title: 'Tiêu đề',
