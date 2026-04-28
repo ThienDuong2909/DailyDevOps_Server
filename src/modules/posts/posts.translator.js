@@ -1,10 +1,17 @@
 const config = require('../../config');
 const { BadRequestError } = require('../../middlewares/error.middleware');
 
+// Ordered by reliability on the free tier:
+// - The Google :free models are routed via Google AI Studio and respond
+//   consistently with 200 for our short translation prompts.
+// - meta-llama/llama-3.3-70b-instruct:free is currently routed exclusively
+//   via Venice on our account, which frequently returns 429/402 due to
+//   upstream rate/spend limits. Keeping it last so it only runs when both
+//   Google providers are exhausted.
 const TRANSLATION_MODELS = [
-    'meta-llama/llama-3.3-70b-instruct:free',
     'google/gemma-3-12b-it:free',
     'google/gemma-3-4b-it:free',
+    'meta-llama/llama-3.3-70b-instruct:free',
 ];
 
 const MAX_CHUNK_SIZE = 3500;
