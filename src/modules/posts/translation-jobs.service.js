@@ -65,8 +65,16 @@ class TranslationJobsService {
      */
     async recoverOrphanedJobs() {
         try {
+            // Only touch jobs that predate this process. The recovery call is
+            // fire-and-forget after `app.listen()`, so a request arriving in
+            // the window between startup and this query running can legitimately
+            // create a PENDING job that must not be swept up here.
+            const cutoff = new Date();
             const { count } = await translationJobsRepository.updateMany({
-                where: { status: { in: ACTIVE_STATUSES } },
+                where: {
+                    status: { in: ACTIVE_STATUSES },
+                    createdAt: { lt: cutoff },
+                },
                 data: {
                     status: 'FAILED',
                     currentStep: 'failed',
