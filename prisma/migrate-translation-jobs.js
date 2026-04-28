@@ -17,6 +17,7 @@ async function main() {
             result_content LONGTEXT NULL,
             error TEXT NULL,
             started_by_id VARCHAR(191) NULL,
+            started_by_role VARCHAR(32) NULL,
             started_at DATETIME(3) NULL,
             completed_at DATETIME(3) NULL,
             created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -36,6 +37,23 @@ async function main() {
         ALTER TABLE translation_jobs
         MODIFY updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3);
     `);
+
+    // Idempotently add started_by_role for installs that predate this column.
+    // MySQL doesn't support `ADD COLUMN IF NOT EXISTS` before 8.0.29, so we
+    // check information_schema first.
+    const [roleColumn] = await prisma.$queryRawUnsafe(`
+        SELECT COLUMN_NAME
+        FROM information_schema.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME = 'translation_jobs'
+          AND COLUMN_NAME = 'started_by_role';
+    `);
+    if (!roleColumn) {
+        await prisma.$executeRawUnsafe(`
+            ALTER TABLE translation_jobs
+            ADD COLUMN started_by_role VARCHAR(32) NULL AFTER started_by_id;
+        `);
+    }
 }
 
 main()

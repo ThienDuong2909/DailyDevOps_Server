@@ -146,6 +146,10 @@ class TranslationJobsService {
             progress: 0,
             currentStep: 'queued',
             startedById: userId || null,
+            // Record the role so the background worker can apply the same
+            // per-role status policy as PostsService.upsertTranslation (e.g.
+            // AUTHOR's translation is downgraded PUBLISHED -> REVIEW).
+            startedByRole: userRole || null,
         });
 
         // Fire-and-forget: run the job in the background. We do not await —
@@ -317,7 +321,12 @@ class TranslationJobsService {
                 currentStep: 'saving translation',
             });
 
-            await this.persistTranslation({ post, translated, locale: job.locale });
+            await this.persistTranslation({
+                post,
+                translated,
+                locale: job.locale,
+                startedByRole: job.startedByRole,
+            });
 
             await translationJobsRepository.update(jobId, {
                 status: 'COMPLETED',
@@ -355,7 +364,16 @@ class TranslationJobsService {
      * PostsService.upsertTranslation (which enforces per-user edit permissions
      * that don't apply to a background worker).
      */
-    async persistTranslation({ post, translated, locale }) {
+    async persistTranslation({ post, translated, locale, startedByRole }) {
+        // Mirror PostsService.upsertTranslation: editorial roles keep the
+        // derived status, but AUTHORs must not bypass review — their
+        // PUBLISHED/SCHEDULED translations are downgraded to REVIEW.
+        const initialStatus = post.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT';
+        const resolvedStatus = this.resolveEditableStatus(
+            initialStatus,
+            startedByRole
+        );
+
         const normalized = normalizeTranslationPayload({
             locale,
             title: translated.title,
@@ -364,7 +382,7 @@ class TranslationJobsService {
             excerpt: translated.excerpt,
             content: translated.content,
             contentHtml: translated.contentHtml,
-            status: post.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT',
+            status: resolvedStatus,
         });
 
         const baseSlug = normalized.slug?.trim() || generateSlug(normalized.title);
@@ -401,6 +419,24 @@ class TranslationJobsService {
                 publishedAt: buildPublishedAt(targetStatus, null),
             },
         });
+    }
+
+    /**
+     * Keep non-editorial roles (AUTHOR) from publishing translations directly.
+     * Mirrors PostsService.resolveEditableStatus but stays local to the
+     * worker so we don't need to import the PostsService from here.
+     */
+    resolveEditableStatus(status, userRole) {
+        if (!status) {
+            return undefined;
+        }
+        if (userRole === 'ADMIN' || userRole === 'EDITOR' || userRole === 'MODERATOR') {
+            return status;
+        }
+        if (status === 'PUBLISHED' || status === 'SCHEDULED') {
+            return 'REVIEW';
+        }
+        return status;
     }
 
     /**
