@@ -1,45 +1,83 @@
 const config = require('../../config');
 const { BadRequestError } = require('../../middlewares/error.middleware');
 
-// Ordered by reliability on the free tier:
-// - The Google :free models are routed via Google AI Studio and respond
-//   consistently with 200 for our short translation prompts.
-// - meta-llama/llama-3.3-70b-instruct:free is currently routed exclusively
-//   via Venice on our account, which frequently returns 429/402 due to
-//   upstream rate/spend limits. Keeping it last so it only runs when both
-//   Google providers are exhausted.
-const TRANSLATION_MODELS = [
-    'google/gemma-3-12b-it:free',
-    'google/gemma-3-4b-it:free',
-    'meta-llama/llama-3.3-70b-instruct:free',
+const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+// Primary text model is read from env (defaults to gemini-3-flash-preview).
+// Fallback models are stable Gemini Flash variants known to handle short
+// translation prompts reliably on the free tier. The list is deduped at
+// runtime in case the configured primary already appears in the fallbacks.
+const FALLBACK_TEXT_MODELS = [
+    'gemini-2.5-flash',
+    'gemini-2.0-flash',
 ];
+
+const getTranslationModels = () => {
+    const primary = config.gemini.textModel || 'gemini-3-flash-preview';
+    const ordered = [primary, ...FALLBACK_TEXT_MODELS];
+    return Array.from(new Set(ordered));
+};
 
 const MAX_CHUNK_SIZE = 3500;
 
+// Only Gemini 2.5 and Gemini 3 models accept `thinkingConfig`. Older
+// pre-thinking-era models (e.g. gemini-2.0-flash, gemini-1.5-*) reject it
+// with HTTP 400, which would break the fallback chain.
+const supportsThinkingConfig = (model) => /(?:^|[^\d])(2\.5|3)(?:[^\d]|$)/.test(model);
+
+const buildGenerationConfig = (model) => {
+    const base = {
+        temperature: 0.2,
+        maxOutputTokens: 8192,
+    };
+    if (supportsThinkingConfig(model)) {
+        // Translation is mechanical work; reasoning tokens just burn budget
+        // without improving output. Gemini 2.5/3 models default to thinking
+        // on, so we explicitly opt out for thinking-capable models.
+        base.thinkingConfig = { thinkingBudget: 0 };
+    }
+    return base;
+};
+
 const executeTranslationRequest = async (model, prompt, apiKey) => {
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': config.appUrl || 'https://dailydevops.blog',
-            'X-Title': 'DevOps Blog Translator',
-        },
-        body: JSON.stringify({
-            model,
-            messages: [{ role: 'user', content: prompt }],
-        }),
-    });
+    const response = await fetch(
+        `${GEMINI_API_BASE_URL}/${encodeURIComponent(model)}:generateContent`,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-goog-api-key': apiKey,
+            },
+            body: JSON.stringify({
+                contents: [
+                    {
+                        parts: [{ text: prompt }],
+                    },
+                ],
+                generationConfig: buildGenerationConfig(model),
+            }),
+        }
+    );
+
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`OpenRouter HTTP ${response.status}: ${errorText}`);
+        const errorMessage =
+            data?.error?.message ||
+            data?.message ||
+            `Gemini HTTP ${response.status}`;
+        throw new Error(`Gemini HTTP ${response.status}: ${errorMessage}`);
     }
 
-    const data = await response.json();
-    const content = data?.choices?.[0]?.message?.content;
+    const candidate = data?.candidates?.[0];
+    const finishReason = candidate?.finishReason;
+    const content = candidate?.content?.parts?.[0]?.text;
 
-    if (!content) {
+    if (finishReason === 'SAFETY' || finishReason === 'PROHIBITED_CONTENT') {
+        throw new Error(`PROVIDER_FAILED: Gemini blocked output (${finishReason}).`);
+    }
+
+    if (!content?.trim()) {
         throw new Error('PROVIDER_FAILED: No content returned from AI translation.');
     }
 
@@ -136,41 +174,81 @@ const buildExcerptTranslationPrompt = (excerpt) => {
 Text: ${excerpt}`;
 };
 
+// A chunk that comes back with too many Vietnamese-only diacritics is almost
+// certainly the model echoing the source text instead of translating it.
+// Anything above the threshold gets retried with the next model.
+//
+// Pure Vietnamese text typically has a diacritic ratio of 15–17%. English
+// translations that legitimately preserve Vietnamese proper nouns (e.g.
+// "Nguyễn", "Hồ Chí Minh", "Đà Nẵng") sit well below 3%. A 5% threshold
+// cleanly separates the two without flagging correctly-translated text that
+// happens to keep a few Vietnamese names.
+const VIETNAMESE_DIACRITIC_REGEX = /[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđÀÁẢÃẠĂẮẰẲẴẶÂẤẦẨẪẬÈÉẺẼẸÊẾỀỂỄỆÌÍỈĨỊÒÓỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰỲÝỶỸỴĐ]/g;
+const MIN_LENGTH_FOR_DIACRITIC_CHECK = 80;
+const MAX_DIACRITIC_RATIO = 0.05;
+
+const looksUntranslated = (text) => {
+    if (!text || text.length < MIN_LENGTH_FOR_DIACRITIC_CHECK) {
+        return false;
+    }
+    const diacritics = text.match(VIETNAMESE_DIACRITIC_REGEX);
+    if (!diacritics) return false;
+    const ratio = diacritics.length / text.length;
+    return ratio > MAX_DIACRITIC_RATIO;
+};
+
 /**
  * Execute translation with model fallback
  */
 const processWithFallback = async (prompt, apiKey, label = 'content') => {
+    const models = getTranslationModels();
     let attempt = 0;
+    let lastError = null;
 
-    while (attempt < TRANSLATION_MODELS.length) {
-        const model = TRANSLATION_MODELS[attempt];
+    while (attempt < models.length) {
+        const model = models[attempt];
 
         try {
             console.log(`[Translator] Translating ${label} with model: ${model}`);
             const rawOutput = await executeTranslationRequest(model, prompt, apiKey);
-            return cleanTranslatedContent(rawOutput);
+            const cleaned = cleanTranslatedContent(rawOutput);
+
+            if (looksUntranslated(cleaned)) {
+                throw new Error(
+                    `PROVIDER_FAILED: Output still contains Vietnamese diacritics (model echoed source).`
+                );
+            }
+
+            return cleaned;
         } catch (error) {
+            lastError = error;
             attempt++;
-            const isOverloaded =
+            const isRetryable =
                 error.message?.includes('429') ||
+                error.message?.includes('500') ||
+                error.message?.includes('502') ||
                 error.message?.includes('503') ||
                 error.message?.includes('524') ||
                 error.message?.includes('rate-limited') ||
                 error.message?.includes('PROVIDER_FAILED');
 
-            if (isOverloaded && attempt < TRANSLATION_MODELS.length) {
+            if (isRetryable && attempt < models.length) {
                 console.warn(
-                    `[Translator] Model ${model} overloaded for ${label}. Falling back...`
+                    `[Translator] Model ${model} failed for ${label} (${error.message}). Falling back...`
                 );
                 await new Promise((r) => setTimeout(r, 2000));
             } else {
-                const errMessage = isOverloaded
-                    ? 'All free AI models are overloaded or rate-limited. Please try again in a few minutes.'
+                const errMessage = isRetryable
+                    ? 'All Gemini text models are overloaded or rate-limited. Please try again in a few minutes.'
                     : `Translation error: ${error.message}`;
                 throw new BadRequestError(errMessage);
             }
         }
     }
+
+    throw new BadRequestError(
+        `Translation failed after exhausting all models. Last error: ${lastError?.message || 'unknown'}`
+    );
 };
 
 /**
@@ -280,11 +358,11 @@ const translateContent = async (rawContent, apiKey, options = {}) => {
  * @returns {Promise<{title: string, subtitle: string, excerpt: string, content: string, contentHtml: string, slug: string}>}
  */
 const translatePost = async (post, options = {}) => {
-    const apiKey = config.openrouter.apiKey;
+    const apiKey = config.gemini.apiKey;
     const onProgress = options.onProgress || noopProgress;
 
     if (!apiKey) {
-        throw new BadRequestError('OpenRouter API key is not configured.');
+        throw new BadRequestError('GEMINI_API_KEY is not configured on the server.');
     }
 
     const rawContent = post.contentHtml || post.content || '';
@@ -327,4 +405,6 @@ module.exports = {
     buildTitleTranslationPrompt,
     buildExcerptTranslationPrompt,
     stripSurroundingQuotes,
+    looksUntranslated,
+    getTranslationModels,
 };
