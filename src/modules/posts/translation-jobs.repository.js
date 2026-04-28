@@ -29,6 +29,10 @@ class TranslationJobsRepository {
         });
     }
 
+    updateMany(params) {
+        return prisma.translationJob.updateMany(params);
+    }
+
     deleteMany(params) {
         return prisma.translationJob.deleteMany(params);
     }

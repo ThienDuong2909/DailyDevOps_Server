@@ -58,21 +58,29 @@ class TranslationJobsService {
     /**
      * On server startup: any job left in PENDING/RUNNING from a previous
      * process is orphaned — mark it FAILED so the UI doesn't show a false
-     * "in progress" state forever. Also re-runs any that might have been
-     * queued (we don't persist across restarts here — simplest behavior).
+     * "in progress" state forever, and so clients polling by job id still
+     * get a terminal state (instead of a 404 when the row disappears).
+     * The worker is in-process, so we can't resume — the client must
+     * re-enqueue.
      */
     async recoverOrphanedJobs() {
         try {
-            const { count } = await translationJobsRepository.deleteMany({
+            const { count } = await translationJobsRepository.updateMany({
                 where: { status: { in: ACTIVE_STATUSES } },
+                data: {
+                    status: 'FAILED',
+                    currentStep: 'failed',
+                    error: 'Server restarted while translation was in progress. Please re-enqueue.',
+                    completedAt: new Date(),
+                },
             });
             if (count > 0) {
                 console.log(
-                    `[TranslationJobs] Cleaned up ${count} orphaned in-flight job(s) from previous process`
+                    `[TranslationJobs] Marked ${count} orphaned in-flight job(s) as FAILED after process restart`
                 );
             }
         } catch (error) {
-            console.error('[TranslationJobs] Failed to clean up orphaned jobs:', error.message);
+            console.error('[TranslationJobs] Failed to recover orphaned jobs:', error.message);
         }
     }
 
