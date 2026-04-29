@@ -3,17 +3,19 @@ const { BadRequestError } = require('../../middlewares/error.middleware');
 
 const GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-// Primary text model is read from env (defaults to gemini-3-flash-preview).
-// Fallback models are stable Gemini Flash variants known to handle short
-// translation prompts reliably on the free tier. The list is deduped at
+// Primary text model is read from env (defaults to gemini-2.0-flash).
+// gemini-2.0-flash has the most generous free-tier quota (1500 RPD) so it is
+// the safest default. gemini-2.5-flash and gemini-3-flash-preview offer higher
+// quality but much smaller free quotas (250 RPD and 5 RPD respectively),
+// so they sit behind 2.0-flash in the fallback chain. The list is deduped at
 // runtime in case the configured primary already appears in the fallbacks.
 const FALLBACK_TEXT_MODELS = [
     'gemini-2.5-flash',
-    'gemini-2.0-flash',
+    'gemini-3-flash-preview',
 ];
 
 const getTranslationModels = () => {
-    const primary = config.gemini.textModel || 'gemini-3-flash-preview';
+    const primary = config.gemini.textModel || 'gemini-2.0-flash';
     const ordered = [primary, ...FALLBACK_TEXT_MODELS];
     return Array.from(new Set(ordered));
 };
