@@ -20,7 +20,7 @@ describe('posts.translator', () => {
         global.fetch = jest.fn();
         config.gemini = config.gemini || {};
         config.gemini.apiKey = 'test-api-key';
-        config.gemini.textModel = 'gemini-3-flash-preview';
+        config.gemini.textModel = 'gemini-2.0-flash';
     });
 
     afterEach(() => {
@@ -168,14 +168,13 @@ describe('posts.translator', () => {
             const models = getTranslationModels();
             expect(models[0]).toBe('gemini-3-flash-preview');
             expect(models).toContain('gemini-2.5-flash');
-            expect(models).toContain('gemini-2.0-flash');
         });
 
         it('does not duplicate when primary already present in fallbacks', () => {
-            config.gemini.textModel = 'gemini-2.0-flash';
+            config.gemini.textModel = 'gemini-2.5-flash';
             const models = getTranslationModels();
-            expect(models.filter((m) => m === 'gemini-2.0-flash')).toHaveLength(1);
-            expect(models[0]).toBe('gemini-2.0-flash');
+            expect(models.filter((m) => m === 'gemini-2.5-flash')).toHaveLength(1);
+            expect(models[0]).toBe('gemini-2.5-flash');
         });
     });
 
@@ -236,23 +235,20 @@ describe('posts.translator', () => {
 
             const [url, init] = global.fetch.mock.calls[0];
             expect(url).toContain('generativelanguage.googleapis.com');
-            expect(url).toContain('gemini-3-flash-preview:generateContent');
+            expect(url).toContain('gemini-2.0-flash:generateContent');
             expect(init.headers['x-goog-api-key']).toBe('test-api-key');
             const body = JSON.parse(init.body);
             expect(body.contents[0].parts[0].text).toContain('Title: Tiêu đề');
-            expect(body.generationConfig.thinkingConfig.thinkingBudget).toBe(0);
+            // gemini-2.0-flash is pre-thinking-era, so thinkingConfig must be omitted
+            expect(body.generationConfig.thinkingConfig).toBeUndefined();
         });
 
-        it('omits thinkingConfig when falling back to a pre-thinking model (gemini-2.0-flash)', async () => {
-            // First two models fail with retryable errors; third (gemini-2.0-flash)
-            // is the one we care about. Verify that body sent to it has NO
-            // thinkingConfig (sending it would 400 and break the chain).
+        it('sends thinkingConfig when falling back to a thinking-era model (gemini-2.5-flash)', async () => {
+            // Default primary is gemini-2.0-flash (pre-thinking, no thinkingConfig).
+            // First call (2.0-flash) fails; second (gemini-2.5-flash) is thinking-era
+            // and MUST receive thinkingConfig.thinkingBudget = 0 to avoid burning
+            // tokens on hidden reasoning.
             global.fetch
-                .mockResolvedValueOnce({
-                    ok: false,
-                    status: 503,
-                    json: async () => ({ error: { message: 'overloaded' } }),
-                })
                 .mockResolvedValueOnce({
                     ok: false,
                     status: 503,
@@ -269,18 +265,19 @@ describe('posts.translator', () => {
 
             await translatePost({ title: 'Tiêu đề', content: '' });
 
-            // Last call (3rd attempt) used gemini-2.0-flash
-            const lastCall = global.fetch.mock.calls[global.fetch.mock.calls.length - 1];
-            const [lastUrl, lastInit] = lastCall;
-            expect(lastUrl).toContain('gemini-2.0-flash:generateContent');
-            const lastBody = JSON.parse(lastInit.body);
-            expect(lastBody.generationConfig.thinkingConfig).toBeUndefined();
-            expect(lastBody.generationConfig.temperature).toBe(0.2);
-            expect(lastBody.generationConfig.maxOutputTokens).toBe(8192);
-
-            // First call (gemini-3-flash-preview) still includes it
+            // First call (gemini-2.0-flash) had NO thinkingConfig
             const firstBody = JSON.parse(global.fetch.mock.calls[0][1].body);
-            expect(firstBody.generationConfig.thinkingConfig.thinkingBudget).toBe(0);
+            expect(firstBody.generationConfig.thinkingConfig).toBeUndefined();
+            expect(global.fetch.mock.calls[0][0]).toContain('gemini-2.0-flash:generateContent');
+
+            // Second call (gemini-2.5-flash) DID include thinkingConfig
+            const secondCall = global.fetch.mock.calls[1];
+            const [secondUrl, secondInit] = secondCall;
+            expect(secondUrl).toContain('gemini-2.5-flash:generateContent');
+            const secondBody = JSON.parse(secondInit.body);
+            expect(secondBody.generationConfig.thinkingConfig.thinkingBudget).toBe(0);
+            expect(secondBody.generationConfig.temperature).toBe(0.2);
+            expect(secondBody.generationConfig.maxOutputTokens).toBe(8192);
         }, 15000);
 
         it('should translate a post with title only (no content)', async () => {
