@@ -205,8 +205,8 @@ const buildLocaleAlternates = (post, translationMap = {}) => {
     };
 
     Object.entries(translationMap).forEach(([locale, translation]) => {
-        if (translation?.slug) {
-            alternates[locale] = translation.slug;
+        if (translation?.status === 'PUBLISHED') {
+            alternates[locale] = post.slug;
         }
     });
 
@@ -247,7 +247,7 @@ const applyTranslationToPost = (post, locale = DEFAULT_LOCALE) => {
         ...basePost,
         locale: resolvedLocale,
         title: translation.title,
-        slug: translation.slug,
+        slug: basePost.slug,
         subtitle: translation.subtitle ?? translation.excerpt ?? null,
         excerpt: translation.subtitle ?? translation.excerpt ?? null,
         content: translation.contentHtml ?? translation.content ?? '',

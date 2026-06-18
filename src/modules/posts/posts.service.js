@@ -195,6 +195,25 @@ class PostsService {
                 where: { slug },
                 include: publicPostInclude,
             });
+
+            if (!post) {
+                const translation = await postsRepository.findFirstTranslation({
+                    where: {
+                        slug,
+                        status: 'PUBLISHED',
+                        post: {
+                            status: 'PUBLISHED',
+                        },
+                    },
+                    include: {
+                        post: {
+                            include: publicPostInclude,
+                        },
+                    },
+                });
+
+                post = translation?.post || null;
+            }
         } else {
             const translation = await postsRepository.findFirstTranslation({
                 where: {
@@ -213,6 +232,22 @@ class PostsService {
             });
 
             post = translation?.post || null;
+
+            if (!post) {
+                post = await postsRepository.findFirst({
+                    where: {
+                        slug,
+                        status: 'PUBLISHED',
+                        translations: {
+                            some: {
+                                locale: resolvedLocale,
+                                status: 'PUBLISHED',
+                            },
+                        },
+                    },
+                    include: publicPostInclude,
+                });
+            }
         }
 
         if (!post) {

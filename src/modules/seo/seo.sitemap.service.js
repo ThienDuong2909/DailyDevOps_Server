@@ -10,8 +10,8 @@ class SitemapService {
         };
 
         translations.forEach((translation) => {
-            if (translation?.locale && translation?.slug && translation.status === 'PUBLISHED') {
-                alternates[translation.locale] = translation.slug;
+            if (translation?.locale && translation.status === 'PUBLISHED') {
+                alternates[translation.locale] = post.slug;
             }
         });
 
@@ -63,20 +63,15 @@ class SitemapService {
             return posts;
         }
 
-        return posts
-            .map((post) => {
-                const translation = Array.isArray(post.translations) ? post.translations[0] : null;
-                if (!translation?.slug) {
-                    return null;
-                }
+        return posts.map((post) => {
+            const translation = Array.isArray(post.translations) ? post.translations[0] : null;
 
-                return {
-                    ...post,
-                    slug: translation.slug,
-                    featuredImage: translation.featuredImage || post.featuredImage,
-                };
-            })
-            .filter(Boolean);
+            return {
+                ...post,
+                slug: post.slug,
+                featuredImage: translation?.featuredImage || post.featuredImage,
+            };
+        });
     }
 
     /**
@@ -190,12 +185,12 @@ class SitemapService {
             };
         }
 
-        const translation = await prisma.postTranslation.findFirst({
+        let translation = await prisma.postTranslation.findFirst({
             where: {
                 locale: resolvedLocale,
-                slug,
                 status: 'PUBLISHED',
                 post: {
+                    slug,
                     status: 'PUBLISHED',
                 },
             },
@@ -218,6 +213,36 @@ class SitemapService {
             },
         });
 
+        if (!translation) {
+            translation = await prisma.postTranslation.findFirst({
+                where: {
+                    locale: resolvedLocale,
+                    slug,
+                    status: 'PUBLISHED',
+                    post: {
+                        status: 'PUBLISHED',
+                    },
+                },
+                select: {
+                    locale: true,
+                    title: true,
+                    slug: true,
+                    excerpt: true,
+                    featuredImage: true,
+                    metaTitle: true,
+                    metaDescription: true,
+                    canonicalUrl: true,
+                    ogImage: true,
+                    noIndex: true,
+                    noFollow: true,
+                    focusKeywords: true,
+                    post: {
+                        select: baseSelect,
+                    },
+                },
+            });
+        }
+
         if (!translation?.post) {
             return null;
         }
@@ -226,7 +251,7 @@ class SitemapService {
             ...translation.post,
             locale: resolvedLocale,
             title: translation.title,
-            slug: translation.slug,
+            slug: translation.post.slug,
             excerpt: translation.excerpt || translation.post.excerpt,
             featuredImage: translation.featuredImage || translation.post.featuredImage,
             seoSetting: {
