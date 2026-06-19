@@ -1,5 +1,7 @@
 require('dotenv').config();
 
+const { randomBytes } = require('crypto');
+
 const nodeEnv = process.env.NODE_ENV || 'development';
 
 const parseNumber = (value, fallback) => {
@@ -57,6 +59,8 @@ const resolveApiPrefix = (value) => {
     return value || 'api/v1';
 };
 
+const buildLocalSigningValue = () => randomBytes(32).toString('hex');
+
 // ============================================
 // SECURITY: Fail fast if JWT secrets are not set in production
 // ============================================
@@ -68,6 +72,13 @@ if (nodeEnv === 'production') {
         process.exit(1);
     }
 }
+
+const localAccessSigningValue = process.env.JWT_ACCESS_SECRET || buildLocalSigningValue();
+const localRefreshSigningValue = process.env.JWT_REFRESH_SECRET || buildLocalSigningValue();
+const localMfaSigningValue =
+    process.env.JWT_MFA_SECRET ||
+    process.env.JWT_ACCESS_SECRET ||
+    buildLocalSigningValue();
 
 const config = {
     // Server
@@ -81,12 +92,9 @@ const config = {
 
     // JWT
     jwt: {
-        accessSecret: process.env.JWT_ACCESS_SECRET || 'dev-access-secret-change-in-production',
-        refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-in-production',
-        mfaSecret:
-            process.env.JWT_MFA_SECRET ||
-            process.env.JWT_ACCESS_SECRET ||
-            'dev-mfa-secret-change-in-production',
+        accessSecret: process.env.JWT_ACCESS_SECRET || localAccessSigningValue,
+        refreshSecret: process.env.JWT_REFRESH_SECRET || localRefreshSigningValue,
+        mfaSecret: process.env.JWT_MFA_SECRET || process.env.JWT_ACCESS_SECRET || localMfaSigningValue,
         accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
         refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
         mfaChallengeExpiresIn: process.env.JWT_MFA_CHALLENGE_EXPIRES_IN || '10m',
