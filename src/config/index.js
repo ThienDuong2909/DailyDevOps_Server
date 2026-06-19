@@ -1,6 +1,6 @@
 require('dotenv').config();
 
-const { randomBytes } = require('crypto');
+const { randomBytes } = require('node:crypto');
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 
