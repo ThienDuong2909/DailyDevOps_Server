@@ -1,6 +1,19 @@
 const config = require('../../config');
 const { BadRequestError } = require('../../middlewares/error.middleware');
 
+const getRetryDelayMs = () => (process.env.NODE_ENV === 'test' ? 0 : 2000);
+
+const waitForRetry = () => new Promise((resolve) => {
+    const delayMs = getRetryDelayMs();
+
+    if (delayMs === 0) {
+        resolve();
+        return;
+    }
+
+    setTimeout(resolve, delayMs);
+});
+
 const executeFormattingRequest = async (model, prompt, apiKey) => {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -113,7 +126,7 @@ Lưu ý QUAN TRỌNG:
 
                 if (isOverloaded && attempt < maxRetries) {
                     console.warn(`[OpenRouter] Model ${currentModel} overloaded on Chunk ${chunkIndex + 1}. Falling back to next model...`);
-                    await new Promise(r => setTimeout(r, 2000));
+                    await waitForRetry();
                 } else {
                     console.error(`[OpenRouter] format error on ${currentModel} at chunk ${chunkIndex + 1}:`, error);
                     const errMessage = isOverloaded
