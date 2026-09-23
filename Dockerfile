@@ -28,7 +28,7 @@ RUN apk upgrade --no-cache \
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder --chown=expressjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=expressjs:nodejs /app/prisma/schema.prisma ./prisma/schema.prisma
+COPY --from=builder --chown=expressjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=expressjs:nodejs /app/public ./public
 COPY --from=builder --chown=expressjs:nodejs /app/src ./src
 
