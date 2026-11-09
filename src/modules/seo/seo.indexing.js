@@ -1,5 +1,5 @@
 const SITE_URL = process.env.SITE_URL || 'https://dailydevops.blog';
-const INDEXNOW_KEY = process.env.INDEXNOW_KEY || 'dailydevops_seo_index';
+const INDEXNOW_KEY = process.env.INDEXNOW_KEY || 'dailydevops-seo-index';
 
 class SeoIndexingService {
     /**
