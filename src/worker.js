@@ -354,6 +354,9 @@ function isContentMutationRequest(method, pathname) {
     if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
         return false;
     }
+    if (pathname.endsWith('/view')) {
+        return false;
+    }
     return (
         pathname.startsWith('/api/v1/posts') ||
         pathname.startsWith('/api/v1/categories') ||

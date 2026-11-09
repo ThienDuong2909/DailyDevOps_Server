@@ -73,6 +73,19 @@ router.get(
 );
 
 /**
+ * @route   POST /api/posts/:slug/view
+ * @desc    Increment post view count beacon (public)
+ * @access  Public
+ */
+router.post(
+    '/:slug/view',
+    asyncHandler(async (req, res) => {
+        await postsService.recordView(req.params.slug);
+        return sendOk(res, { success: true });
+    })
+);
+
+/**
  * @route   GET /api/posts/:id/related
  * @desc    Get related posts
  * @access  Public

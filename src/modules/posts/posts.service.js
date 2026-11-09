@@ -284,16 +284,29 @@ class PostsService {
             throw new NotFoundError('Post not found');
         }
 
-        runInBackground(
-            postsRepository
-                .update({
+        return serializePosts([post], resolvedLocale)[0];
+    }
+
+    /**
+     * Record a view beacon for a post by slug or ID
+     */
+    async recordView(slugOrId) {
+        if (!slugOrId) return;
+        runInBackground(async () => {
+            const post = await postsRepository.findFirst({
+                where: {
+                    OR: [{ slug: slugOrId }, { id: slugOrId }],
+                    status: 'PUBLISHED',
+                },
+                select: { id: true },
+            });
+            if (post) {
+                await postsRepository.update({
                     where: { id: post.id },
                     data: { viewCount: { increment: 1 } },
-                })
-                .catch(() => {})
-        );
-
-        return serializePosts([post], resolvedLocale)[0];
+                }).catch(() => {});
+            }
+        });
     }
 
     /**
