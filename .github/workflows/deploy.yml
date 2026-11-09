@@ -2,16 +2,15 @@ name: CI/CD - Build & Deploy Server (Cloudflare Workers)
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   deploy-cloudflare:
     name: Build & Deploy API to Cloudflare Workers
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout source
         uses: actions/checkout@v4
 
       - name: Set up Node.js
