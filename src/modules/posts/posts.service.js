@@ -33,6 +33,7 @@ const subscribersService = require('../subscribers/subscribers.service');
 const { parseNotionExport } = require('./posts.importer');
 const { generateFeaturedImage } = require('./posts.image-generator');
 const translationJobsService = require('./translation-jobs.service');
+const seoIndexingService = require('../seo/seo.indexing');
 const thumbnailGenerationService = require('./posts.thumbnail-generation.service');
 
 class PostsService {
@@ -345,6 +346,7 @@ class PostsService {
         // Auto-translate to English when published
         if (targetStatus === 'PUBLISHED') {
             this.triggerAutoTranslation(post.id, authorId, authorRole);
+            runInBackground(() => seoIndexingService.notifyPost(post.slug, 'PUBLISHED'));
         }
 
         return serializePost(post);
@@ -636,6 +638,10 @@ class PostsService {
             this.triggerAutoTranslation(id, userId, userRole);
         }
 
+        if (nextStatus === 'PUBLISHED') {
+            runInBackground(() => seoIndexingService.notifyPost(updatedPost.slug, hasJustPublished ? 'PUBLISHED' : 'UPDATED'));
+        }
+
         return serializedUpdatedPost;
     }
 
@@ -650,6 +656,10 @@ class PostsService {
         }
 
         await postsRepository.delete({ where: { id } });
+
+        if (post.status === 'PUBLISHED') {
+            runInBackground(() => seoIndexingService.notifyPost(post.slug, 'DELETED'));
+        }
 
         return { message: 'Post deleted successfully' };
     }
