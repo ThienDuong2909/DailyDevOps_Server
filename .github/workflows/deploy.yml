@@ -16,14 +16,28 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
-      - name: Prepare Prisma D1 & Deploy to Cloudflare Workers
+      - name: Prepare Prisma D1 & Worker patches
+        env:
+          DATABASE_URL: "file:./dev.db"
+        run: npm run prepare:cf
+
+      - name: Verify Cloudflare API Token Secret
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN secret is missing in GitHub Repository Settings -> Secrets and variables -> Actions"
+            exit 1
+          fi
+
+      - name: Deploy API Worker to Cloudflare
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID || '4c87e4e13d3136e7c56c2009e1963a3a' }}
-        run: npm run deploy:cf
+        run: npx wrangler deploy
