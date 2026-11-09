@@ -85,6 +85,14 @@ function buildPublicSeoConfig(records) {
     };
 }
 
+function parseKeywords(val) {
+    if (Array.isArray(val)) return val;
+    if (typeof val === "string") {
+        try { const p = JSON.parse(val); return Array.isArray(p) ? p : []; } catch { return []; }
+    }
+    return [];
+}
+
 function buildPageEntryFromSeo(seoRecord, baseUrl) {
     return {
         pageType: seoRecord.pageType || 'home',
@@ -93,7 +101,7 @@ function buildPageEntryFromSeo(seoRecord, baseUrl) {
         metaTitle: seoRecord.metaTitle || '',
         metaDescription: seoRecord.metaDescription || '',
         canonicalUrl: seoRecord.canonicalUrl || `${baseUrl}/`,
-        focusKeywords: Array.isArray(seoRecord.focusKeywords) ? seoRecord.focusKeywords : [],
+        focusKeywords: parseKeywords(seoRecord.focusKeywords),
         ogImage: seoRecord.ogImage || '',
         noIndex: !!seoRecord.noIndex,
         noFollow: !!seoRecord.noFollow,
@@ -101,8 +109,9 @@ function buildPageEntryFromSeo(seoRecord, baseUrl) {
 }
 
 function buildPageEntryFromPost(post, baseUrl) {
-    const focusKeywords = Array.isArray(post.seoSetting?.focusKeywords)
-        ? post.seoSetting.focusKeywords
+    const parsedPostKeywords = parseKeywords(post.seoSetting?.focusKeywords);
+    const focusKeywords = parsedPostKeywords.length
+        ? parsedPostKeywords
         : post.tags.map((tag) => tag.name.toLowerCase());
 
     const metaTitle = post.seoSetting?.metaTitle || post.title;

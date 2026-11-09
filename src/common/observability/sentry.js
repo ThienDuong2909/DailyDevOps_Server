@@ -1,10 +1,21 @@
-const Sentry = require('@sentry/node');
 const config = require('../../config');
 
 let initialized = false;
+let Sentry = null;
 
 function isSentryEnabled() {
-    return Boolean(config.sentry.dsn);
+    return Boolean(config.sentry?.dsn);
+}
+
+function getSentry() {
+    if (!Sentry && isSentryEnabled()) {
+        try {
+            Sentry = require('@sentry/node');
+        } catch {
+            Sentry = null;
+        }
+    }
+    return Sentry;
 }
 
 function initSentry() {
@@ -12,13 +23,19 @@ function initSentry() {
         return;
     }
 
-    Sentry.init({
-        dsn: config.sentry.dsn,
-        environment: config.nodeEnv,
-        tracesSampleRate: config.sentry.tracesSampleRate,
-    });
+    const sentryClient = getSentry();
+    if (!sentryClient) return;
 
-    initialized = true;
+    try {
+        sentryClient.init({
+            dsn: config.sentry.dsn,
+            environment: config.nodeEnv,
+            tracesSampleRate: config.sentry.tracesSampleRate,
+        });
+        initialized = true;
+    } catch {
+        // Ignore initialization errors in edge runtime
+    }
 }
 
 function captureException(error, context = {}) {
@@ -26,12 +43,19 @@ function captureException(error, context = {}) {
         return;
     }
 
-    Sentry.withScope((scope) => {
-        Object.entries(context).forEach(([key, value]) => {
-            scope.setExtra(key, value);
+    const sentryClient = getSentry();
+    if (!sentryClient) return;
+
+    try {
+        sentryClient.withScope((scope) => {
+            Object.entries(context).forEach(([key, value]) => {
+                scope.setExtra(key, value);
+            });
+            sentryClient.captureException(error);
         });
-        Sentry.captureException(error);
-    });
+    } catch {
+        // Ignore
+    }
 }
 
 module.exports = {

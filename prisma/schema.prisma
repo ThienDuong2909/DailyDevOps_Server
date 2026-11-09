@@ -1,54 +1,13 @@
-// Prisma Schema for DevOps Blog
-// Documentation: https://pris.ly/d/prisma-schema
+// Prisma Schema for DevOps Blog (Cloudflare D1 / SQLite)
 
 generator client {
-  provider      = "prisma-client-js"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
-}
-
-// ============================================
-// ENUMS
-// ============================================
-
-enum Role {
-  ADMIN
-  MODERATOR
-  EDITOR
-  AUTHOR
-  VIEWER
-}
-
-enum PostStatus {
-  DRAFT
-  REVIEW
-  PUBLISHED
-  SCHEDULED
-  ARCHIVED
-}
-
-enum CommentStatus {
-  PENDING
-  APPROVED
-  SPAM
-  TRASH
-}
-
-enum TranslationJobStatus {
-  PENDING
-  RUNNING
-  COMPLETED
-  FAILED
-}
-
-enum SubscriberStatus {
-  PENDING
-  CONFIRMED
-  UNSUBSCRIBED
 }
 
 // ============================================
@@ -56,33 +15,33 @@ enum SubscriberStatus {
 // ============================================
 
 model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  password      String
-  firstName     String    @map("first_name")
-  lastName      String    @map("last_name")
-  avatar        String?
-  bio           String?
-  role          Role      @default(VIEWER)
-  isActive      Boolean   @default(true) @map("is_active")
-  refreshToken  String?   @map("refresh_token")
-  mfaEnabled    Boolean   @default(false) @map("mfa_enabled")
-  mfaSecret     String?   @map("mfa_secret")
-  mfaTempSecret String?   @map("mfa_temp_secret")
-  emailVerifiedAt DateTime? @map("email_verified_at")
-  emailVerificationToken String? @unique @map("email_verification_token")
+  id                         String    @id @default(cuid())
+  email                      String    @unique
+  password                   String
+  firstName                  String    @map("first_name")
+  lastName                   String    @map("last_name")
+  avatar                     String?
+  bio                        String?
+  role                       String    @default("VIEWER")
+  isActive                   Boolean   @default(true) @map("is_active")
+  refreshToken               String?   @map("refresh_token")
+  mfaEnabled                 Boolean   @default(false) @map("mfa_enabled")
+  mfaSecret                  String?   @map("mfa_secret")
+  mfaTempSecret              String?   @map("mfa_temp_secret")
+  emailVerifiedAt            DateTime? @map("email_verified_at")
+  emailVerificationToken     String?   @unique @map("email_verification_token")
   emailVerificationExpiresAt DateTime? @map("email_verification_expires_at")
-  resetPasswordToken String? @unique @map("reset_password_token")
-  resetPasswordExpiresAt DateTime? @map("reset_password_expires_at")
-  lastLoginAt   DateTime? @map("last_login_at")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  resetPasswordToken         String?   @unique @map("reset_password_token")
+  resetPasswordExpiresAt     DateTime? @map("reset_password_expires_at")
+  lastLoginAt                DateTime? @map("last_login_at")
+  createdAt                  DateTime  @default(now()) @map("created_at")
+  updatedAt                  DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  posts         Post[]
-  comments      Comment[]
-  seoSettings   SeoSetting[]
-  postVersions  PostVersion[]
+  posts        Post[]
+  comments     Comment[]
+  seoSettings  SeoSetting[]
+  postVersions PostVersion[]
 
   @@map("users")
 }
@@ -99,11 +58,11 @@ model Category {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Self-relation for subcategories
-  parent      Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
-  children    Category[] @relation("CategoryToCategory")
-  
+  parent   Category?  @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryToCategory")
+
   // Relations
-  posts       Post[]
+  posts Post[]
 
   @@map("categories")
 }
@@ -116,38 +75,38 @@ model Tag {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  posts     Post[]   @relation("PostTags")
+  posts Post[] @relation("PostTags")
 
   @@map("tags")
 }
 
 model Post {
-  id              String     @id @default(cuid())
-  title           String
-  slug            String     @unique
-  subtitle        String?    @db.Text
-  excerpt         String?
-  content         String     @db.Text
-  contentHtml     String?    @map("content_html") @db.LongText
-  contentJson     Json?      @map("content_json")
-  featuredImage   String?    @map("featured_image")
-  status          PostStatus @default(DRAFT)
-  rejectionReason String?    @map("rejection_reason") @db.Text
-  reviewedAt      DateTime?  @map("reviewed_at")
-  viewCount       Int        @default(0) @map("view_count")
-  readingTime     Int?       @map("reading_time") // in minutes
-  publishedAt     DateTime?  @map("published_at")
+  id               String    @id @default(cuid())
+  title            String
+  slug             String    @unique
+  subtitle         String?
+  excerpt          String?
+  content          String
+  contentHtml      String?   @map("content_html")
+  contentJson      String?   @map("content_json")
+  featuredImage    String?   @map("featured_image")
+  status           String    @default("DRAFT")
+  rejectionReason  String?   @map("rejection_reason")
+  reviewedAt       DateTime? @map("reviewed_at")
+  viewCount        Int       @default(0) @map("view_count")
+  readingTime      Int?      @map("reading_time") // in minutes
+  publishedAt      DateTime? @map("published_at")
   newsletterSentAt DateTime? @map("newsletter_sent_at")
-  scheduledAt     DateTime?  @map("scheduled_at")
-  createdAt       DateTime   @default(now()) @map("created_at")
-  updatedAt       DateTime   @updatedAt @map("updated_at")
+  scheduledAt      DateTime? @map("scheduled_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   // Relations
-  author          User       @relation(fields: [authorId], references: [id])
-  authorId        String     @map("author_id")
-  category        Category?  @relation(fields: [categoryId], references: [id])
-  categoryId      String?    @map("category_id")
-  tags            Tag[]      @relation("PostTags")
+  author          User              @relation(fields: [authorId], references: [id])
+  authorId        String            @map("author_id")
+  category        Category?         @relation(fields: [categoryId], references: [id])
+  categoryId      String?           @map("category_id")
+  tags            Tag[]             @relation("PostTags")
   comments        Comment[]
   seoSetting      SeoSetting?
   versions        PostVersion[]
@@ -161,31 +120,31 @@ model Post {
 }
 
 model PostTranslation {
-  id               String     @id @default(cuid())
-  locale           String
-  title            String
-  slug             String
-  subtitle         String?    @db.Text
-  excerpt          String?    @db.Text
-  content          String     @db.Text
-  contentHtml      String?    @map("content_html") @db.LongText
-  contentJson      Json?      @map("content_json")
-  featuredImage    String?    @map("featured_image")
-  metaTitle        String?    @map("meta_title")
-  metaDescription  String?    @map("meta_description") @db.Text
-  canonicalUrl     String?    @map("canonical_url")
-  ogImage          String?    @map("og_image")
-  noIndex          Boolean    @default(false) @map("no_index")
-  noFollow         Boolean    @default(false) @map("no_follow")
-  focusKeywords    Json?      @map("focus_keywords") @default("[]")
-  status           PostStatus @default(DRAFT)
-  publishedAt      DateTime?  @map("published_at")
-  scheduledAt      DateTime?  @map("scheduled_at")
-  createdAt        DateTime   @default(now()) @map("created_at")
-  updatedAt        DateTime   @updatedAt @map("updated_at")
+  id              String    @id @default(cuid())
+  locale          String
+  title           String
+  slug            String
+  subtitle        String?
+  excerpt         String?
+  content         String
+  contentHtml     String?   @map("content_html")
+  contentJson     String?   @map("content_json")
+  featuredImage   String?   @map("featured_image")
+  metaTitle       String?   @map("meta_title")
+  metaDescription String?   @map("meta_description")
+  canonicalUrl    String?   @map("canonical_url")
+  ogImage         String?   @map("og_image")
+  noIndex         Boolean   @default(false) @map("no_index")
+  noFollow        Boolean   @default(false) @map("no_follow")
+  focusKeywords   String?   @default("[]") @map("focus_keywords")
+  status          String    @default("DRAFT")
+  publishedAt     DateTime? @map("published_at")
+  scheduledAt     DateTime? @map("scheduled_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  post             Post       @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId           String     @map("post_id")
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String @map("post_id")
 
   @@unique([postId, locale])
   @@unique([locale, slug])
@@ -195,52 +154,52 @@ model PostTranslation {
 }
 
 model PostVersion {
-  id             String   @id @default(cuid())
-  postId         String   @map("post_id")
-  title          String
-  slug           String
-  subtitle       String?  @db.Text
-  excerpt        String?  @db.Text
-  content        String   @db.Text
-  contentHtml    String?  @map("content_html") @db.LongText
-  contentJson    Json?    @map("content_json")
-  featuredImage  String?  @map("featured_image")
-  status         PostStatus
-  scheduledAt    DateTime? @map("scheduled_at")
-  rejectionReason String?  @map("rejection_reason") @db.Text
-  categoryId     String?   @map("category_id")
-  tagIds         Json      @default("[]") @map("tag_ids")
-  createdById    String?   @map("created_by_id")
-  reason         String?   @db.Text
-  createdAt      DateTime  @default(now()) @map("created_at")
+  id              String    @id @default(cuid())
+  postId          String    @map("post_id")
+  title           String
+  slug            String
+  subtitle        String?
+  excerpt         String?
+  content         String
+  contentHtml     String?   @map("content_html")
+  contentJson     String?   @map("content_json")
+  featuredImage   String?   @map("featured_image")
+  status          String
+  scheduledAt     DateTime? @map("scheduled_at")
+  rejectionReason String?   @map("rejection_reason")
+  categoryId      String?   @map("category_id")
+  tagIds          String    @default("[]") @map("tag_ids")
+  createdById     String?   @map("created_by_id")
+  reason          String?
+  createdAt       DateTime  @default(now()) @map("created_at")
 
-  post           Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
-  createdBy      User?     @relation(fields: [createdById], references: [id])
+  post      Post  @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdBy User? @relation(fields: [createdById], references: [id])
 
   @@index([postId, createdAt])
   @@map("post_versions")
 }
 
 model Comment {
-  id        String        @id @default(cuid())
-  content   String        @db.Text
-  authorName String?      @map("author_name") // For guest comments
-  authorEmail String?     @map("author_email") // For guest comments
-  authorIp  String?       @map("author_ip")
-  status    CommentStatus @default(PENDING)
-  parentId  String?       @map("parent_id")
-  createdAt DateTime      @default(now()) @map("created_at")
-  updatedAt DateTime      @updatedAt @map("updated_at")
+  id          String   @id @default(cuid())
+  content     String
+  authorName  String?  @map("author_name") // For guest comments
+  authorEmail String?  @map("author_email") // For guest comments
+  authorIp    String?  @map("author_ip")
+  status      String   @default("PENDING")
+  parentId    String?  @map("parent_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Relations
-  post      Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId    String        @map("post_id")
-  user      User?         @relation(fields: [userId], references: [id])
-  userId    String?       @map("user_id")
-  
+  post   Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String  @map("post_id")
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String? @map("user_id")
+
   // Self-relation for replies
-  parent    Comment?      @relation("CommentReplies", fields: [parentId], references: [id])
-  replies   Comment[]     @relation("CommentReplies")
+  parent  Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies Comment[] @relation("CommentReplies")
 
   @@index([postId, status])
   @@map("comments")
@@ -249,8 +208,8 @@ model Comment {
 model SeoSetting {
   id              String   @id @default(cuid())
   metaTitle       String?  @map("meta_title")
-  metaDescription String?  @map("meta_description") @db.Text
-  focusKeywords   Json?    @map("focus_keywords") @default("[]")
+  metaDescription String?  @map("meta_description")
+  focusKeywords   String?  @default("[]") @map("focus_keywords")
   canonicalUrl    String?  @map("canonical_url")
   ogImage         String?  @map("og_image")
   noIndex         Boolean  @default(false) @map("no_index")
@@ -259,28 +218,28 @@ model SeoSetting {
   updatedAt       DateTime @updatedAt @map("updated_at")
 
   // Relations - can be for post or global page
-  post            Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId          String?  @unique @map("post_id")
-  user            User?    @relation(fields: [userId], references: [id])
-  userId          String?  @map("user_id")
-  
+  post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String? @unique @map("post_id")
+  user   User?   @relation(fields: [userId], references: [id])
+  userId String? @map("user_id")
+
   // For global pages (home, about, etc.)
-  pageType        String?  @map("page_type") // 'home', 'about', 'contact', etc.
+  pageType String? @map("page_type") // 'home', 'about', 'contact', etc.
 
   @@map("seo_settings")
 }
 
 model Subscriber {
-  id          String    @id @default(cuid())
-  email       String    @unique
-  name        String?
-  status      SubscriberStatus @default(PENDING)
-  isActive    Boolean   @default(false) @map("is_active")
-  confirmToken String?  @unique @map("confirm_token")
-  confirmedAt DateTime? @map("confirmed_at")
-  unsubscribeToken String? @unique @map("unsubscribe_token")
-  subscribedAt DateTime @default(now()) @map("subscribed_at")
-  unsubscribedAt DateTime? @map("unsubscribed_at")
+  id               String    @id @default(cuid())
+  email            String    @unique
+  name             String?
+  status           String    @default("PENDING")
+  isActive         Boolean   @default(false) @map("is_active")
+  confirmToken     String?   @unique @map("confirm_token")
+  confirmedAt      DateTime? @map("confirmed_at")
+  unsubscribeToken String?   @unique @map("unsubscribe_token")
+  subscribedAt     DateTime  @default(now()) @map("subscribed_at")
+  unsubscribedAt   DateTime? @map("unsubscribed_at")
 
   @@map("subscribers")
 }
@@ -288,7 +247,7 @@ model Subscriber {
 model SystemSetting {
   id        String   @id @default(cuid())
   key       String   @unique
-  value     String   @db.Text
+  value     String
   type      String   @default("string") // string, number, boolean, json
   group     String   @default("general") // general, seo, email, backup
   createdAt DateTime @default(now()) @map("created_at")
@@ -298,16 +257,16 @@ model SystemSetting {
 }
 
 model ActivityLog {
-  id          String   @id @default(cuid())
-  action      String   // CREATE, UPDATE, DELETE, LOGIN, etc.
-  entity      String   // Post, User, Comment, etc.
-  entityId    String?  @map("entity_id")
-  userId      String?  @map("user_id")
-  userEmail   String?  @map("user_email")
-  ipAddress   String?  @map("ip_address")
-  userAgent   String?  @map("user_agent")
-  details     String?  @db.Text // JSON string for additional info
-  createdAt   DateTime @default(now()) @map("created_at")
+  id        String   @id @default(cuid())
+  action    String // CREATE, UPDATE, DELETE, LOGIN, etc.
+  entity    String // Post, User, Comment, etc.
+  entityId  String?  @map("entity_id")
+  userId    String?  @map("user_id")
+  userEmail String?  @map("user_email")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  details   String? // JSON string for additional info
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId, createdAt])
   @@index([entity, entityId])
@@ -315,26 +274,49 @@ model ActivityLog {
 }
 
 model TranslationJob {
-  id            String               @id @default(cuid())
-  post          Post                 @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId        String               @map("post_id")
-  locale        String               @default("en")
-  status        TranslationJobStatus @default(PENDING)
-  progress      Int                  @default(0)
-  currentStep   String?              @map("current_step")
-  resultTitle   String?              @map("result_title") @db.Text
-  resultSlug    String?              @map("result_slug")
-  resultExcerpt String?              @map("result_excerpt") @db.Text
-  resultContent String?              @map("result_content") @db.LongText
-  error         String?              @db.Text
-  startedById   String?              @map("started_by_id")
-  startedByRole String?              @map("started_by_role")
-  startedAt     DateTime?            @map("started_at")
-  completedAt   DateTime?            @map("completed_at")
-  createdAt     DateTime             @default(now()) @map("created_at")
-  updatedAt     DateTime             @updatedAt @map("updated_at")
+  id            String    @id @default(cuid())
+  post          Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId        String    @map("post_id")
+  locale        String    @default("en")
+  status        String    @default("PENDING")
+  progress      Int       @default(0)
+  currentStep   String?   @map("current_step")
+  resultTitle   String?   @map("result_title")
+  resultSlug    String?   @map("result_slug")
+  resultExcerpt String?   @map("result_excerpt")
+  resultContent String?   @map("result_content")
+  error         String?
+  startedById   String?   @map("started_by_id")
+  startedByRole String?   @map("started_by_role")
+  startedAt     DateTime? @map("started_at")
+  completedAt   DateTime? @map("completed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
   @@index([postId, status, createdAt])
   @@index([status])
   @@map("translation_jobs")
+}
+
+model PostFeaturedImageJob {
+  id               String    @id @default(cuid())
+  postId           String    @map("post_id")
+  requestedById    String?   @map("requested_by_id")
+  status           String
+  payloadJson      String    @map("payload_json")
+  resultImageUrl   String?   @map("result_image_url")
+  resultStorageKey String?   @map("result_storage_key")
+  resultMimeType   String?   @map("result_mime_type")
+  promptText       String?   @map("prompt_text")
+  errorMessage     String?   @map("error_message")
+  attemptCount     Int       @default(0) @map("attempt_count")
+  processorToken   String?   @map("processor_token")
+  startedAt        DateTime? @map("started_at")
+  completedAt      DateTime? @map("completed_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  @@index([postId, createdAt])
+  @@index([status, createdAt])
+  @@map("post_featured_image_jobs")
 }

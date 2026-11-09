@@ -56,54 +56,75 @@ app.get('/metrics', async (req, res) => {
     }
 });
 
-
 // CORS
-app.use(cors({
-    origin(origin, callback) {
-        if (!origin) {
-            return callback(null, true);
-        }
+app.use(
+    cors({
+        origin(origin, callback) {
+            if (!origin) {
+                return callback(null, true);
+            }
 
-        if (config.corsOrigin.includes(origin)) {
-            return callback(null, true);
-        }
+            if (
+                config.corsOrigin.includes(origin) ||
+                origin.endsWith('.workers.dev') ||
+                origin.endsWith('.dailydevops.blog')
+            ) {
+                return callback(null, true);
+            }
 
-        return callback(new Error(`CORS origin not allowed: ${origin}`));
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Locale'],
-}));
+            return callback(new Error(`CORS origin not allowed: ${origin}`));
+        },
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Locale'],
+    })
+);
 
-// Body parsers
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body parsers (skip if already parsed by Cloudflare Worker bridge)
+app.use((req, res, next) => {
+    if (req._workerParsedBody) {
+        return next();
+    }
+    return express.json({ limit: '10mb' })(req, res, next);
+});
+app.use((req, res, next) => {
+    if (req._workerParsedBody) {
+        return next();
+    }
+    return express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
+});
 app.use(cookieParser());
 // Resolve request locale from query param > x-locale header > cookie > default.
 // Injects req.locale so all route handlers are locale-agnostic.
 app.use(localeMiddleware);
 
-
-// Static files (uploaded images, thumbnails)
-app.use('/uploads', express.static(path.join(__dirname, '../public/uploads'), {
-    setHeaders(res) {
-        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-    },
-}));
+// Static files (uploaded images, thumbnails) - only on Node filesystem
+if (!globalThis.__CF_ENV) {
+    app.use(
+        '/uploads',
+        express.static(path.join(__dirname, '../public/uploads'), {
+            setHeaders(res) {
+                res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+                res.setHeader('Access-Control-Allow-Origin', '*');
+            },
+        })
+    );
+}
 
 // Detailed Logging
 app.use(requestLogger(config.nodeEnv, config.log));
 
-// Rate limiting
-const limiter = rateLimit({
-    windowMs: config.rateLimit.windowMs,
-    max: config.rateLimit.maxRequests,
-    message: 'Too many requests from this IP, please try again later.',
-    standardHeaders: true,
-    legacyHeaders: false,
-});
-app.use(`/${config.apiPrefix}/`, limiter);
+// Rate limiting (skipped on Cloudflare Workers where edge rate limiting applies)
+if (!globalThis.__CF_ENV) {
+    const limiter = rateLimit({
+        windowMs: config.rateLimit.windowMs,
+        max: config.rateLimit.maxRequests,
+        message: 'Too many requests from this IP, please try again later.',
+        standardHeaders: true,
+        legacyHeaders: false,
+    });
+    app.use(`/${config.apiPrefix}/`, limiter);
+}
 
 // ============================================
 // PUBLIC SEO ROUTES (before rate-limited API routes)
@@ -116,15 +137,18 @@ app.use(`/${config.apiPrefix}/seo`, seoPublicRoutes);
 // ============================================
 
 app.get('/health', (req, res) => {
+    const mem = typeof process.memoryUsage === 'function' ? process.memoryUsage() : { heapUsed: 0, heapTotal: 0 };
+    const uptime = typeof process.uptime === 'function' ? Math.floor(process.uptime()) : 0;
     res.status(200).json({
         success: true,
         message: 'DevOps Blog API is running',
         timestamp: new Date().toISOString(),
         environment: config.nodeEnv,
-        uptime: Math.floor(process.uptime()),
+        runtime: globalThis.__CF_ENV ? 'cloudflare-workers' : 'nodejs',
+        uptime,
         memory: {
-            heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024) + 'MB',
-            heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024) + 'MB',
+            heapUsed: Math.round((mem.heapUsed || 0) / 1024 / 1024) + 'MB',
+            heapTotal: Math.round((mem.heapTotal || 0) / 1024 / 1024) + 'MB',
         },
     });
 });

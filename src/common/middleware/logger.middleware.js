@@ -116,6 +116,11 @@ const requestLogger = (env, options = {}) => {
     const format = options.format || 'pretty';
     const loggerOptions = {
         skip: (req) => shouldSkipRequestLog(req, options),
+        stream: {
+            write: (message) => {
+                console.log(String(message).trimEnd());
+            },
+        },
     };
 
     return [

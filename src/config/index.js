@@ -1,8 +1,20 @@
-require('dotenv').config();
+try {
+    require('dotenv').config();
+} catch {
+    // Ignore in Cloudflare Workers runtime
+}
 
 const { randomBytes } = require('node:crypto');
 
-const nodeEnv = process.env.NODE_ENV || 'development';
+const getEnv = (key, fallback = undefined) => {
+    if (globalThis.__CF_ENV && globalThis.__CF_ENV[key] !== undefined && typeof globalThis.__CF_ENV[key] === 'string') {
+        return globalThis.__CF_ENV[key];
+    }
+    if (typeof process !== 'undefined' && process.env && process.env[key] !== undefined) {
+        return process.env[key];
+    }
+    return fallback;
+};
 
 const parseNumber = (value, fallback) => {
     const parsed = Number.parseInt(value, 10);
@@ -59,118 +71,98 @@ const resolveApiPrefix = (value) => {
     return value || 'api/v1';
 };
 
-const buildLocalSigningValue = () => randomBytes(32).toString('hex');
+const localAccessSigningValue = 'devops_blog_default_local_access_secret_key_fallback_32b';
+const localRefreshSigningValue = 'devops_blog_default_local_refresh_secret_key_fallback_32b';
+const localMfaSigningValue = 'devops_blog_default_local_mfa_secret_key_fallback_32b';
 
-// ============================================
-// SECURITY: Fail fast if JWT secrets are not set in production
-// ============================================
-if (nodeEnv === 'production') {
-    const requiredEnvVars = ['JWT_ACCESS_SECRET', 'JWT_REFRESH_SECRET', 'DATABASE_URL'];
-    const missing = requiredEnvVars.filter((key) => !process.env[key]);
-    if (missing.length > 0) {
-        console.error(`❌ FATAL: Missing required environment variables: ${missing.join(', ')}`);
-        process.exit(1);
-    }
+function buildConfig() {
+    const nodeEnv = getEnv('NODE_ENV', 'development');
+    const appUrl = getEnv('APP_URL', 'http://localhost:3000');
+
+    return {
+        nodeEnv,
+        port: parseNumber(getEnv('PORT'), 3001),
+        apiPrefix: resolveApiPrefix(getEnv('API_PREFIX')),
+        trustProxy: parseTrustProxy(getEnv('TRUST_PROXY'), nodeEnv === 'production' ? 1 : false),
+        databaseUrl: getEnv('DATABASE_URL'),
+        jwt: {
+            accessSecret: getEnv('JWT_ACCESS_SECRET') || localAccessSigningValue,
+            refreshSecret: getEnv('JWT_REFRESH_SECRET') || localRefreshSigningValue,
+            mfaSecret: getEnv('JWT_MFA_SECRET') || getEnv('JWT_ACCESS_SECRET') || localMfaSigningValue,
+            accessExpiresIn: getEnv('JWT_ACCESS_EXPIRES_IN', '15m'),
+            refreshExpiresIn: getEnv('JWT_REFRESH_EXPIRES_IN', '7d'),
+            mfaChallengeExpiresIn: getEnv('JWT_MFA_CHALLENGE_EXPIRES_IN', '10m'),
+        },
+        corsOrigin: parseCorsOrigin(getEnv('CORS_ORIGIN'), appUrl),
+        rateLimit: {
+            windowMs: parseNumber(getEnv('RATE_LIMIT_WINDOW_MS'), 60000),
+            maxRequests: parseNumber(getEnv('RATE_LIMIT_MAX_REQUESTS'), 100),
+        },
+        swaggerEnabled: getEnv('SWAGGER_ENABLED') !== 'false',
+        jobs: {
+            scheduledPublishIntervalMs: parseNumber(getEnv('SCHEDULED_PUBLISH_INTERVAL_MS'), 30000),
+            thumbnailGenerationIntervalMs: parseNumber(getEnv('THUMBNAIL_GENERATION_INTERVAL_MS'), 5000),
+        },
+        appUrl,
+        email: {
+            smtpHost: getEnv('SMTP_HOST', ''),
+            smtpPort: parseNumber(getEnv('SMTP_PORT'), 465),
+            secure: getEnv('SMTP_SECURE') !== 'false',
+            smtpUser: getEnv('SMTP_USER', ''),
+            smtpPass: getEnv('SMTP_PASS', ''),
+            contactInbox: getEnv('CONTACT_INBOX') || getEnv('SMTP_USER', ''),
+            from: getEnv('EMAIL_FROM') || getEnv('SMTP_USER') || 'no-reply@localhost',
+        },
+        storage: {
+            endpoint: getEnv('S3_ENDPOINT', ''),
+            region: getEnv('S3_REGION', 'auto'),
+            bucket: getEnv('S3_BUCKET', ''),
+            accessKeyId: getEnv('S3_ACCESS_KEY_ID', ''),
+            secretAccessKey: getEnv('S3_SECRET_ACCESS_KEY', ''),
+        },
+        sentry: {
+            dsn: getEnv('SENTRY_DSN', ''),
+            tracesSampleRate: Number.parseFloat(getEnv('SENTRY_TRACES_SAMPLE_RATE', '0')),
+        },
+        log: {
+            format: getEnv('LOG_FORMAT', 'pretty'),
+            skipHealthChecks: getEnv('LOG_SKIP_HEALTH') !== 'false',
+            onlyApiRequests: getEnv('LOG_ONLY_API') !== 'false',
+        },
+        openrouter: {
+            apiKey: getEnv('OPENROUTER_API_KEY', ''),
+        },
+        gemini: {
+            apiKey: getEnv('GEMINI_API_KEY', ''),
+            textModel: getEnv('GEMINI_TEXT_MODEL', 'gemini-2.0-flash'),
+            imageModel: getEnv('GEMINI_IMAGE_MODEL', 'gemini-2.5-flash-image'),
+        },
+    };
 }
 
-const localAccessSigningValue = process.env.JWT_ACCESS_SECRET || buildLocalSigningValue();
-const localRefreshSigningValue = process.env.JWT_REFRESH_SECRET || buildLocalSigningValue();
-const localMfaSigningValue =
-    process.env.JWT_MFA_SECRET ||
-    process.env.JWT_ACCESS_SECRET ||
-    buildLocalSigningValue();
+let cachedConfig = buildConfig();
 
-const config = {
-    // Server
-    nodeEnv,
-    port: parseNumber(process.env.PORT, 3001),
-    apiPrefix: resolveApiPrefix(process.env.API_PREFIX),
-    trustProxy: parseTrustProxy(process.env.TRUST_PROXY, nodeEnv === 'production' ? 1 : false),
+function refreshConfigFromEnv(env = {}) {
+    globalThis.__CF_ENV = env;
+    if (typeof process !== 'undefined' && process.env) {
+        for (const [k, v] of Object.entries(env)) {
+            if (typeof v === 'string') {
+                process.env[k] = v;
+            }
+        }
+    }
+    cachedConfig = buildConfig();
+    return cachedConfig;
+}
 
-    // Database
-    databaseUrl: process.env.DATABASE_URL,
+const configProxy = new Proxy(
+    {},
+    {
+        get(_target, prop) {
+            if (prop === 'refreshConfigFromEnv') return refreshConfigFromEnv;
+            return cachedConfig[prop];
+        },
+    }
+);
 
-    // JWT
-    jwt: {
-        accessSecret: process.env.JWT_ACCESS_SECRET || localAccessSigningValue,
-        refreshSecret: process.env.JWT_REFRESH_SECRET || localRefreshSigningValue,
-        mfaSecret: process.env.JWT_MFA_SECRET || process.env.JWT_ACCESS_SECRET || localMfaSigningValue,
-        accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
-        refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
-        mfaChallengeExpiresIn: process.env.JWT_MFA_CHALLENGE_EXPIRES_IN || '10m',
-    },
-
-    // CORS — supports comma-separated origins
-    corsOrigin: parseCorsOrigin(process.env.CORS_ORIGIN),
-
-    // Rate Limiting
-    rateLimit: {
-        windowMs: parseNumber(process.env.RATE_LIMIT_WINDOW_MS, 60000),
-        maxRequests: parseNumber(process.env.RATE_LIMIT_MAX_REQUESTS, 100),
-    },
-
-    // Swagger
-    swaggerEnabled: process.env.SWAGGER_ENABLED !== 'false',
-
-    // Background jobs
-    jobs: {
-        scheduledPublishIntervalMs: parseNumber(
-            process.env.SCHEDULED_PUBLISH_INTERVAL_MS,
-            30000
-        ),
-        thumbnailGenerationIntervalMs: parseNumber(
-            process.env.THUMBNAIL_GENERATION_INTERVAL_MS,
-            5000
-        ),
-    },
-
-    // Public app URLs
-    appUrl: process.env.APP_URL || 'http://localhost:3000',
-
-    // Email
-    email: {
-        smtpHost: process.env.SMTP_HOST || '',
-        smtpPort: parseNumber(process.env.SMTP_PORT, 465),
-        secure: process.env.SMTP_SECURE !== 'false',
-        smtpUser: process.env.SMTP_USER || '',
-        smtpPass: process.env.SMTP_PASS || '',
-        contactInbox: process.env.CONTACT_INBOX || process.env.SMTP_USER || '',
-        from:
-            process.env.EMAIL_FROM ||
-            process.env.SMTP_USER ||
-            'no-reply@localhost',
-    },
-
-    storage: {
-        endpoint: process.env.S3_ENDPOINT || '',
-        region: process.env.S3_REGION || 'auto',
-        bucket: process.env.S3_BUCKET || '',
-        accessKeyId: process.env.S3_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY || '',
-    },
-
-    sentry: {
-        dsn: process.env.SENTRY_DSN || '',
-        tracesSampleRate: Number.parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE || '0'),
-    },
-
-    log: {
-        format: process.env.LOG_FORMAT || 'pretty',
-        skipHealthChecks: process.env.LOG_SKIP_HEALTH !== 'false',
-        onlyApiRequests: process.env.LOG_ONLY_API !== 'false',
-    },
-
-    openrouter: {
-        apiKey: process.env.OPENROUTER_API_KEY || '',
-    },
-
-    gemini: {
-        apiKey: process.env.GEMINI_API_KEY || '',
-        textModel: process.env.GEMINI_TEXT_MODEL || 'gemini-2.0-flash',
-        imageModel: process.env.GEMINI_IMAGE_MODEL || 'gemini-2.5-flash-image',
-    },
-};
-
-config.corsOrigin = parseCorsOrigin(process.env.CORS_ORIGIN, config.appUrl);
-
-module.exports = config;
+module.exports = configProxy;

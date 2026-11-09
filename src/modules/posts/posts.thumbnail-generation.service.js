@@ -5,7 +5,6 @@ const { generateFeaturedImage } = require('./posts.image-generator');
 
 const prisma = getPrismaClient();
 
-const JOB_TABLE_NAME = 'post_featured_image_jobs';
 const JOB_STATUS = {
     PENDING: 'PENDING',
     PROCESSING: 'PROCESSING',
@@ -19,35 +18,8 @@ class PostsThumbnailGenerationService {
 
     isRunning = false;
 
-    tableReadyPromise = null;
-
     async ensureTable() {
-        if (!this.tableReadyPromise) {
-            this.tableReadyPromise = prisma.$executeRawUnsafe(`
-                CREATE TABLE IF NOT EXISTS ${JOB_TABLE_NAME} (
-                    id VARCHAR(191) NOT NULL PRIMARY KEY,
-                    post_id VARCHAR(191) NOT NULL,
-                    requested_by_id VARCHAR(191) NULL,
-                    status VARCHAR(32) NOT NULL,
-                    payload_json LONGTEXT NOT NULL,
-                    result_image_url TEXT NULL,
-                    result_storage_key VARCHAR(512) NULL,
-                    result_mime_type VARCHAR(128) NULL,
-                    prompt_text LONGTEXT NULL,
-                    error_message TEXT NULL,
-                    attempt_count INT NOT NULL DEFAULT 0,
-                    processor_token VARCHAR(191) NULL,
-                    started_at DATETIME(3) NULL,
-                    completed_at DATETIME(3) NULL,
-                    created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-                    updated_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-                    INDEX idx_pfij_post_created (post_id, created_at),
-                    INDEX idx_pfij_status_created (status, created_at)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            `);
-        }
-
-        await this.tableReadyPromise;
+        // Table is managed via Prisma schema (PostFeaturedImageJob / post_featured_image_jobs)
     }
 
     start() {
@@ -78,73 +50,49 @@ class PostsThumbnailGenerationService {
     }
 
     async enqueueJob({ postId, requestedById, input }) {
-        await this.ensureTable();
-
-        await prisma.$executeRawUnsafe(
-            `
-                UPDATE ${JOB_TABLE_NAME}
-                SET status = ?, error_message = ?, completed_at = NOW(3), updated_at = NOW(3)
-                WHERE post_id = ? AND status = ?
-            `,
-            JOB_STATUS.CANCELLED,
-            'Superseded by a newer thumbnail request',
-            postId,
-            JOB_STATUS.PENDING
-        );
+        const now = new Date();
+        await prisma.postFeaturedImageJob.updateMany({
+            where: {
+                postId,
+                status: JOB_STATUS.PENDING,
+            },
+            data: {
+                status: JOB_STATUS.CANCELLED,
+                errorMessage: 'Superseded by a newer thumbnail request',
+                completedAt: now,
+                updatedAt: now,
+            },
+        });
 
         const id = crypto.randomUUID();
+        const job = await prisma.postFeaturedImageJob.create({
+            data: {
+                id,
+                postId,
+                requestedById: requestedById || null,
+                status: JOB_STATUS.PENDING,
+                payloadJson: JSON.stringify(input || {}),
+            },
+        });
 
-        await prisma.$executeRawUnsafe(
-            `
-                INSERT INTO ${JOB_TABLE_NAME} (
-                    id,
-                    post_id,
-                    requested_by_id,
-                    status,
-                    payload_json
-                ) VALUES (?, ?, ?, ?, ?)
-            `,
-            id,
-            postId,
-            requestedById || null,
-            JOB_STATUS.PENDING,
-            JSON.stringify(input || {})
-        );
-
-        return this.getJobById(id);
+        return this.serializeJob(job);
     }
 
     async getLatestJob(postId) {
-        await this.ensureTable();
+        const job = await prisma.postFeaturedImageJob.findFirst({
+            where: { postId },
+            orderBy: { createdAt: 'desc' },
+        });
 
-        const rows = await prisma.$queryRawUnsafe(
-            `
-                SELECT *
-                FROM ${JOB_TABLE_NAME}
-                WHERE post_id = ?
-                ORDER BY created_at DESC
-                LIMIT 1
-            `,
-            postId
-        );
-
-        return this.serializeJob(rows[0] || null);
+        return this.serializeJob(job);
     }
 
     async getJobById(id) {
-        await this.ensureTable();
+        const job = await prisma.postFeaturedImageJob.findUnique({
+            where: { id },
+        });
 
-        const rows = await prisma.$queryRawUnsafe(
-            `
-                SELECT *
-                FROM ${JOB_TABLE_NAME}
-                WHERE id = ?
-                LIMIT 1
-            `,
-            id
-        );
-
-        return this.serializeJob(rows[0] || null);
+        return this.serializeJob(job);
     }
 
     async runOnce() {
@@ -155,7 +103,6 @@ class PostsThumbnailGenerationService {
         this.isRunning = true;
 
         try {
-            await this.ensureTable();
             await this.processNextJob();
         } catch (error) {
             console.error('[scheduler] Failed to process featured image jobs:', error);
@@ -165,107 +112,87 @@ class PostsThumbnailGenerationService {
     }
 
     async processNextJob() {
-        const processorToken = crypto.randomUUID();
-        const claimedCount = await prisma.$executeRawUnsafe(
-            `
-                UPDATE ${JOB_TABLE_NAME}
-                SET status = ?,
-                    processor_token = ?,
-                    started_at = COALESCE(started_at, NOW(3)),
-                    attempt_count = attempt_count + 1,
-                    updated_at = NOW(3)
-                WHERE id = (
-                    SELECT id FROM (
-                        SELECT id
-                        FROM ${JOB_TABLE_NAME}
-                        WHERE status = ?
-                        ORDER BY created_at ASC
-                        LIMIT 1
-                    ) AS next_job
-                )
-            `,
-            JOB_STATUS.PROCESSING,
-            processorToken,
-            JOB_STATUS.PENDING
-        );
+        const nextJob = await prisma.postFeaturedImageJob.findFirst({
+            where: { status: JOB_STATUS.PENDING },
+            orderBy: { createdAt: 'asc' },
+        });
 
-        if (!claimedCount) {
+        if (!nextJob) {
             return null;
         }
 
-        const rows = await prisma.$queryRawUnsafe(
-            `
-                SELECT *
-                FROM ${JOB_TABLE_NAME}
-                WHERE processor_token = ? AND status = ?
-                ORDER BY started_at DESC
-                LIMIT 1
-            `,
-            processorToken,
-            JOB_STATUS.PROCESSING
-        );
+        const processorToken = crypto.randomUUID();
+        const now = new Date();
 
-        const job = rows[0];
+        const claimed = await prisma.postFeaturedImageJob.updateMany({
+            where: {
+                id: nextJob.id,
+                status: JOB_STATUS.PENDING,
+            },
+            data: {
+                status: JOB_STATUS.PROCESSING,
+                processorToken,
+                startedAt: nextJob.startedAt || now,
+                attemptCount: (nextJob.attemptCount || 0) + 1,
+                updatedAt: now,
+            },
+        });
+
+        if (!claimed.count) {
+            return null;
+        }
+
+        const job = await prisma.postFeaturedImageJob.findUnique({
+            where: { id: nextJob.id },
+        });
+
         if (!job) {
             return null;
         }
 
         try {
-            const payload = this.parsePayload(job.payload_json);
+            const payload = this.parsePayload(job.payloadJson);
             const result = await generateFeaturedImage(payload);
 
             await prisma.post.update({
-                where: { id: job.post_id },
+                where: { id: job.postId },
                 data: {
                     featuredImage: result.imageUrl,
                 },
             });
 
-            await prisma.$executeRawUnsafe(
-                `
-                    UPDATE ${JOB_TABLE_NAME}
-                    SET status = ?,
-                        result_image_url = ?,
-                        result_storage_key = ?,
-                        result_mime_type = ?,
-                        prompt_text = ?,
-                        error_message = NULL,
-                        completed_at = NOW(3),
-                        processor_token = NULL,
-                        updated_at = NOW(3)
-                    WHERE id = ?
-                `,
-                JOB_STATUS.SUCCEEDED,
-                result.imageUrl,
-                result.storageKey || null,
-                result.mimeType || null,
-                result.prompt || null,
-                job.id
-            );
+            const updated = await prisma.postFeaturedImageJob.update({
+                where: { id: job.id },
+                data: {
+                    status: JOB_STATUS.SUCCEEDED,
+                    resultImageUrl: result.imageUrl,
+                    resultStorageKey: result.storageKey || null,
+                    resultMimeType: result.mimeType || null,
+                    promptText: result.prompt || null,
+                    errorMessage: null,
+                    completedAt: new Date(),
+                    processorToken: null,
+                },
+            });
 
-            return this.getJobById(job.id);
+            return this.serializeJob(updated);
         } catch (error) {
             const message =
                 error instanceof Error && error.message
                     ? error.message
                     : 'Thumbnail generation failed';
 
-            await prisma.$executeRawUnsafe(
-                `
-                    UPDATE ${JOB_TABLE_NAME}
-                    SET status = ?,
-                        error_message = ?,
-                        completed_at = NOW(3),
-                        processor_token = NULL,
-                        updated_at = NOW(3)
-                    WHERE id = ?
-                `,
-                JOB_STATUS.FAILED,
-                message,
-                job.id
-            );
+            const updated = await prisma.postFeaturedImageJob.update({
+                where: { id: job.id },
+                data: {
+                    status: JOB_STATUS.FAILED,
+                    errorMessage: message,
+                    completedAt: new Date(),
+                    processorToken: null,
+                },
+            });
 
-            return this.getJobById(job.id);
+            return this.serializeJob(updated);
         }
     }
 
@@ -285,19 +212,19 @@ class PostsThumbnailGenerationService {
 
         return {
             id: job.id,
-            postId: job.post_id,
-            requestedById: job.requested_by_id,
+            postId: job.postId || job.post_id,
+            requestedById: job.requestedById ?? job.requested_by_id ?? null,
             status: job.status,
-            imageUrl: job.result_image_url || null,
-            storageKey: job.result_storage_key || null,
-            mimeType: job.result_mime_type || null,
-            prompt: job.prompt_text || null,
-            errorMessage: job.error_message || null,
-            attemptCount: Number(job.attempt_count || 0),
-            startedAt: job.started_at ? new Date(job.started_at).toISOString() : null,
-            completedAt: job.completed_at ? new Date(job.completed_at).toISOString() : null,
-            createdAt: job.created_at ? new Date(job.created_at).toISOString() : null,
-            updatedAt: job.updated_at ? new Date(job.updated_at).toISOString() : null,
+            imageUrl: job.resultImageUrl || job.result_image_url || null,
+            storageKey: job.resultStorageKey || job.result_storage_key || null,
+            mimeType: job.resultMimeType || job.result_mime_type || null,
+            prompt: job.promptText || job.prompt_text || null,
+            errorMessage: job.errorMessage || job.error_message || null,
+            attemptCount: Number(job.attemptCount ?? job.attempt_count ?? 0),
+            startedAt: job.startedAt ? new Date(job.startedAt).toISOString() : null,
+            completedAt: job.completedAt ? new Date(job.completedAt).toISOString() : null,
+            createdAt: job.createdAt ? new Date(job.createdAt).toISOString() : null,
+            updatedAt: job.updatedAt ? new Date(job.updatedAt).toISOString() : null,
         };
     }
 }

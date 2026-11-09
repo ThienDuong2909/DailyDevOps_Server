@@ -1,5 +1,5 @@
-const argon2 = require('argon2');
 const jwt = require('jsonwebtoken');
+const { hashPassword, verifyHash } = require('../../common/security/password');
 
 const config = require('../../config');
 const {
@@ -37,7 +37,7 @@ const ensureRefreshableUser = (user) => {
 };
 
 const verifyPassword = async (hashedPassword, plainPassword) => {
-    const isValid = await argon2.verify(hashedPassword, plainPassword);
+    const isValid = await verifyHash(hashedPassword, plainPassword);
 
     if (!isValid) {
         throw new UnauthorizedError('Invalid credentials');
@@ -45,14 +45,14 @@ const verifyPassword = async (hashedPassword, plainPassword) => {
 };
 
 const verifyRefreshToken = async (hashedRefreshToken, refreshToken) => {
-    const isValid = await argon2.verify(hashedRefreshToken, refreshToken);
+    const isValid = await verifyHash(hashedRefreshToken, refreshToken);
 
     if (!isValid) {
         throw new UnauthorizedError('Access denied');
     }
 };
 
-const hashData = (value) => argon2.hash(value);
+const hashData = (value) => hashPassword(value);
 
 const buildAuthPayload = (user) => ({
     sub: user.id,

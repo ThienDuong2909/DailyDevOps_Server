@@ -1,3 +1,4 @@
+const { runInBackground } = require("../../common/runtime/background");
 const { NotFoundError, ForbiddenError } = require('../../middlewares/error.middleware');
 const postsRepository = require('./posts.repository');
 const {
@@ -21,6 +22,8 @@ const {
     normalizeLocale,
     normalizeEditorPayload,
     normalizeTranslationPayload,
+    parseJsonField,
+    stringifyJsonField,
     serializePost,
     serializePosts,
     serializeVersions,
@@ -178,9 +181,15 @@ class PostsService {
             return serializePost(post);
         }
 
-        return Array.isArray(post.translations)
+        const found = Array.isArray(post.translations)
             ? post.translations.find((item) => item.locale === resolvedLocale) || null
             : null;
+        if (!found) return null;
+        return {
+            ...found,
+            contentJson: parseJsonField(found.contentJson, null),
+            focusKeywords: parseJsonField(found.focusKeywords, []),
+        };
     }
 
     /**
@@ -275,10 +284,14 @@ class PostsService {
             throw new NotFoundError('Post not found');
         }
 
-        await postsRepository.update({
-            where: { id: post.id },
-            data: { viewCount: { increment: 1 } },
-        });
+        runInBackground(
+            postsRepository
+                .update({
+                    where: { id: post.id },
+                    data: { viewCount: { increment: 1 } },
+                })
+                .catch(() => {})
+        );
 
         return serializePosts([post], resolvedLocale)[0];
     }
@@ -355,11 +368,13 @@ class PostsService {
                 : fallbackTagNames,
         };
 
-        return thumbnailGenerationService.enqueueJob({
+        const job = await thumbnailGenerationService.enqueueJob({
             postId: id,
             requestedById: userId,
             input,
         });
+        runInBackground(() => thumbnailGenerationService.runOnce());
+        return job;
     }
 
     async getLatestFeaturedImageJob(id, userId, userRole) {
@@ -423,7 +438,11 @@ class PostsService {
             },
         });
 
-        return translation;
+        return {
+            ...translation,
+            contentJson: parseJsonField(translation.contentJson, null),
+            focusKeywords: parseJsonField(translation.focusKeywords, []),
+        };
     }
 
     /**
@@ -507,7 +526,7 @@ class PostsService {
      * visible in the admin UI instead of being silently lost on process restart.
      */
     triggerAutoTranslation(postId, userId, userRole) {
-        setImmediate(async () => {
+        runInBackground(async () => {
             try {
                 const existing = await postsRepository.findFirstTranslation({
                     where: { postId, locale: 'en' },
@@ -875,8 +894,8 @@ class PostsService {
                 publishedAt: buildPublishedAt(targetStatus, post.publishedAt),
                 tags: {
                     set: [],
-                    connect: Array.isArray(version.tagIds)
-                        ? version.tagIds.map((tagId) => ({ id: tagId }))
+                    connect: Array.isArray(parseJsonField(version.tagIds, []))
+                        ? parseJsonField(version.tagIds, []).map((tagId) => ({ id: tagId }))
                         : [],
                 },
             },
@@ -901,13 +920,13 @@ class PostsService {
                 excerpt: post.excerpt ?? null,
                 content: post.content || '',
                 contentHtml: post.contentHtml || post.content || '',
-                contentJson: post.contentJson ?? null,
+                contentJson: stringifyJsonField(post.contentJson, null),
                 featuredImage: post.featuredImage ?? null,
                 status: post.status,
                 scheduledAt: post.scheduledAt ?? null,
                 rejectionReason: post.rejectionReason ?? null,
                 categoryId: post.category?.id ?? post.categoryId ?? null,
-                tagIds,
+                tagIds: JSON.stringify(tagIds),
                 createdById: createdById ?? null,
                 reason: reason || null,
             },

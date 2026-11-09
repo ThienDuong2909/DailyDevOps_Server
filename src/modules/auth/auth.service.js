@@ -97,13 +97,17 @@ class AuthService {
         }
 
         const tokens = generateTokens(buildAuthPayload(user));
+        const nextData = {
+            refreshToken: await hashData(tokens.refreshToken),
+            lastLoginAt: new Date(),
+        };
+        if (user.password && user.password.startsWith('$argon2')) {
+            nextData.password = await hashData(dto.password);
+        }
 
         await authRepository.updateUser({
             where: { id: user.id },
-            data: {
-                refreshToken: await hashData(tokens.refreshToken),
-                lastLoginAt: new Date(),
-            },
+            data: nextData,
         });
 
         return tokens;

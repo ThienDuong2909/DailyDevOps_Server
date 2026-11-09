@@ -1,3 +1,4 @@
+const { runInBackground } = require("../../common/runtime/background");
 const { BadRequestError, ForbiddenError, NotFoundError } = require('../../middlewares/error.middleware');
 const translationJobsRepository = require('./translation-jobs.repository');
 const postsRepository = require('./posts.repository');
@@ -157,9 +158,7 @@ class TranslationJobsService {
         // row so the client can start polling. The top-level wrapper swallows
         // every rejection to avoid tripping the server's unhandledRejection
         // handler (which calls process.exit).
-        setImmediate(() => {
-            this.safelyProcessJob(job.id);
-        });
+        runInBackground(() => this.safelyProcessJob(job.id));
 
         return toJobDTO(job);
     }

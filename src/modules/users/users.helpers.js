@@ -1,4 +1,4 @@
-const argon2 = require('argon2');
+const { hashPassword } = require('../../common/security/password');
 
 const { ForbiddenError } = require('../../middlewares/error.middleware');
 
@@ -82,7 +82,7 @@ const buildUpdateUserData = async (dto) => {
 
     return {
         ...dto,
-        password: await argon2.hash(dto.password),
+        password: await hashPassword(dto.password),
     };
 };
 

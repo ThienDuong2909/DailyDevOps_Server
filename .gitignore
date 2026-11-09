@@ -7,3 +7,6 @@ coverage
 .DS_Store
 .vscode
 .idea
+.wrangler
+prisma/d1
+src/generated-cache-hashes.json

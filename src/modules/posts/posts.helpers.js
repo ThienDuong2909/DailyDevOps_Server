@@ -10,6 +10,24 @@ const normalizeLocale = (locale) => {
 
 const isDefaultLocale = (locale) => normalizeLocale(locale) === DEFAULT_LOCALE;
 
+const parseJsonField = (val, fallback) => {
+    if (val === undefined || val === null) return fallback;
+    if (typeof val === 'string') {
+        try {
+            return JSON.parse(val);
+        } catch {
+            return fallback;
+        }
+    }
+    return val;
+};
+
+const stringifyJsonField = (val, fallback = null) => {
+    if (val === undefined || val === null) return fallback;
+    if (typeof val === 'string') return val;
+    return JSON.stringify(val);
+};
+
 const buildListQuery = (query) => {
     const {
         page = 1,
@@ -173,13 +191,16 @@ const normalizeEditorPayload = (dto = {}) => {
         rejectionReason: dto.rejectionReason ?? null,
         contentHtml: resolvedContent,
         content: resolvedContent,
-        contentJson: dto.contentJson ?? null,
+        contentJson: stringifyJsonField(dto.contentJson, null),
     };
 };
 
 const normalizeTranslationPayload = (dto = {}) => {
     const resolvedLocale = normalizeLocale(dto.locale);
     const resolvedContent = dto.contentHtml || dto.content || '';
+    const keywords = Array.isArray(dto.focusKeywords)
+        ? dto.focusKeywords
+        : parseJsonField(dto.focusKeywords, []);
 
     return {
         ...dto,
@@ -188,12 +209,12 @@ const normalizeTranslationPayload = (dto = {}) => {
         excerpt: dto.subtitle ?? dto.excerpt ?? null,
         contentHtml: resolvedContent,
         content: resolvedContent,
-        contentJson: dto.contentJson ?? null,
+        contentJson: stringifyJsonField(dto.contentJson, null),
         metaTitle: dto.metaTitle ?? null,
         metaDescription: dto.metaDescription ?? null,
         canonicalUrl: dto.canonicalUrl ?? null,
         ogImage: dto.ogImage ?? null,
-        focusKeywords: Array.isArray(dto.focusKeywords) ? dto.focusKeywords : [],
+        focusKeywords: JSON.stringify(keywords),
         noIndex: Boolean(dto.noIndex),
         noFollow: Boolean(dto.noFollow),
     };
@@ -232,7 +253,13 @@ const applyTranslationToPost = (post, locale = DEFAULT_LOCALE) => {
         excerpt: post.subtitle ?? post.excerpt ?? null,
         content: post.contentHtml ?? post.content ?? '',
         contentHtml: post.contentHtml ?? post.content ?? '',
-        contentJson: post.contentJson ?? null,
+        contentJson: parseJsonField(post.contentJson, null),
+        ...(post.seoSetting && {
+            seoSetting: {
+                ...post.seoSetting,
+                focusKeywords: parseJsonField(post.seoSetting.focusKeywords, []),
+            },
+        }),
         locale: DEFAULT_LOCALE,
         sourcePostId: post.id,
         availableLocales: Object.keys(buildLocaleAlternates(post, translationMap)),
@@ -243,6 +270,8 @@ const applyTranslationToPost = (post, locale = DEFAULT_LOCALE) => {
         return basePost;
     }
 
+    const parsedTranslationKeywords = parseJsonField(translation.focusKeywords, null);
+
     return {
         ...basePost,
         locale: resolvedLocale,
@@ -252,7 +281,7 @@ const applyTranslationToPost = (post, locale = DEFAULT_LOCALE) => {
         excerpt: translation.subtitle ?? translation.excerpt ?? null,
         content: translation.contentHtml ?? translation.content ?? '',
         contentHtml: translation.contentHtml ?? translation.content ?? '',
-        contentJson: translation.contentJson ?? null,
+        contentJson: parseJsonField(translation.contentJson, null),
         featuredImage: translation.featuredImage ?? basePost.featuredImage ?? null,
         publishedAt: translation.publishedAt ?? basePost.publishedAt,
         scheduledAt: translation.scheduledAt ?? basePost.scheduledAt,
@@ -266,8 +295,8 @@ const applyTranslationToPost = (post, locale = DEFAULT_LOCALE) => {
             ...(translation.ogImage && { ogImage: translation.ogImage }),
             noIndex: translation.noIndex,
             noFollow: translation.noFollow,
-            focusKeywords: Array.isArray(translation.focusKeywords)
-                ? translation.focusKeywords
+            focusKeywords: Array.isArray(parsedTranslationKeywords)
+                ? parsedTranslationKeywords
                 : basePost.seoSetting?.focusKeywords || [],
         },
     };
@@ -289,9 +318,11 @@ const serializeVersion = (version) => {
         return version;
     }
 
+    const parsedTagIds = parseJsonField(version.tagIds, []);
     return {
         ...version,
-        tagIds: Array.isArray(version.tagIds) ? version.tagIds : [],
+        contentJson: parseJsonField(version.contentJson, null),
+        tagIds: Array.isArray(parsedTagIds) ? parsedTagIds : [],
     };
 };
 
@@ -309,6 +340,8 @@ module.exports = {
     SUPPORTED_PUBLIC_LOCALES,
     normalizeLocale,
     isDefaultLocale,
+    parseJsonField,
+    stringifyJsonField,
     normalizeEditorPayload,
     normalizeTranslationPayload,
     applyTranslationToPost,
