@@ -46,7 +46,7 @@ class SeoIndexingService {
             const token = await this.getGoogleAccessToken(clientEmail, privateKey);
             if (!token) throw new Error('Failed to obtain Google access token');
 
-            const response = await fetch('https://indexing.googleapis.com/v1/urlNotifications:publish', {
+            const response = await fetch('https://indexing.googleapis.com/v3/urlNotifications:publish', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -55,9 +55,16 @@ class SeoIndexingService {
                 body: JSON.stringify({ url, type }),
             });
 
-            const data = await response.json();
-            console.log(`[Google Indexing] Published ${url} (${type}):`, data);
-            return { success: response.ok, data };
+            let data;
+            const responseText = await response.text();
+            try {
+                data = JSON.parse(responseText);
+            } catch {
+                data = { raw: responseText };
+            }
+
+            console.log(`[Google Indexing] Published ${url} (${type}), status: ${response.status}:`, data);
+            return { success: response.ok, status: response.status, data };
         } catch (error) {
             console.error(`[Google Indexing] Failed for ${url}:`, error.message);
             return { success: false, error: error.message };
