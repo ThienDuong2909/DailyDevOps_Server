@@ -408,6 +408,22 @@ router.get(
     })
 );
 
+router.get(
+    '/:id/versions/:versionId',
+    authenticate,
+    authorize('ADMIN', 'MODERATOR', 'EDITOR', 'AUTHOR'),
+    validate(versionParamsSchema, 'params'),
+    asyncHandler(async (req, res) => {
+        const version = await postsService.getVersion(
+            req.params.id,
+            req.params.versionId,
+            req.user.id,
+            req.user.role
+        );
+        return sendOk(res, { data: version });
+    })
+);
+
 /**
  * @route   POST /api/posts/:id/auto-translate
  * @desc    Enqueue a background auto-translate job (VI -> locale, default en).

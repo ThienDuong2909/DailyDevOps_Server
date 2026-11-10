@@ -26,9 +26,10 @@ const {
     stringifyJsonField,
     serializePost,
     serializePosts,
+    serializeVersion,
     serializeVersions,
 } = require('./posts.helpers');
-const { postVersionListSelect } = require('./posts.queries');
+const { postVersionListSelect, postVersionDetailSelect } = require('./posts.queries');
 const subscribersService = require('../subscribers/subscribers.service');
 const { parseNotionExport } = require('./posts.importer');
 const { generateFeaturedImage } = require('./posts.image-generator');
@@ -910,6 +911,10 @@ class PostsService {
             });
 
             publishedCount += 1;
+
+            // Record immutable version snapshot documenting automatic publication
+            await this.createVersionSnapshot(updatedPost, null, 'Auto-published by schedule');
+
             await this.dispatchNewsletterIfNeeded(serializePost(updatedPost), {
                 hasJustPublished: true,
             });
@@ -934,10 +939,29 @@ class PostsService {
             where: { postId: id },
             orderBy: { createdAt: 'desc' },
             select: postVersionListSelect,
-            take: 3,
+            take: 15,
         });
 
         return serializeVersions(versions);
+    }
+
+    async getVersion(id, versionId, userId, userRole) {
+        const post = await this.findById(id);
+
+        if (!this.canEditPost(post, userId, userRole)) {
+            throw new ForbiddenError('You do not have access to this post history');
+        }
+
+        const version = await postsRepository.findUniqueVersion({
+            where: { id: versionId },
+            select: postVersionDetailSelect,
+        });
+
+        if (!version || version.postId !== id) {
+            throw new NotFoundError('Post version not found');
+        }
+
+        return serializeVersion(version);
     }
 
     async restoreVersion(id, versionId, userId, userRole, reason) {
@@ -1021,7 +1045,7 @@ class PostsService {
         return snapshot;
     }
 
-    async pruneVersionHistory(postId, retain = 3) {
+    async pruneVersionHistory(postId, retain = 15) {
         const overflowVersions = await postsRepository.findManyVersions({
             where: { postId },
             orderBy: { createdAt: 'desc' },

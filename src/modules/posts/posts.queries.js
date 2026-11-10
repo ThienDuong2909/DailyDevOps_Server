@@ -116,9 +116,43 @@ const adminWriteInclude = {
 
 const postVersionListSelect = {
     id: true,
+    postId: true,
     title: true,
     slug: true,
+    subtitle: true,
+    excerpt: true,
+    featuredImage: true,
     status: true,
+    scheduledAt: true,
+    categoryId: true,
+    tagIds: true,
+    reason: true,
+    createdAt: true,
+    createdBy: {
+        select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+        },
+    },
+};
+
+const postVersionDetailSelect = {
+    id: true,
+    postId: true,
+    title: true,
+    slug: true,
+    subtitle: true,
+    excerpt: true,
+    content: true,
+    contentHtml: true,
+    contentJson: true,
+    featuredImage: true,
+    status: true,
+    scheduledAt: true,
+    rejectionReason: true,
+    categoryId: true,
+    tagIds: true,
     reason: true,
     createdAt: true,
     createdBy: {
@@ -169,6 +203,7 @@ module.exports = {
     publicPostInclude,
     adminWriteInclude,
     postVersionListSelect,
+    postVersionDetailSelect,
     statsRecentPostsSelect,
     relatedPostsInclude,
 };

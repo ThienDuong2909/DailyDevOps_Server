@@ -537,7 +537,12 @@ export default {
         const postsService = require('./modules/posts/posts.service');
         const thumbnailGenerationService = require('./modules/posts/posts.thumbnail-generation.service');
         const tasks = Promise.allSettled([
-            postsService.processScheduledPublications(),
+            postsService.processScheduledPublications().then(async (result) => {
+                if (result && result.publishedCount > 0) {
+                    await bumpEdgeCacheVersion(env.DB);
+                }
+                return result;
+            }),
             thumbnailGenerationService.runOnce(),
         ]);
 
