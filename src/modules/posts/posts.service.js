@@ -35,6 +35,8 @@ const { generateFeaturedImage } = require('./posts.image-generator');
 const translationJobsService = require('./translation-jobs.service');
 const seoIndexingService = require('../seo/seo.indexing');
 const thumbnailGenerationService = require('./posts.thumbnail-generation.service');
+const categoriesRepository = require('../categories/categories.repository');
+const tagsRepository = require('../tags/tags.repository');
 
 class PostsService {
     /**
@@ -144,6 +146,63 @@ class PostsService {
             publishedAt: post.publishedAt || null,
             category: post.category || null,
         }));
+    }
+
+    /**
+     * Get lightweight micro-index for in-memory client search
+     */
+    async getSearchIndex(query = {}) {
+        const locale = normalizeLocale(query.locale);
+        const [posts, categories, tags] = await Promise.all([
+            postsRepository.findMany({
+                where: { status: 'PUBLISHED' },
+                select: {
+                    id: true,
+                    title: true,
+                    slug: true,
+                    subtitle: true,
+                    excerpt: true,
+                    publishedAt: true,
+                    category: {
+                        select: { name: true, slug: true }
+                    },
+                    tags: {
+                        select: { name: true, slug: true }
+                    },
+                    translations: {
+                        where: { locale, status: 'PUBLISHED' },
+                        select: { title: true, slug: true, subtitle: true, excerpt: true }
+                    }
+                },
+                orderBy: { publishedAt: 'desc' },
+            }),
+            categoriesRepository.findMany({
+                select: { name: true, slug: true }
+            }),
+            tagsRepository.findMany({
+                select: { name: true, slug: true }
+            })
+        ]);
+
+        const mappedPosts = posts.map((post) => {
+            const translation = post.translations?.[0];
+            return {
+                id: post.id,
+                title: translation?.title || post.title,
+                slug: translation?.slug || post.slug,
+                excerpt: translation?.subtitle || translation?.excerpt || post.subtitle || post.excerpt || '',
+                category: post.category ? { name: post.category.name, slug: post.category.slug } : null,
+                tags: (post.tags || []).map((t) => t.name),
+                publishedAt: post.publishedAt,
+            };
+        });
+
+        return {
+            version: String(Date.now()),
+            posts: mappedPosts,
+            categories: categories.map((c) => ({ name: c.name, slug: c.slug })),
+            tags: tags.map((t) => ({ name: t.name, slug: t.slug })),
+        };
     }
 
     /**

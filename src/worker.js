@@ -335,6 +335,7 @@ function isCacheablePublicApiGet(pathname) {
         pathname.startsWith('/api/v1/posts/slug/') ||
         pathname === '/api/v1/posts/search' ||
         pathname === '/api/v1/posts/autocomplete' ||
+        pathname === '/api/v1/posts/search-index' ||
         pathname === '/api/v1/categories' ||
         pathname === '/api/v1/tags' ||
         pathname === '/api/v1/seo/sitemap-data' ||

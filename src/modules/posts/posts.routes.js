@@ -124,6 +124,17 @@ router.get(
     })
 );
 
+router.get(
+    '/search-index',
+    asyncHandler(async (req, res) => {
+        const index = await postsService.getSearchIndex(req.query);
+        res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+        return sendOk(res, {
+            data: index,
+        });
+    })
+);
+
 // ============================================
 // ADMIN ROUTES
 // ============================================
