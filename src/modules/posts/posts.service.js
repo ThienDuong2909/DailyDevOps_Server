@@ -162,9 +162,10 @@ class PostsService {
                     slug: true,
                     subtitle: true,
                     excerpt: true,
+                    featuredImage: true,
                     publishedAt: true,
                     category: {
-                        select: { name: true, slug: true }
+                        select: { name: true, slug: true, color: true }
                     },
                     tags: {
                         select: { name: true, slug: true }
@@ -191,7 +192,8 @@ class PostsService {
                 title: translation?.title || post.title,
                 slug: translation?.slug || post.slug,
                 excerpt: translation?.subtitle || translation?.excerpt || post.subtitle || post.excerpt || '',
-                category: post.category ? { name: post.category.name, slug: post.category.slug } : null,
+                featuredImage: post.featuredImage || null,
+                category: post.category ? { name: post.category.name, slug: post.category.slug, color: post.category.color } : null,
                 tags: (post.tags || []).map((t) => t.name),
                 publishedAt: post.publishedAt,
             };
