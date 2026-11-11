@@ -35,7 +35,7 @@ const DEFAULT_SETTINGS = {
         footerDescription:
             'The leading resource for DevOps professionals, SREs, and Platform Engineers. Building the future of infrastructure together.',
         footerContentLinks: [
-            { label: 'Articles', href: '/blog' },
+            { label: 'Articles', href: '/category' },
             { label: 'Search', href: '/search' },
             { label: 'Newsletter', href: '/newsletter' },
             { label: 'RSS Feed', href: '/rss.xml' },
