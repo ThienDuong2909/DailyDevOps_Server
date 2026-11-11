@@ -45,6 +45,7 @@ class PostsService {
      */
     async findAll(query) {
         const { page, limit, skip, where, orderBy, locale } = buildListQuery(query);
+        const summaryOnly = query.fullContent !== 'true';
 
         const [posts, total] = await Promise.all([
             postsRepository.findMany({
@@ -57,7 +58,12 @@ class PostsService {
             postsRepository.count({ where }),
         ]);
 
-        return buildPaginatedResponse({ data: serializePosts(posts, locale), total, page, limit });
+        return buildPaginatedResponse({
+            data: serializePosts(posts, locale, summaryOnly),
+            total,
+            page,
+            limit,
+        });
     }
 
     /**
@@ -797,7 +803,7 @@ class PostsService {
             include: relatedPostsInclude,
         });
 
-        return serializePosts(posts, locale);
+        return serializePosts(posts, locale, true);
     }
 
     async submitForReview(id, userId, userRole) {

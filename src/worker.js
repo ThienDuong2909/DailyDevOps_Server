@@ -339,6 +339,7 @@ function isCacheablePublicApiGet(pathname) {
         pathname === '/api/v1/categories' ||
         pathname === '/api/v1/tags' ||
         pathname === '/api/v1/seo/sitemap-data' ||
+        pathname === '/api/v1/seo/public-config' ||
         pathname.startsWith('/api/v1/seo/post-meta/') ||
         pathname === '/api/v1/settings/public' ||
         pathname.startsWith('/api/v1/comments/post/')
@@ -381,13 +382,33 @@ function resolveRequestLocale(request, url) {
 export default {
     async fetch(request, env, ctx) {
         try {
+            const url = new URL(request.url);
+
+            // Fast-path /health (under 1ms, zero DB/middleware/Express CPU overhead)
+            if (url.pathname === '/health' || url.pathname === '/api/v1/health') {
+                return new Response(
+                    JSON.stringify({
+                        status: 'healthy',
+                        service: 'devopsdaily-api',
+                        timestamp: new Date().toISOString(),
+                    }),
+                    {
+                        status: 200,
+                        headers: {
+                            'content-type': 'application/json; charset=utf-8',
+                            'cache-control': 'public, max-age=60, s-maxage=60',
+                            'access-control-allow-origin': '*',
+                        },
+                    }
+                );
+            }
+
             globalThis.__CF_D1_BINDING = env.DB;
             globalThis.__CF_R2_BINDING = env.MEDIA_BUCKET || null;
             initD1Prisma(env.DB);
             config.refreshConfigFromEnv(env);
             setWaitUntil(ctx && typeof ctx.waitUntil === 'function' ? ctx.waitUntil.bind(ctx) : null);
 
-            const url = new URL(request.url);
             const edgeCache = typeof caches !== 'undefined' && caches.default ? caches.default : null;
 
             // 0. Fast-path internal cache-version endpoint for Frontend Worker
@@ -406,7 +427,9 @@ export default {
             if (request.method === 'GET' && url.pathname === '/api/v1/media/object') {
                 const key = url.searchParams.get('key');
                 if (key && env.MEDIA_BUCKET) {
-                    const mediaCacheKey = new Request(`https://cache.dailydevops.blog/media?key=${encodeURIComponent(key)}`, {
+                    const mediaCacheUrl = new URL(url.toString());
+                    mediaCacheUrl.search = `?key=${encodeURIComponent(key)}`;
+                    const mediaCacheKey = new Request(mediaCacheUrl.toString(), {
                         method: 'GET',
                     });
                     if (edgeCache) {
@@ -456,7 +479,6 @@ export default {
                 const locale = resolveRequestLocale(request, url);
                 const originHeader = request.headers.get('origin') || '';
                 const cacheUrl = new URL(url.toString());
-                cacheUrl.hostname = 'cache.dailydevops.blog';
                 cacheUrl.searchParams.set('__cv', `${version}_${moduleHash}`);
                 cacheUrl.searchParams.set('__loc', locale);
 

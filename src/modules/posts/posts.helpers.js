@@ -234,7 +234,7 @@ const buildLocaleAlternates = (post, translationMap = {}) => {
     return alternates;
 };
 
-const applyTranslationToPost = (post, locale = DEFAULT_LOCALE) => {
+const applyTranslationToPost = (post, locale = DEFAULT_LOCALE, summaryOnly = false) => {
     if (!post) {
         return post;
     }
@@ -251,9 +251,9 @@ const applyTranslationToPost = (post, locale = DEFAULT_LOCALE) => {
         ...post,
         subtitle: post.subtitle ?? post.excerpt ?? null,
         excerpt: post.subtitle ?? post.excerpt ?? null,
-        content: post.contentHtml ?? post.content ?? '',
-        contentHtml: post.contentHtml ?? post.content ?? '',
-        contentJson: parseJsonField(post.contentJson, null),
+        content: summaryOnly ? '' : (post.contentHtml ?? post.content ?? ''),
+        contentHtml: summaryOnly ? '' : (post.contentHtml ?? post.content ?? ''),
+        contentJson: summaryOnly ? null : parseJsonField(post.contentJson, null),
         ...(post.seoSetting && {
             seoSetting: {
                 ...post.seoSetting,
@@ -279,9 +279,9 @@ const applyTranslationToPost = (post, locale = DEFAULT_LOCALE) => {
         slug: basePost.slug,
         subtitle: translation.subtitle ?? translation.excerpt ?? null,
         excerpt: translation.subtitle ?? translation.excerpt ?? null,
-        content: translation.contentHtml ?? translation.content ?? '',
-        contentHtml: translation.contentHtml ?? translation.content ?? '',
-        contentJson: parseJsonField(translation.contentJson, null),
+        content: summaryOnly ? '' : (translation.contentHtml ?? translation.content ?? ''),
+        contentHtml: summaryOnly ? '' : (translation.contentHtml ?? translation.content ?? ''),
+        contentJson: summaryOnly ? null : parseJsonField(translation.contentJson, null),
         featuredImage: translation.featuredImage ?? basePost.featuredImage ?? null,
         publishedAt: translation.publishedAt ?? basePost.publishedAt,
         scheduledAt: translation.scheduledAt ?? basePost.scheduledAt,
@@ -302,16 +302,16 @@ const applyTranslationToPost = (post, locale = DEFAULT_LOCALE) => {
     };
 };
 
-const serializePost = (post) => {
+const serializePost = (post, summaryOnly = false) => {
     if (!post) {
         return post;
     }
 
-    return applyTranslationToPost(post, post.locale || DEFAULT_LOCALE);
+    return applyTranslationToPost(post, post.locale || DEFAULT_LOCALE, summaryOnly);
 };
 
-const serializePosts = (posts = [], locale = DEFAULT_LOCALE) =>
-    posts.map((post) => applyTranslationToPost(post, locale));
+const serializePosts = (posts = [], locale = DEFAULT_LOCALE, summaryOnly = false) =>
+    posts.map((post) => applyTranslationToPost(post, locale, summaryOnly));
 
 const serializeVersion = (version) => {
     if (!version) {
